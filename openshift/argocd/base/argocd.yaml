@@ -1,0 +1,22 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ArgoCD
+metadata:
+  name: argocd
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource
+spec:
+  dex:
+    image: ghcr.io/dexidp/dex
+    openShiftOAuth: true
+    version: v2.27.0
+  image: argoproj/argocd
+  rbac:
+    defaultPolicy: "role:admin"
+  redis:
+    image: redis
+    version: 5.0.10-alpine
+  server:
+    route:
+      enabled: true
+  version: v1.8.2
