@@ -1,0 +1,29 @@
+apiVersion: redhatgov.io/v1alpha1
+kind: Nexus
+metadata:
+  name: nexus
+  namespace: nexus
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+    argocd.argoproj.io/sync-wave: "5"
+spec:
+  persistent: true
+  nexus:
+    allowAnonymousAccess: true
+    oauth:
+      enabled: true
+      bypassAuthFor:
+        - "/repository"
+      adminUsers:
+        - sabre1041
+        - thomasphall
+        - samueltauil
+        - nasx
+    expose:
+      ssl: true
+      kind: Route
+    image:
+      src: registry.connect.redhat.com/sonatype/nexus-repository-manager
+      tag: latest
+      pullPolicy: IfNotPresent
+    volumeSize: 100Gi
