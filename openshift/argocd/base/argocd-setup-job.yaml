@@ -1,0 +1,70 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  annotations:
+    argocd.argoproj.io/hook: PostSync
+    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation
+  labels:
+    run: argocd-setup
+  name: argocd-setup
+  generateName: argocd-setup-
+  namespace: openshift-operators
+spec:
+  template:
+    spec:
+      activeDeadlineSeconds: 600
+      containers:
+        - image: registry.redhat.io/openshift4/ose-tools-rhel8:v4.6
+          command:
+            - /bin/bash
+            - -c
+            - |
+              export HOME=/tmp/argocd-setup
+
+              until oc -n openshift-gitops get routes argocd-cluster-server > /dev/null 2>&1; do sleep 5; done;
+
+              ARGOCD_DEX_REDIRECT_URI=https://$(oc -n openshift-gitops get routes argocd-cluster-server -o jsonpath='{ .spec.host }')/api/dex/callback
+
+              until oc -n openshift-gitops get sa argocd-cluster-argocd-dex-server > /dev/null 2>&1; do sleep 5; done;
+
+              ARGOCD_DEX_SA_TOKEN=$(oc -n openshift-gitops sa get-token argocd-cluster-argocd-dex-server)
+
+              oc annotate -n openshift-gitops --overwrite sa argocd-cluster-argocd-dex-server serviceaccounts.openshift.io/oauth-redirecturi.argocd=${ARGOCD_DEX_REDIRECT_URI}
+
+              until oc -n openshift-gitops get argocd argocd-cluster  > /dev/null 2>&1; do sleep 5; done;
+
+              cat <<EOF > /tmp/dex-config-template.txt
+              connectors:
+              - config:
+                  clientID: system:serviceaccount:openshift-gitops:argocd-cluster-argocd-dex-server
+                  clientSecret: ${ARGOCD_DEX_SA_TOKEN}
+                  insecureCA: true
+                  issuer: https://kubernetes.default.svc
+                  redirectURI: ${ARGOCD_DEX_REDIRECT_URI}
+                id: openshift
+                name: OpenShift
+                type: openshift
+              EOF
+
+              while true; do
+
+                oc get argocd -n openshift-gitops argocd-cluster -o json | jq 'del(.metadata.resourceVersion)' > /tmp/argocd-cluster.json
+
+                jq --arg config "$(cat /tmp/dex-config-template.txt)" '.spec.dex.config = $config' /tmp/argocd-cluster.json > /tmp/argocd-cluster.json.updated
+                
+                oc apply -n openshift-gitops -f /tmp/argocd-cluster.json.updated
+
+                if [ $? -eq 0 ]; then
+                  break
+                else
+                  rm /tmp/argocd-cluster.json /tmp/argocd-cluster.json.updated
+                fi
+
+              done
+          imagePullPolicy: IfNotPresent
+          name: argocd-setup
+      dnsPolicy: ClusterFirst
+      restartPolicy: OnFailure
+      serviceAccount: gitops-operator
+      serviceAccountName: gitops-operator
+      terminationGracePeriodSeconds: 30

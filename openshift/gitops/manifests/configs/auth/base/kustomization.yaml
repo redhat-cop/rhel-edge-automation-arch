@@ -1,0 +1,9 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - group-sync-operator-namespace.yaml
+  - group-sync-operator-operatorgroup.yaml
+  - group-sync-operator-subscription.yaml
+  - groupsync.yaml
+  - oauth.yaml
