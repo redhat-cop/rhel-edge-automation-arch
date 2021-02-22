@@ -1,0 +1,11 @@
+apiVersion: operators.coreos.com/v1
+kind: OperatorGroup
+metadata:
+  annotations:
+    olm.providedAPIs: Nexus.v1alpha1.redhatgov.io,NexusUser.v1alpha1.redhatgov.io
+  name: nexus
+  generateName: nexus-
+  namespace: rfe
+spec:
+  targetNamespaces:
+    - rfe

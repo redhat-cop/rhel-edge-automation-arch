@@ -1,10 +1,16 @@
 apiVersion: operators.coreos.com/v1alpha1
 kind: Subscription
 metadata:
-  name: argocd-operator
+  name: openshift-gitops-operator
+  namespace: openshift-operators
 spec:
-  channel: alpha
+  channel: preview
   installPlanApproval: Automatic
-  name: argocd-operator
-  source: community-operators
+  name: openshift-gitops-operator
+  source: redhat-operators
   sourceNamespace: openshift-marketplace
+  startingCSV: openshift-gitops-operator.v1.0.0
+  config:
+    env:
+      - name: DISABLE_DEX
+        value: "false"
