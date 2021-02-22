@@ -1,0 +1,7 @@
+- name: Configure Image Builder
+  hosts: image-builder
+  become: yes
+  roles:
+    - role: image-builder
+      tags:
+        - image-builder
