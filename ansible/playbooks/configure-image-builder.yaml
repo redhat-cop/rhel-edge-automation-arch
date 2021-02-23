@@ -1,4 +1,11 @@
-- name: Configure Image Builder
+- name: Generate In-Memory Inventory of OpenShift VMs
+  hosts: localhost
+  roles:
+    - role: openshift-vm-imi
+      tags:
+        openshift-vm-imi
+
+- name: Configure Image Builder VM
   hosts: image-builder
   become: yes
   roles:
