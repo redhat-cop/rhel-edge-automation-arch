@@ -7,4 +7,4 @@ metadata:
     argocd.argoproj.io/sync-wave: "5"
     argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
 spec:
-  BareMetalPlatform: false
+  bareMetalPlatform: false
