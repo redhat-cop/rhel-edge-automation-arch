@@ -1,0 +1,92 @@
+apiVersion: kubevirt.io/v1alpha3
+kind: VirtualMachine
+metadata:
+  annotations:
+    description: RHEL 8 With Image Builder
+    name.os.template.kubevirt.io/rhel8.3: Red Hat Enterprise Linux 8.0 or higher
+  name: image-builder
+  namespace: rfe
+  labels:
+    app: image-builder
+    os.template.kubevirt.io/rhel8.3: 'true'
+    vm.kubevirt.io/template: rhel8-server-large-v0.11.3
+    vm.kubevirt.io/template.namespace: openshift
+    vm.kubevirt.io/template.revision: '1'
+    vm.kubevirt.io/template.version: v0.12.4
+    workload.template.kubevirt.io/server: 'true'
+spec:
+  dataVolumeTemplates:
+    - apiVersion: cdi.kubevirt.io/v1alpha1
+      kind: DataVolume
+      metadata:
+        creationTimestamp: null
+        name: image-builder-rootdisk
+      spec:
+        pvc:
+          accessModes:
+            - ReadWriteOnce
+          resources:
+            requests:
+              storage: 100Gi
+          storageClassName: gp2
+          volumeMode: Filesystem
+        source:
+          http:
+            url: 'http://httpd:8080/qcow/rhel-8.3-x86_64-kvm.qcow2'
+  running: true
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        kubevirt.io/domain: image-builder
+        kubevirt.io/size: large
+        os.template.kubevirt.io/rhel8.3: 'true'
+        vm.kubevirt.io/name: image-builder
+        workload.template.kubevirt.io/server: 'true'
+    spec:
+      domain:
+        cpu:
+          cores: 2
+          sockets: 1
+          threads: 1
+        devices:
+          disks:
+            - bootOrder: 1
+              disk:
+                bus: virtio
+              name: rootdisk
+            - disk:
+                bus: virtio
+              name: cloudinitdisk
+          interfaces:
+            - masquerade: {}
+              model: virtio
+              name: nic-0
+          networkInterfaceMultiqueue: true
+          rng: {}
+        machine:
+          type: pc-q35-rhel8.2.0
+        resources:
+          requests:
+            memory: 6Gi
+      evictionStrategy: LiveMigrate
+      hostname: image-builder
+      networks:
+        - name: nic-0
+          pod: {}
+      terminationGracePeriodSeconds: 180
+      volumes:
+        - dataVolume:
+            name: image-builder-rootdisk
+          name: rootdisk
+        - cloudInitNoCloud:
+            userData: |
+              #cloud-config
+              name: default
+              hostname: image-builder
+              ssh_authorized_keys:
+                - >-
+                  ssh-rsa
+                  AAAAB3NzaC1yc2EAAAADAQABAAACAQDaUm7UZ7QT2a/tOWC9k1tSTOj9vMFBoTtI14jHASKw6iPu9WbCh3MfzzqwFsUjfvSXPgvO6L5qK/ALT6c7wY0mdf31cg+D55RdH/lZ2hp9uZDanV6s2sPCf42R1HdLfZb1Qr/Haf3/7aBLt+kvyYvggKnzTY2t32Q8mQb9FWg6a5ZBTSG405GrFIe6EyL1C4onhWR0ZNDZP8XfZhvOP5SNof/VUXiWzDZJ3krcScUKunjeMniyUtEAwkD3n4slO+98CXOryWATzxg8UWGGbKAxX71mft/jGvRBenKITFqh0hE5yWQ1Fp+PEQnEFQ2dC2DQG557hEzu6TaJZTLxMMmyZtfV+2PJNDKroYpYknF8b6dPEovKvn20CLjZA7HaEuAhh1io1LHkaLXCpNm1jyAQIwoLsNcGLSPn3IUhdiXNvQ4Opj+UJeO12SIR4WNfwNVC6uB73pvDf78inSYbjZKkj2M/DBJWnJo5559B9NjMCkW+Cre7TkPnhm6sjqv4mc/QoZU+V1LqbPOVObGNlPhwsQIVDjWC/oRPPCzkM2eSXXHM3LDRmK7oNKFQN0ADx7lZJzZotHBiptz9ZBebF/5++HjEsY1NB5PbaCorvQFFtOCi4PX2YaDBBN2Ij61nuR8vV0LB7EFQy9KUyxnLMN2LdSZ2SM05s5ytooEHM90aLw==
+                  cloud-user@cnv
+          name: cloudinitdisk

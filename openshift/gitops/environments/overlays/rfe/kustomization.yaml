@@ -4,6 +4,7 @@ kind: Kustomization
 bases:
   - ../../../manifests/rfe/httpd/base
   - ../../../manifests/rfe/nexus/base
+  - ../../../manifests/rfe/image-builder-vm/base
 
 resources:
   - rfe-namespace.yaml
