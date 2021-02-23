@@ -1,6 +1,16 @@
 apiVersion: v1
 data:
   debug.useEmulation: "true"
+  default-network-interface: masquerade
+  feature-gates: DataVolumes,SRIOV,LiveMigration,CPUManager,CPUNodeDiscovery,Sidecar,Snapshot
+  machine-type: pc-q35-rhel8.2.0
+  selinuxLauncherType: virt_launcher.process
+  smbios: |-
+    Family: Red Hat
+    Product: Container-native virtualization
+    Manufacturer: Red Hat
+    Sku: 2.5.4
+    Version: 2.5.4
 kind: ConfigMap
 metadata:
   name: kubevirt-config
