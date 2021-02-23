@@ -9,13 +9,13 @@ The contents of this directory makes use of GitOps principles to configure an Op
 Deploy Red Hat GitOps by executing the following command:
 
 ```
-oc apply -k ../argocd-operator/base
+oc apply -k manifests/bootstrap/argocd-operator/base
 ```
 
 Now, deploy Argo CD:
 
 ```
-until oc apply -k ../argocd/base; do sleep 2; done
+until oc apply -k manifests/bootstrap/argocd/base; do sleep 2; done
 
 ```
 
