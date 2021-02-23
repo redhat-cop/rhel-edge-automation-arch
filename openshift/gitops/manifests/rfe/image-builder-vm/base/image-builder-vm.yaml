@@ -32,7 +32,7 @@ spec:
           volumeMode: Filesystem
         source:
           http:
-            url: 'http://httpd.rfe.svc.cluster.local:8080/qcow/rhel-8.3-x86_64-kvm.qcow2'
+            url: 'http://httpd:8080/qcow/rhel-8.3-x86_64-kvm.qcow2'
   running: true
   template:
     metadata:
