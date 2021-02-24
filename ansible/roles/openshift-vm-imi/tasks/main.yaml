@@ -1,0 +1,23 @@
+- name: Query VirtualMachineInstances
+  community.kubernetes.k8s_info:
+    username: "{{ openshift_ansible_sa }}"
+    api_key: "{{ openshift_ansible_sa_token }}"
+    host: "{{ openshift_api }}"
+    api_version: kubevirt.io/v1alpha3
+    kind: VirtualMachineInstance
+    namespace: "{{ image_builder_namespace }}"
+    validate_certs: no
+  register: vmi_results
+
+- name: Debug vmi_results
+  ansible.builtin.debug:
+    msg: "{{ item.spec.hostname }} - {{ item.status.interfaces[0].ipAddress }}"
+    verbosity: 1
+  loop: "{{ vmi_results.resources }}"
+
+- name: Generate In-Memory Inventory of All VMs
+  ansible.builtin.add_host:
+    hostname: "{{ item.spec.hostname }}"
+    ansible_ssh_host: "{{ item.status.interfaces[0].ipAddress }}"
+    ansible_ssh_port: "22"
+  loop: "{{ vmi_results.resources }}"
