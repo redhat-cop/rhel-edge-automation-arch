@@ -2,8 +2,8 @@
 
 if [ ! -f "variables.sh" ] ;
 then
-    echo "Can't find variables file variables.sh!"
-    exit
+	echo "Can't find variables file variables.sh!"
+	exit
 fi
 
 if [ "$#" -ne 2 ] ;
@@ -14,7 +14,7 @@ fi
 
 case $1 in
 	strict)
-    	;;
+		;;
 	namespace-wide)
 		;;
 	cluster-wide)
@@ -27,7 +27,7 @@ esac
 
 if [ ! -f "$2" ] ;
 then
-	echo "Could not find the file $1!"
+	echo "Could not find the file $2!"
 	exit
 fi
 

@@ -5,3 +5,4 @@ namespace: rfe
 
 resources:
   - image-builder-vm.yaml
+  - image-builder-ssh-key-sealed-secret.yaml
