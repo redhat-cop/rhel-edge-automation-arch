@@ -26,88 +26,113 @@ The overall architecture is still being defined. We have split out "Above Site" 
 
 # Deploying Above Site Components
 
-All of the Above Site components (see [architecture](#architecture)) will be deployed on OpenShift. Most of these components will be deployed/configured by tools like [Argo CD](https://argoproj.github.io/argo-cd/) and [Resource Locker](https://github.com/redhat-cop/resource-locker-operator). We also chose to use [Sealed Secrets](https://github.com/bitnami-labs/sealed-secrets) to support our GitOps workflow.
+All of the Above Site components (see [architecture](#architecture)) will be deployed on OpenShift. Most of these components will be deployed/configured by tools like [Argo CD](https://argoproj.github.io/argo-cd/). We also chose to use [Sealed Secrets](https://github.com/bitnami-labs/sealed-secrets) to support secrets management in our GitOps automation.
 
-## Creating an Ansible Service Account
+## Argo CD
 
-We will need to create a Service Account so Ansible can interact with the cluster. Run the following command to do this:
-
-```
-$ cat << EOF | oc create -f -
----
-kind: ServiceAccount
-apiVersion: v1
-metadata:
-  name: ansible-sa
-  namespace: openshift-config
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRoleBinding
-metadata:
-  name: ansible-sa-cluster-admin
-  namespace: openshift-config
-subjects:
-  - kind: ServiceAccount
-    name: ansible-sa
-    namespace: openshift-config
-roleRef:
-  kind: ClusterRole
-  apiGroup: rbac.authorization.k8s.io
-  name: cluster-admin
-EOF
-```
-
-The name of the service account is `ansible-sa` and it will be placed in the `openshift-config` namespace. A cluster role binding is also used to grant the service account the `cluster-admin` role.
-
-## Deploying Sealed Secrets Controller
-
-Ansible is used to deploy the Sealed Secrets controller on our Above Site OpenShift cluster. Before we start the installation we need to create our own RSA key pair. Some helper scripts are provided in `util/sealed-secrets` assist. First modify the variables in `variables.sh` accordingly. The default values will result in the key pair being generated in your current working directory with the certificate set to expire in two years (i.e. 730 days).
+We will be using the Red Hat GitOps operator to provision Argo CD. To deploy the operator, run the following command from the root of the repository:
 
 ```
-$ ./generate-sealed-secrets.sh
-Generating a RSA private key
-..........++++
-........................................++++
-writing new private key to './tls.key'
------
+$ oc apply -k openshift/gitops/manifests/bootstrap/argocd-operator/base
 ```
 
-After running the `generate-sealed-secrets.sh` script, ensure the files `tls.key` and `tls.crt` are present. Next, create an Ansible vault and store base64 encoded contents of each file in the variables `sealed_secrets_keypair_crt` and `sealed_secrets_keypair_key`. Be sure to disable wrapping when encoding the files, for example:
+Now we will deploy Argo CD using the GitOps operator:
 
 ```
-$ base64 -w0 tls.key
+$ until oc apply -k openshift/gitops/manifests/bootstrap/argocd/base; do sleep 2; done
 ```
 
-### Additional Vault Variables
+## Bootstrapping Environment
 
-We need to provide the Ansible k8s module some additional variables. Add the following to your vault:
+Sealed Secrets are deployed as part of the GitOps automation. Several secrets will need to be encrypted before the GitOps automation is applied to the cluster.
+
+### Creating RSA Keypair
+
+First we will need to generate an RSA keypair to encrypted our secrets. To do this a helper script is provided.
+
+First, move to the util/sealed-secrets directory. The helper scripts should be run in this directory only.
+
+```
+$ cd util/sealed-secrets
+```
+
+By default, our private key will be stored in `./tls.key` and `./tls.crt`. The certificate is also set to expire after two years. These settings can be modified in the `variables.sh` file.
+
+To generate our RSA keypair, run the following:
+
+```
+$ ./generate-key-pair.sh
+```
+
+### Creating Keypair Secret
+
+We will need to store this keypair in a `Secret` resource before deploying Sealed Secrets. Create a manifest for the secret using the following YAML as a template:
 
 ```yaml
-openshift_api: https://api.cluster.local:6443
-openshift_ansible_sa: ansible-sa
-openshift_ansible_sa_token: eyJhbGciOiJSUzI...
-
+apiVersion: v1
+kind: Secret
+metadata:
+  labels:
+    sealedsecrets.bitnami.com/sealed-secrets-key: active
+  name: sealed-secrets-custom-key
+  namespace: sealed-secrets
+type: kubernetes.io/tls
+data:
+  tls.crt: LS0tLUtLS0tLQo=
+  tls.key: LS0tLS1fe0tLQo=
 ```
 
-You can find your API endpoint by running the `oc cluster-info` command. The token used to authenticate the service account is stored in a secret. To find the secret, run the following command:
+The values of the keys should be the base64 encoded contents of the files we just created. For instance, the value of the `tls.crt` key should be the output of `base64 -w0 tls.crt`.
+
+Once the manifest is finished, move the YAML file to `../../openshift/gitops/environments/overlays/bootstrap/sealed-secrets-secret.yaml`
+
+### Creating a Sealed Secret for Image Builder SSH Private Key
+
+The Tekton pipeline that handles the RFE builds will use Ansible to SSH into the Image Builder virtual machine. There is a helper script in the `util/sealed-secrets` directory to assist.
+
+First, generate an SSH keypair. This can be done using as follows:
 
 ```
-$ oc get serviceaccount ansible-sa -n openshift-config -ojson | jq -r '.secrets[] | select(.name | contains("token")) | .name'
-ansible-sa-token-qm66j
+$ ssh-keygen -b 4096 -f ~/.ssh/image-builder -C cloud-user@cnv
 ```
 
-To extract the token from the secret, run the following:
+Next we need to create a `Secret` to encrypt. First, make sure you are still in the `util/sealed-secrets` directory. Create a `Secret` with the name `image-builder-ssh-key.yaml` with the following format:
+
+```yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: image-builder-ssh-key
+  namespace: rfe
+type: kubernetes.io/ssh-auth
+data:
+  ssh-privatekey: LS0tLddw20tLQo=
+```
+
+The value for the `ssh-privatekey` key should be the base64 encoded contents of your SSH private key (i.e. `base64 -w0 ~/.ssh/image-builder`).
+
+Next we need to encrypt the key. To do this we will use the provided helper script. To do this, run the following command:
 
 ```
-$ oc get secret ansible-sa-token-qm66j -n openshift-config -ojson | jq -r .data.token | base64 -d
+./generate-sealed-secret.sh strict image-builder-ssh-key.yaml | yq -y > image-builder-ssh-key-sealed-secret.yaml
 ```
 
-### Running Playbook
+Finally, copy the file `image-builder-ssh-key-sealed-secret.yaml` to `../../openshift/gitops/manifests/rfe/image-builder-vm/base/image-builder-ssh-key-sealed-secret.yaml`
 
-To deploy the Sealed Secrets controller, run the following:
+### Executing the Bootstrap
+
+Now that all of our artifacts are in place we can bootstrap the environment. Run the following command from the root of the repository.
 
 ```
-$ ansible-playbook --ask-vault-pass -e @../local/vault.yaml deploy-sealed-secrets.yaml
+kustomize build openshift/gitops/clusters/overlays/rhpds/argocd/manager | oc apply -f-
 ```
 
-Be sure to adjust the path to your `vault.yaml` accordingly.
+## Accessing Argo CD
+
+To watch Argo CD deploy the various manifests in real time, you can access it through the `Route` by running the following command:
+
+```
+oc get routes -n openshift-gitops argocd-cluster-server -o jsonpath=https://'{.spec.host}'
+```
+
+Login using your OpenShift credentials.
