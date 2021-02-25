@@ -1,0 +1,7 @@
+name = "hello-world"
+description = "Hello World"
+version = "0.0.1"
+
+[[modules]]
+name = "git"
+version = "*"
