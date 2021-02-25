@@ -72,12 +72,15 @@ spec:
               if `oc get secret ${RFE_NEXUS_SECRET} > /dev/null 2>&1`; then
                 RFE_NEXUS_PASSWORD=$(oc get secret ${RFE_NEXUS_SECRET} -o jsonpath='{ .data.password }')
               else
-                oc create secret ${RFE_NEXUS_SECRET} generic --from-literal=username=${RFE_NEXUS_USERNAME} --from-literal=password=${RFE_NEXUS_PASSWORD} > /dev/null 2>&1
+                echo "Creating Secret: ${RFE_NEXUS_SECRET}"
+                oc create secret generic ${RFE_NEXUS_SECRET} --from-literal=username=${RFE_NEXUS_USERNAME} --from-literal=password=${RFE_NEXUS_PASSWORD} > /dev/null 2>&1
               fi
 
               USER_EXISTS_RESPONSE=$(curl -s -u ${NEXUS_ADMIN_USERNAME}:${NEXUS_ADMIN_PASSWORD} http://${SERVICE_NAME}:8081/service/rest/v1/security/users?userId=${RFE_NEXUS_USERNAME})
 
               if [[ ${USER_EXISTS_RESPONSE} == "[ ]" ]]; then
+
+                  echo "Creating User: ${RFE_NEXUS_USERNAME}"
 
                   curl -s -k -X POST "http://${SERVICE_NAME}:8081/service/rest/v1/security/users" \
                   -u "${NEXUS_ADMIN_USERNAME}:${NEXUS_ADMIN_PASSWORD}" \
