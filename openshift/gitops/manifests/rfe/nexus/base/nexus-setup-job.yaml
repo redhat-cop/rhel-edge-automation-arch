@@ -18,6 +18,10 @@ spec:
               value: nexus
             - name: NEXUS_REPOSITORIES
               value: "rfe-kickstarts,rfe-tarballs"
+            - name: RFE_NEXUS_SECRET
+              value: "nexus-rfe-credentials"
+            - name: RFE_NEXUS_USERNAME
+              value: "rfe-automation"
           command:
             - /bin/bash
             - -c
@@ -48,6 +52,48 @@ spec:
 
                 fi
               done
+
+              ROLE_STATUS=$(curl -s -u ${NEXUS_ADMIN_USERNAME}:${NEXUS_ADMIN_PASSWORD} -o /dev/null -w ''%{http_code}''  http://${SERVICE_NAME}:8081/service/rest/v1/security/roles/rfe)
+
+              if [[ ${ROLE_STATUS} == "404" ]]; then
+
+                  echo "Creating Role: rfe'"
+
+                  curl -s -k -X POST "http://${SERVICE_NAME}:8081/service/rest/v1/security/roles" \
+                  -u "${NEXUS_ADMIN_USERNAME}:${NEXUS_ADMIN_PASSWORD}" \
+                  -H "accept: application/json" \
+                  -H "Content-Type: application/json" \
+                  -d "{ \"id\": \"rfe\",\"name\": \"rfe\",\"description\": \"Management of rfe assets\",\"privileges\": [\"nx-repository-admin-raw-rfe-kickstarts-*\",\"nx-repository-admin-raw-rfe-tarballs-*\"]}"
+
+              fi
+
+              RFE_NEXUS_PASSWORD=$(date | md5sum | cut -d" " -f1)
+
+              if `oc get secret ${RFE_NEXUS_SECRET} > /dev/null 2>&1`; then
+                RFE_NEXUS_PASSWORD=$(oc get secret ${RFE_NEXUS_SECRET} -o jsonpath='{ .data.password }')
+              else
+                oc create secret ${RFE_NEXUS_SECRET} generic --from-literal=username=${RFE_NEXUS_USERNAME} --from-literal=password=${RFE_NEXUS_PASSWORD} > /dev/null 2>&1
+              fi
+
+              USER_EXISTS_RESPONSE=$(curl -s -u ${NEXUS_ADMIN_USERNAME}:${NEXUS_ADMIN_PASSWORD} http://${SERVICE_NAME}:8081/service/rest/v1/security/users?userId=${RFE_NEXUS_USERNAME})
+
+              if [[ ${USER_EXISTS_RESPONSE} == "[ ]" ]]; then
+
+                  curl -s -k -X POST "http://${SERVICE_NAME}:8081/service/rest/v1/security/users" \
+                  -u "${NEXUS_ADMIN_USERNAME}:${NEXUS_ADMIN_PASSWORD}" \
+                  -H "accept: application/json" \
+                  -H "Content-Type: application/json" \
+                  -d "{ \"userId\": \"${RFE_NEXUS_USERNAME}\",\"firstName\": \"${RFE_NEXUS_USERNAME}\",\"lastName\": \"${RFE_NEXUS_USERNAME}\",\"emailAddress\": \"${RFE_NEXUS_USERNAME}@redhat.com\",\"password\": \"${RFE_NEXUS_PASSWORD}\",\"status\": \"active\",\"roles\": [\"rfe\"] }"
+
+              else
+
+                  curl -s -k -X PUT "http://${SERVICE_NAME}:8081/service/rest/v1/security/users/${RFE_NEXUS_USERNAME}/change-password" \
+                  -u "${NEXUS_ADMIN_USERNAME}:${NEXUS_ADMIN_PASSWORD}" \
+                  -H "accept: application/json" \
+                  -H "Content-Type: text/plain" \
+                  -d "${RFE_NEXUS_PASSWORD}"
+
+              fi
 
           imagePullPolicy: IfNotPresent
           name: nexus-setup

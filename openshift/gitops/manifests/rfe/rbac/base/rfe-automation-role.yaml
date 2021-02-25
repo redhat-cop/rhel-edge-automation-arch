@@ -9,6 +9,7 @@ rules:
     resources:
       - pods
       - services
+      - secrets
     verbs:
       - list
       - get
