@@ -26,7 +26,7 @@ spec:
           
   strategy:
     type: Docker
-    dockerstrategy:
+    dockerStrategy:
       from:
         kind: DockerImage
         name: registry.access.redhat.com/ubi8/python-38
