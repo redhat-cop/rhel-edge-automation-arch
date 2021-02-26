@@ -4,5 +4,5 @@ kind: Kustomization
 namespace: rfe
 
 resources:
-  - ansible-rfe-imagestream.yaml
+  - ansible-rfe-runner-imagestream.yaml
   - ansible-rfe-runner-buildconfig.yaml
