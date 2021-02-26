@@ -6,7 +6,25 @@ spec:
   runPolicy: "Serial" 
   source:
     type: Dockerfile
-    dockerfile: "FROM registry.access.redhat.com/ubi8/python-38\nUSER 0\nRUN dnf update -y\nRUN pip install --upgrade pip\nRUN pip install openshift\nRUN pip install ansible==2.9.*\nUSER 1001"
+    dockerfile: |
+    
+      #pull ubi python image
+      FROM registry.access.redhat.com/ubi8/python-38
+      
+      #set user to root
+      USER 0
+      
+      #run base image update
+      RUN dnf update -y
+          #update pip
+          pip install --upgrade pip
+          #install pip openshift libraries
+          pip install openshift
+          #install ansible 2.9
+          pip install ansible==2.9.*
+          #set user to default
+          USER 1001
+          
   strategy:
     type: Docker
     dockerstrategy:
