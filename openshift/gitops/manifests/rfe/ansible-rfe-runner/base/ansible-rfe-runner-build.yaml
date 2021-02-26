@@ -14,12 +14,14 @@ spec:
       #set user to root
       USER 0
       
-      #run base image update
+      #run base image update, pip upgrade, pip openshift libraries, install ansible 2.9.x
       RUN dnf update -y && \
           pip install --upgrade pip && \
           pip install openshift && \
-          pip install ansible==2.9.* a && \
-          USER 1001
+          pip install ansible==2.9.*
+      
+      #set user to default
+      USER 1001
           
   strategy:
     type: Docker
