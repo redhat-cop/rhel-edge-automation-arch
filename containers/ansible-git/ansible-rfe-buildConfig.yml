@@ -1,0 +1,38 @@
+kind: BuildConfig
+apiVersion: build.openshift.io/v1
+metadata:
+  name: "ansible-rfe-build" 
+spec:
+  runPolicy: "Serial" 
+  source:
+    type: Dockerfile
+    dockerfile: |
+      FROM registry.access.redhat.com/ubi8/python-38
+      
+      #set to root user
+      USER 0
+      
+      #update the repos
+      RUN dnf update -y
+      
+      #upgrade pip
+      RUN pip install --upgrade pip
+      
+      #install openshift libraries for pip
+      RUN pip install openshift
+      
+      #install ansible 2.9
+      RUN pip install ansible==2.9.*
+      
+      #reset user to default
+      USER 1001
+  strategy:
+    type: Docker
+    dockerstrategy:
+      from:
+        kind: DockerImage
+        name: registry.access.redhat.com/ubi8/python-38
+  output: 
+    to:
+      kind: "ImageStreamTag"
+      name: "ansible-rfe-build:latest"
