@@ -6,6 +6,7 @@ bases:
   - ../../../manifests/rfe/nexus/base
   - ../../../manifests/rfe/image-builder-vm/base
   - ../../../manifests/rfe/rbac/base
+  - ../../../manifests/rfe/ansible-rfe-runner/base
 
 resources:
   - rfe-namespace.yaml
