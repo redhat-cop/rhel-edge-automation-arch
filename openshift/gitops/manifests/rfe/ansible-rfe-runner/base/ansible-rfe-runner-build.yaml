@@ -1,9 +1,10 @@
 kind: BuildConfig
 apiVersion: build.openshift.io/v1
 metadata:
-  name: "ansible-rfe" 
+  name: ansible-rfe
+  namespace: rfe
 spec:
-  runPolicy: "Serial" 
+  runPolicy: Serial
   source:
     type: Dockerfile
     dockerfile: |
@@ -33,5 +34,5 @@ spec:
     - type: ConfigChange
   output: 
     to:
-      kind: "ImageStreamTag"
-      name: "ansible-rfe:latest"
+      kind: ImageStreamTag
+      name: ansible-rfe:latest
