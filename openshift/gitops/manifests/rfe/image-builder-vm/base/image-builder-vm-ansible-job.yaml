@@ -29,8 +29,8 @@ spec:
             - |
               mkdir -p $GIT_DIRECTORY
               git clone $GIT_URL $GIT_DIRECTORY
-              ansible-galaxy collection install -f $GIT_DIRECTORY/ansible/collections/requirements.yaml
-              ansible-playbook --private-key $SSH_KEY $GIT_DIRECTORY/$ANSIBLE_PLAYBOOK
+              ansible-galaxy collection install -r $GIT_DIRECTORY/ansible/collections/requirements.yaml
+              ansible-playbook -u cloud-user --private-key=$SSH_KEY $GIT_DIRECTORY/$ANSIBLE_PLAYBOOK
           volumeMounts:
             - name: image-builder-ssh-key
               mountPath: /var/secrets/image-builder-ssh-key
