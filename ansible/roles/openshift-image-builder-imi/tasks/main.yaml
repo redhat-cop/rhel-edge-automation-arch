@@ -6,19 +6,23 @@
     host: https://kubernetes.default.svc
     kind: VirtualMachineInstance
     namespace: rfe
+    name: image-builder
     username: rfe-automation
     validate_certs: yes
   register: vmi_results
+  retries: 60
+  delay: 10
+  until:
+    - vmi_results.resources | default([]) | list | count == 1
+    - vmi_results.resources | default([]) | list | first | json_query("status.interfaces[0].ipAddress") | ipaddr
 
 - name: Debug vmi_results
   ansible.builtin.debug:
-    msg: "{{ item.spec.hostname }} - {{ item.status.interfaces[0].ipAddress }}"
+    msg: "{{ image-builder - {{ vmi_results.resources[0].status.interfaces[0].ipAddress }}"
     verbosity: 1
-  loop: "{{ vmi_results.resources }}"
 
-- name: Generate In-Memory Inventory of All VMs
+- name: Generate In-Memory Inventory of Image Builder VM
   ansible.builtin.add_host:
-    ansible_ssh_host: "{{ item.status.interfaces[0].ipAddress }}"
+    ansible_ssh_host: "{{ vmi_results.resources[0].status.interfaces[0].ipAddress }}"
     ansible_ssh_port: "22"
-    hostname: "{{ item.spec.hostname }}"
-  loop: "{{ vmi_results.resources }}"
+    hostname: image-builder
