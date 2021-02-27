@@ -20,7 +20,7 @@ spec:
             - name: GIT_URL
               value: "https://github.com/redhat-cop/rhel-edge-automation-arch.git"
             - name: SSH_KEY
-              value: "/root/.ssh/image-builder-ssh-key/ssh-privatekey"
+              value: "/var/secrets/image-builder-ssh-key/ssh-privatekey"
             - name: ANSIBLE_PLAYBOOK
               value: "ansible/playbooks/configure-image-builder.yaml"
           command:
@@ -29,10 +29,14 @@ spec:
             - |
               mkdir -p $GIT_DIRECTORY
               git clone $GIT_URL $GIT_DIRECTORY
-              ansible-playbook -i $SSH_KEY $GIT_DIRECTORY/$ANSIBLE_PLAYBOOK
+              ansible-galaxy collection install -f $GIT_DIRECTORY/ansible/collections/requirements.yaml
+              ansible-playbook --private-key $SSH_KEY $GIT_DIRECTORY/$ANSIBLE_PLAYBOOK
           volumeMounts:
             - name: image-builder-ssh-key
-              mountPath: /root/.ssh/image-builder-ssh-key
+              mountPath: /var/secrets/image-builder-ssh-key
+              readOnly: yes
+            - name: redhat-portal-credentials
+              mountPath: /var/secrets/redhat-portal-credentials
               readOnly: yes
           imagePullPolicy: IfNotPresent
           name: ansible-rfe-runner
@@ -40,6 +44,9 @@ spec:
         - name: image-builder-ssh-key
           secret:
             secretName: image-builder-ssh-key
+        - name: redhat-portal-credentials
+          secret:
+            secretName: redhat-portal-credentials
       dnsPolicy: ClusterFirst
       restartPolicy: OnFailure
       serviceAccount: rfe-automation

@@ -1,9 +1,9 @@
 - name: Register Host
   community.general.redhat_subscription:
     state: present
-    username: "{{ redhat_username }}"
-    password: "{{ redhat_password }}"
-    pool_ids: "{{ redhat_pool_id }}"
+    username: "{{ lookup('file', '/var/secrets/redhat-portal-credentials/username') }}"
+    password: "{{ lookup('file', '/var/secrets/redhat-portal-credentials/password') }}"
+    pool_ids: "{{ lookup('file', '/var/secrets/redhat-portal-credentials/pool_id') }}"
 
 - name: Setup Repositories
   community.general.rhsm_repository:
