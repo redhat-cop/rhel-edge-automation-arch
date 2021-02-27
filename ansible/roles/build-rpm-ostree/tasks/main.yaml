@@ -1,0 +1,74 @@
+---
+- name: Verify Blueprint Source Directory defined
+  assert:
+    fail_msg: Blueprints Source Directory Must be Defined
+    that:
+      - blueprint_source_dir is defined
+
+- name: Validate Blueprint Directory and Blueprint file Exists
+  local_action: stat path="{{ item }}"
+  become: no
+  register: blueprint_exists
+  failed_when: not blueprint_exists.stat.exists
+  connection: local
+  loop:
+    - "{{ blueprint_source_dir }}"
+    - "{{ blueprint_source_dir }}/blueprint.toml"
+
+- name: Create Blueprints Directory
+  file:
+    state: directory
+    path: "{{ base_rpm_ostree_blueprints_dir }}"
+
+- name: Set Blueprint Facts
+  set_fact:
+    blueprint_name: "{{ blueprint_source_dir | basename }}"
+    build_blueprint_dir: "{{ base_rpm_ostree_blueprints_dir }}/{{ blueprint_source_dir | basename }}"
+
+- name: Copy Blueprints Directory to Image Builder
+  copy:
+    src: "{{ blueprint_source_dir }}/"
+    dest: "{{ build_blueprint_dir }}/"
+
+- name: Push Blueprint to Server
+  command: >
+    composer-cli blueprints push "{{ build_blueprint_dir }}/blueprint.toml"
+
+- name: Resolve Dependencies
+  command: >
+    composer-cli blueprints depsolve {{ blueprint_name }}
+
+- name: Freeze Blueprint
+  command: >
+    composer-cli -j blueprints freeze {{ blueprint_name }}
+  register: frozen_blueprint
+
+- name: Set Blueprint Version Number
+  set_fact:
+    blueprint_version: "{{ (frozen_blueprint.stdout | from_json).blueprints[0].blueprint.version }}"
+
+- name: Image Builder
+  block:
+    - name: Compose Image
+      command: >
+        composer-cli -j compose start {{ blueprint_name}} rhel-edge-commit
+      register: composed_image
+
+    - name: Set Build Number
+      set_fact:
+        build_id: "{{ (composed_image.stdout | from_json).build_id }}"
+
+    - name: Wait for Image Build to Complete
+      command: >
+        composer-cli -j compose status
+      delay: 30
+      retries: 200
+      changed_when: false
+      failed_when: not (image_build_status.stdout | from_json | selectattr('id', 'equalto', build_id) | list | first).finished and (image_build_status.stdout | from_json | selectattr('id', 'equalto', build_id) | list | first).status != "FINISHED"
+      until: (image_build_status.stdout | from_json | selectattr('id', 'equalto', build_id) | list | first).finished and (image_build_status.stdout | from_json | selectattr('id', 'equalto', build_id) | list | first).status == "FINISHED"
+      register: image_build_status
+
+- name: Save commit id to file
+  local_action: copy content="{{ build_id }}" dest="{{ build_commit_output_file }}"
+  become: no
+  connection: local
