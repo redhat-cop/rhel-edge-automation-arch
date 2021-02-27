@@ -38,7 +38,7 @@ spec:
             - name: redhat-portal-credentials
               mountPath: /var/secrets/redhat-portal-credentials
               readOnly: yes
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: Always
           name: ansible-rfe-runner
       volumes:
         - name: image-builder-ssh-key
