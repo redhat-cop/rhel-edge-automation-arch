@@ -1,0 +1,47 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  annotations:
+    argocd.argoproj.io/hook: PostSync
+    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation
+  labels:
+    run: image-builder-vm-ansible-job
+  name: image-builder-vm-ansible-job
+  namespace: rfe
+spec:
+  template:
+    spec:
+      activeDeadlineSeconds: 600
+      containers:
+        - image: image-registry.openshift-image-registry.svc:5000/rfe/ansible-rfe-runner:latest
+          env:
+            - name: GIT_DIRECTORY
+              value: "/tmp/git/rhel-edge-automation-arch"
+            - name: GIT_URL
+              value: "https://github.com/redhat-cop/rhel-edge-automation-arch.git"
+            - name: SSH_KEY
+              value: "/root/.ssh/image-builder-ssh-key/ssh-privatekey"
+            - name: ANSIBLE_PLAYBOOK
+              value: "ansible/playbooks/configure-image-builder.yaml"
+          command:
+            - /bin/bash
+            - -c
+            - |
+              mkdir -p $GIT_DIRECTORY
+              git clone $GIT_URL $GIT_DIRECTORY
+              ansible-playbook -i $SSH_KEY $GIT_DIRECTORY/$ANSIBLE_PLAYBOOK
+          volumeMounts:
+            - name: image-builder-ssh-key
+              mountPath: /root/.ssh/image-builder-ssh-key
+              readOnly: yes
+          imagePullPolicy: IfNotPresent
+          name: ansible-rfe-runner
+      volumes:
+        - name: image-builder-ssh-key
+          secret:
+            secretName: image-builder-ssh-key
+      dnsPolicy: ClusterFirst
+      restartPolicy: OnFailure
+      serviceAccount: rfe-automation
+      serviceAccountName: rfe-automation
+      terminationGracePeriodSeconds: 30

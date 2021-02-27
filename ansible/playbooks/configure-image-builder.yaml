@@ -1,14 +1,16 @@
-- name: Generate In-Memory Inventory of OpenShift VMs
+- name: Generate In-Memory Inventory of Image Builder VM
   hosts: localhost
   roles:
-    - role: openshift-vm-imi
-      tags:
-        openshift-vm-imi
+    - role: openshift-image-builder-imi
 
 - name: Configure Image Builder VM
   hosts: image-builder
   become: yes
-  roles:
-    - role: image-builder
-      tags:
-        - image-builder
+  tasks:
+    - name: Wait for Connection
+      ansible.builtin.wait_for_connection:
+        timeout: 600
+        sleep: 10
+    - name: Call image-builder Role
+      ansible.builtin.include_role:
+        name: image-builder
