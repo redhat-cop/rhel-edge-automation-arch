@@ -19,6 +19,7 @@ rules:
       - pods/exec
     verbs:
       - update
+      - create
   - apiGroups:
       - kubevirt.io
     resources:
