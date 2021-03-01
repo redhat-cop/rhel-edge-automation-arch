@@ -63,14 +63,14 @@ spec:
                   -u "${NEXUS_ADMIN_USERNAME}:${NEXUS_ADMIN_PASSWORD}" \
                   -H "accept: application/json" \
                   -H "Content-Type: application/json" \
-                  -d "{ \"id\": \"rfe\",\"name\": \"rfe\",\"description\": \"Management of rfe assets\",\"privileges\": [\"nx-repository-admin-raw-rfe-kickstarts-*\",\"nx-repository-admin-raw-rfe-tarballs-*\"]}"
+                  -d "{ \"id\": \"rfe\",\"name\": \"rfe\",\"description\": \"Management of rfe assets\",\"privileges\": [\"nx-repository-admin-raw-rfe-kickstarts-*\",\"nx-repository-admin-raw-rfe-tarballs-*\",\"nx-repository-view-raw-rfe-tarballs-*\",\"nx-repository-view-raw-rfe-kickstarts-*\"]}"
 
               fi
 
               RFE_NEXUS_PASSWORD=$(date | md5sum | cut -d" " -f1)
 
               if `oc get secret ${RFE_NEXUS_SECRET} > /dev/null 2>&1`; then
-                RFE_NEXUS_PASSWORD=$(oc get secret ${RFE_NEXUS_SECRET} -o jsonpath='{ .data.password }')
+                RFE_NEXUS_PASSWORD=$(oc get secret ${RFE_NEXUS_SECRET} -o jsonpath='{ .data.password }' | base64 -d)
               else
                 echo "Creating Secret: ${RFE_NEXUS_SECRET}"
                 oc create secret generic ${RFE_NEXUS_SECRET} --from-literal=username=${RFE_NEXUS_USERNAME} --from-literal=password=${RFE_NEXUS_PASSWORD} > /dev/null 2>&1
