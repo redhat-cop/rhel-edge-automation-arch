@@ -23,6 +23,8 @@ spec:
               value: "/var/secrets/image-builder-ssh-key/ssh-privatekey"
             - name: ANSIBLE_PLAYBOOK
               value: "ansible/playbooks/configure-image-builder.yaml"
+            - name: ANSIBLE_CONFIG
+              value: $GIT_DIRECTORY/ansible/ansible.cfg
           command:
             - /bin/bash
             - -c
@@ -44,9 +46,11 @@ spec:
         - name: image-builder-ssh-key
           secret:
             secretName: image-builder-ssh-key
+            defaultMode: 0400
         - name: redhat-portal-credentials
           secret:
             secretName: redhat-portal-credentials
+            defaultMode: 0400
       dnsPolicy: ClusterFirst
       restartPolicy: OnFailure
       serviceAccount: rfe-automation

@@ -9,10 +9,6 @@ metadata:
   labels:
     app: image-builder
     os.template.kubevirt.io/rhel8.3: 'true'
-    vm.kubevirt.io/template: rhel8-server-large-v0.11.3
-    vm.kubevirt.io/template.namespace: openshift
-    vm.kubevirt.io/template.revision: '1'
-    vm.kubevirt.io/template.version: v0.12.4
     workload.template.kubevirt.io/server: 'true'
 spec:
   dataVolumeTemplates:
@@ -36,17 +32,15 @@ spec:
   running: true
   template:
     metadata:
-      creationTimestamp: null
       labels:
         kubevirt.io/domain: image-builder
-        kubevirt.io/size: large
         os.template.kubevirt.io/rhel8.3: 'true'
         vm.kubevirt.io/name: image-builder
         workload.template.kubevirt.io/server: 'true'
     spec:
       domain:
         cpu:
-          cores: 2
+          cores: 8
           sockets: 1
           threads: 1
         devices:
@@ -68,7 +62,7 @@ spec:
           type: pc-q35-rhel8.2.0
         resources:
           requests:
-            memory: 6Gi
+            memory: 16Gi
       evictionStrategy: LiveMigrate
       hostname: image-builder
       networks:
