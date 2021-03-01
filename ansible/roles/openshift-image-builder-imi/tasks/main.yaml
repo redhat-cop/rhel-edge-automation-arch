@@ -18,7 +18,7 @@
 
 - name: Debug vmi_results
   ansible.builtin.debug:
-    msg: "{{ image-builder - {{ vmi_results.resources[0].status.interfaces[0].ipAddress }}"
+    msg: "image-builder - {{ vmi_results.resources[0].status.interfaces[0].ipAddress }}"
     verbosity: 1
 
 - name: Generate In-Memory Inventory of Image Builder VM
