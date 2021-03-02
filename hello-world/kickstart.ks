@@ -21,7 +21,7 @@ text
 # activate network devices and configure with DHCP
 network --bootproto=dhcp
 
-# create default user 'core' with sudo privileges using password 'edge'
+# create default user with sudo privileges
 user --name={{ rfe_user | default('core') }} --groups=wheel --password={{ rfe_password | default('edge') }}
 
 # set up the OSTree-based install with disabled GPG key verification, the base
