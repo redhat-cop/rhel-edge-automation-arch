@@ -1,0 +1,11 @@
+apiVersion: v1
+data:
+  default-service-account: pipeline
+  default-timeout-minutes: "120"
+kind: ConfigMap
+metadata:
+  annotations:
+    app.kubernetes.io/instance: default
+    app.kubernetes.io/part-of: tekton-pipelines
+  name: config-defaults
+  namespace: openshift-pipelines

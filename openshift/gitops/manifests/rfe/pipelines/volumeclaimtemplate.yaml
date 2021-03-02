@@ -1,0 +1,8 @@
+metadata:
+  name: rfe-tekton-workspace
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 3Gi

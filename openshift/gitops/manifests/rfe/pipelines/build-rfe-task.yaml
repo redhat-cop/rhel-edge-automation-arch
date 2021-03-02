@@ -1,0 +1,40 @@
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+    argocd.argoproj.io/sync-wave: "5"
+  name: build-rfe-tarball
+spec:
+  workspaces:
+    - name: workspace
+  params:
+    - name: blueprint-dir
+      description: Directory containing blueprint file
+      type: string
+    - name: image-builder-secret
+      description: Name of the secret containing the SSH key for the image builder
+      default: "image-builder-ssh-key"
+      type: string
+  results:
+    - name: build-commit
+      description: Commit of the build
+  steps:
+    - name: build-rfe-tarball
+      image: image-registry.openshift-image-registry.svc:5000/rfe/ansible-rfe-runner:latest
+      workingDir: /workspace/workspace
+      args:
+        - |-
+          cd tooling/ansible
+          ansible-galaxy collection install -r collections/requirements.yaml
+          ansible-playbook -u cloud-user --private-key=/var/secrets/ssh-privatekey playbooks/build-rfe-rpm-ostree.yaml -e blueprint_source_dir=$(params.blueprint-dir) -e build_commit_output_file=$(results.build-commit.path)
+      command:
+        - /bin/bash
+        - -c
+      volumeMounts:
+        - name: image-builder-ssh
+          mountPath: /var/secrets
+  volumes:
+    - name: image-builder-ssh
+      secret:
+        secretName: "$(params.image-builder-secret)"

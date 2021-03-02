@@ -10,3 +10,4 @@ bases:
   - ../../../manifests/argocd/apps/sealed-secrets/base
   - ../../../manifests/argocd/apps/user-workload-monitoring/base
   - ../../../manifests/argocd/apps/cnv/base
+  - ../../../manifests/argocd/apps/pipelines/base
