@@ -1,0 +1,83 @@
+apiVersion: tekton.dev/v1beta1
+kind: Pipeline
+metadata:
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+    argocd.argoproj.io/sync-wave: "5"
+  name: rfe-kickstart-pipeline
+spec:
+  params:
+    - name: kickstarts-git-url
+      description: Kickstarts Repository URL
+      default: https://github.com/redhat-cop/rhel-edge-automation-arch.git
+      type: string
+    - name: kickstarts-git-revision
+      description: Kickstarts Repository URL Reference
+      default: kickstarts
+      type: string
+    - name: tooling-git-url
+      description: Tooling Repository URL
+      default: https://github.com/redhat-cop/rhel-edge-automation-arch.git
+      type: string
+    - name: tooling-git-revision
+      description: Tooling Repository URL Reference
+      default: main
+      type: string
+    - name: rfe-tarball-url
+      description: HTTP Location of RFE Tarball
+      type: string
+    - name: kickstart-path
+      description: Path containing the kickstart
+      type: string
+  workspaces:
+    - name: shared-workspace
+  tasks:
+    - name: git-clone-tooling
+      taskRef:
+        name: git-clone
+        kind: ClusterTask
+      params:
+        - name: url
+          value: $(params.tooling-git-url)
+        - name: revision
+          value: $(params.tooling-git-revision)
+        - name: subdirectory
+          value: "tooling"
+      workspaces:
+        - name: output
+          workspace: shared-workspace
+    - name: git-clone-kickstarts
+      taskRef:
+        name: git-clone
+        kind: ClusterTask
+      params:
+        - name: url
+          value: $(params.kickstarts-git-url)
+        - name: revision
+          value: $(params.kickstarts-git-revision)
+        - name: subdirectory
+          value: "kickstarts"
+      workspaces:
+        - name: output
+          workspace: shared-workspace
+    - name: upload-rfe-kickstart
+      taskRef:
+        name: upload-kickstart
+        kind: Task
+      params:
+        - name: rfe-tarball-url
+          value: $(params.rfe-tarball-url)
+        - name: kickstart-path
+          value: /workspace/workspace/kickstarts/$(params.kickstart-path)
+        - name: kickstart-destination-dir
+          value: /workspace/workspace/kickstarts
+      runAfter:
+        - "git-clone-kickstarts"
+        - "git-clone-tooling"
+      workspaces:
+        - name: workspace
+          workspace: shared-workspace
+  results:
+    - name: build-commit
+      description: Commit of the build
+      value: $(tasks.build-rfe-tarball.results.build-commit)
