@@ -1,0 +1,18 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: rfe
+  namespace: openshift-gitops
+spec:
+  destination:
+    namespace: openshift-gitops
+    server: https://kubernetes.default.svc
+  project: rfe
+  source:
+    path: openshift/gitops/clusters/overlays/shared/argocd/rfe
+    repoURL: https://github.com/redhat-cop/rhel-edge-automation-arch.git
+    targetRevision: main
+  syncPolicy:
+    automated:
+      prune: false
+      selfHeal: true

@@ -3,13 +3,3 @@ kind: OAuth
 metadata:
   name: cluster
 spec:
-  identityProviders:
-    - github:
-        clientID: d4ad09a6d67182e85fc3
-        clientSecret:
-          name: github
-        teams:
-          - redhat-cop/rhel-edge-automation-arch
-      mappingMethod: claim
-      name: GitHub
-      type: GitHub

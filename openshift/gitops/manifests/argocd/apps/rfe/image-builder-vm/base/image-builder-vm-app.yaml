@@ -1,0 +1,22 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: rfe-image-builder-vm
+  annotations:
+    argocd.argoproj.io/sync-wave: "10"
+    argocd.argoproj.io/compare-options: IgnoreExtraneous
+  labels:
+    gitops.ownedBy: rfe
+spec:
+  destination:
+    namespace: openshift-gitops
+    server: https://kubernetes.default.svc
+  project: rfe
+  source:
+    path: openshift/gitops/manifests/rfe/image-builder-vm/base
+    repoURL: https://github.com/redhat-cop/rhel-edge-automation-arch.git
+    targetRevision: main
+  syncPolicy:
+    automated:
+      prune: false
+      selfHeal: true
