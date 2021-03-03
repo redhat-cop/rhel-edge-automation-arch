@@ -1,0 +1,20 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+bases:
+  - ../../../../../manifests/configs/auth/base
+
+resources:
+  - rhel-edge-admins-group.yaml
+
+patchesStrategicMerge:
+  - oauth.yaml
+
+secretGenerator:
+  - name: htpasswd-secret
+    namespace: openshift-config
+    files:
+      - htpasswd=users.htpasswd
+
+generatorOptions:
+  disableNameSuffixHash: true

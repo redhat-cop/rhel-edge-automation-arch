@@ -1,0 +1,15 @@
+apiVersion: redhatgov.io/v1alpha1
+kind: Nexus
+metadata:
+  name: nexus
+spec:
+  nexus:
+    adminUsers:
+      - sabre1041
+      - thomasphall
+      - samueltauil
+      - nasx
+      - raedrizk
+      - stephennimmo
+      - jarcher
+      - andrewwiththeredhat

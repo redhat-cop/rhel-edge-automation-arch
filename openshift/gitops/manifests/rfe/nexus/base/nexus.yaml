@@ -13,15 +13,6 @@ spec:
       enabled: true
       bypassAuthFor:
         - "/repository"
-      adminUsers:
-        - sabre1041
-        - thomasphall
-        - samueltauil
-        - nasx
-        - raedrizk
-        - stephennimmo
-        - jarcher
-        - andrewwiththeredhat
     resources:
       cpu:
         request: 500m
