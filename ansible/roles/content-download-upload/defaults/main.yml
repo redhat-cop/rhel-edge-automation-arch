@@ -1,0 +1,18 @@
+---
+nexus_http_scheme: http
+nexus_service_name: nexus
+nexus_service_port: 8081
+# Variables
+#file_to_upload
+#uploaded_filename_override
+httpd_pod_label_selector: "deployment=httpd"
+
+httpd_html_dir: /opt/rh/httpd24/root/var/www/html
+httpd_dest_dir: /
+httpd_unarchive_file: false
+#build_commit:
+
+base_rpm_ostree_dir: /opt/rfe-rpm-ostree
+base_rpm_ostree_builds_dir: "{{ base_rpm_ostree_dir }}/builds"
+
+local_rpm_ostree_build_dir: "/tmp/rfe-rpm-ostree-build"

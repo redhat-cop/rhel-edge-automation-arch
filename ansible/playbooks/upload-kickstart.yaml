@@ -1,0 +1,67 @@
+---
+- hosts: localhost
+  vars:
+    nexus_credentials_secret_name: nexus-rfe-credentials
+    nexus_rfe_kickstarts_repository: rfe-kickstarts
+    kickstart_destination_dir: /tmp/rfe-kickstart-dest
+  tasks:
+    - name: Get Nexus Credentials
+      community.kubernetes.k8s_info:
+        api_key: "{{ lookup('file', '/var/run/secrets/kubernetes.io/serviceaccount/token') }}"
+        ca_cert: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+        host: https://kubernetes.default.svc
+        kind: Secret
+        namespace: rfe
+        name: "{{ nexus_credentials_secret_name }}"
+        validate_certs: yes
+      failed_when: nexus_secret.resources | length != 1
+      register: nexus_secret
+
+    - name: Set Nexus Credentials
+      set_fact:
+        nexus_username: "{{ nexus_secret.resources[0].data.username | b64decode }}"
+        nexus_password: "{{ nexus_secret.resources[0].data.password | b64decode }}"
+      no_log: true
+
+    - name: Assert Kickstart file variable exists and is found
+      stat:
+        path: "{{ kickstart_file }}"
+      register: file_exists
+      when: kickstart_file is defined
+
+    - name: Assert file exists
+      assert:
+        fail_msg: "File is not defined or does not exist"
+        that:
+          - kickstart_file is defined
+          - file_exists.stat.exists
+
+    - name: Assert RFE Tarball URL is defined
+      assert:
+        fail_msg: "RFE Tarball URL is not defined"
+        that:
+          - rfe_tarball_url is defined
+
+    - name: Create Kickstart Template directory
+      file:
+        state: directory
+        path: "{{ override_kickstart_destination_dir if override_kickstart_destination_dir is defined else kickstart_destination_dir }}"
+
+    - name: Set Kickstart Destination
+      set_fact:
+        kickstart_destination: "{{ kickstart_destination_dir}}/{{ override_kickstart_filename if override_kickstart_filename is defined else 'kickstart.ks' }}"
+
+    - name: Template Kickstart file
+      template:
+        src: "{{ kickstart_file }}"
+        dest: "{{ kickstart_destination }}"
+
+    - name: Upload to Nexus and HTTPD
+      include_role:
+        name: content-download-upload
+        tasks_from: upload-rfe-artifact.yaml
+      vars:
+        file_to_upload: "{{ kickstart_destination }}"
+        nexus_repository: "{{ nexus_rfe_kickstarts_repository }}"
+        nexus_repository_folder: "{{ kickstart_file | dirname | basename }}"
+        httpd_dest_dir: "kickstarts/{{ kickstart_file | dirname | basename }}"

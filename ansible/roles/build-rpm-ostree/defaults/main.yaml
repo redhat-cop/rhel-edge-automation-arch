@@ -1,0 +1,4 @@
+---
+base_rpm_ostree_dir: /opt/rfe-rpm-ostree
+base_rpm_ostree_blueprints_dir: "{{ base_rpm_ostree_dir }}/blueprints"
+build_commit_output_file: /tmp/rfe-rpm-ostree-commit

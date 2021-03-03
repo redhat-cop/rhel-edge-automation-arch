@@ -1,0 +1,55 @@
+---
+- name: Assert Commit ID has been Provided
+  assert:
+    that:
+      - build_commit is defined
+      - build_commit != ""
+
+- name: Check if Build ID is valid
+  command: >
+    composer-cli -j compose list finished
+  changed_when: false
+  register: compose_list
+
+- name: Assert finished Build ID found
+  assert:
+    fail_msg: "Did not find a valid finished build for the commit id"
+    that:
+      - compose_list.stdout | from_json | selectattr('id','equalto',build_commit) | list | length == 1
+
+- name: Set Build Directory
+  set_fact:
+    build_dir: "{{ base_rpm_ostree_builds_dir }}/{{ build_commit }}"
+
+- name: Create Blueprints Directory
+  file:
+    state: directory
+    path: "{{ build_dir }}"
+
+- name: Set Downloaded File Path
+  set_fact:
+    rfe_downloaded_file_path: "{{ local_rpm_ostree_build_dir }}/{{ build_commit }}.tar"
+
+- name: Download Edge Image
+  command: >
+    composer-cli compose image {{ build_commit }}
+  args:
+    chdir: "{{ build_dir }}"
+    creates: "{{ build_dir }}/{{ build_commit }}-commit.tar"
+
+- name: Create Local Build Directory
+  local_action: file state=directory path="{{ local_rpm_ostree_build_dir }}"
+  connection: local
+  become: no
+
+- name: Fetch RFE Build tar
+  become: no
+  fetch:
+    src: "{{ build_dir }}/{{ build_commit }}-commit.tar"
+    dest: "{{ rfe_downloaded_file_path }}"
+    flat: yes
+
+- name: Remove Remote Build Directory
+  file:
+    state: absent
+    path: "{{ build_dir }}"

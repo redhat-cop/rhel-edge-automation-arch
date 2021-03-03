@@ -1,0 +1,13 @@
+- name: Generate In-Memory Inventory of OpenShift VMs
+  hosts: localhost
+  roles:
+    - role: openshift-vm-imi
+      tags: openshift-vm-imi
+
+- name: Configure Image Builder VM
+  hosts: image-builder
+  become: yes
+  tasks:
+    - name: Build rfe-ostree
+      include_role:
+        name: build-rpm-ostree
