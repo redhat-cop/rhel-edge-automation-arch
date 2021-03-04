@@ -1,8 +1,8 @@
 - name: Generate In-Memory Inventory of OpenShift VMs
   hosts: localhost
   roles:
-    - role: openshift-vm-imi
-      tags: openshift-vm-imi
+    - role: openshift-image-builder-imi
+      tags: openshift-image-builder-imi
 
 - hosts: image-builder
   become: yes
