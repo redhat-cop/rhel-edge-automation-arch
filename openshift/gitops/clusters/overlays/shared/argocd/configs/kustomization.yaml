@@ -17,3 +17,9 @@ patches:
       kind: Application
       name: config-cnv
     path: cnv-app-patch.yaml
+  - target:
+      group: argoproj.io
+      version: v1alpha1
+      kind: Application
+      name: config-rbac
+    path: rbac-app-patch.yaml
