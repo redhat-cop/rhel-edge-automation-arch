@@ -4,9 +4,10 @@ metadata:
   name: nexus
 spec:
   nexus:
-    adminUsers:
-      - user1
-      - user2
-      - user3
-      - user4
-      - user5
+    oauth:
+      adminUsers:
+        - user1
+        - user2
+        - user3
+        - user4
+        - user5
