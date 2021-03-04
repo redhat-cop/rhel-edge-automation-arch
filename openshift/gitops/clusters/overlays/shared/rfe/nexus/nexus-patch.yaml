@@ -4,12 +4,13 @@ metadata:
   name: nexus
 spec:
   nexus:
-    adminUsers:
-      - sabre1041
-      - thomasphall
-      - samueltauil
-      - nasx
-      - raedrizk
-      - stephennimmo
-      - jarcher
-      - andrewwiththeredhat
+    oauth:
+      adminUsers:
+        - sabre1041
+        - thomasphall
+        - samueltauil
+        - nasx
+        - raedrizk
+        - stephennimmo
+        - jarcher
+        - andrewwiththeredhat
