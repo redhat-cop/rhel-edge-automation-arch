@@ -9,11 +9,11 @@ patches:
       group: argoproj.io
       version: v1alpha1
       kind: Application
-      name: auth
+      name: config-auth
     path: auth-app-patch.yaml
   - target:
       group: argoproj.io
       version: v1alpha1
       kind: Application
-      name: cnv
+      name: config-cnv
     path: cnv-app-patch.yaml
