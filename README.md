@@ -22,7 +22,7 @@ Our design will focus on the following topics:
 
 The overall architecture is still being defined. We have split out "Above Site" components (things like RFE build orchestration and CI/CD tooling) and "Below Site" (the actual RFE deployments). All Above Site components will be hosted on OpenShift.
 
-![Above Site Architecture](/images/above-site-architecture.png)
+![Overall Architecture](/images/overall-architecture.png)
 
 # Deploying Above Site Components
 
