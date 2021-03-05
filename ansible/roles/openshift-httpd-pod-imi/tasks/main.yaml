@@ -8,18 +8,12 @@
     label_selectors:
       - "{{ httpd_pod_label_selector }}"
     namespace: "{{ httpd_pod_namespace }}"
-    username: rfe-automation
     validate_certs: yes
   register: httpd_pod_results
   retries: 60
   delay: 10
   until:
     - httpd_pod_results.resources | default([]) | list | count >= 1
-
-- name: Debug httpd_pod_results
-  ansible.builtin.debug:
-    var: httpd_pod_results
-    verbosity: 1
 
 - name: Grab First httpd Pod From List & Set Name
   ansible.builtin.set_fact:
