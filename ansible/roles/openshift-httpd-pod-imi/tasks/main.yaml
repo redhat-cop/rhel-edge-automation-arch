@@ -1,0 +1,28 @@
+- name: Query httpd Pod
+  community.kubernetes.k8s_info:
+    api_key: "{{ lookup('file', '/var/run/secrets/kubernetes.io/serviceaccount/token') }}"
+    api_version: v1
+    ca_cert: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+    host: https://kubernetes.default.svc
+    kind: Pod
+    label_selectors:
+      - "{{ httpd_pod_label_selector }}"
+    namespace: "{{ httpd_pod_namespace }}"
+    validate_certs: yes
+  register: httpd_pod_results
+  retries: 60
+  delay: 10
+  until:
+    - httpd_pod_results.resources | default([]) | list | count >= 1
+
+- name: Grab First httpd Pod From List & Set Name
+  ansible.builtin.set_fact:
+    httpd_pod_name: "{{ (httpd_pod_results.resources | first).metadata.name }}"
+
+- name: Generate In-Memory Inventory for httpd Pod
+  ansible.builtin.add_host:
+    ansible_connection: kubectl
+    ansible_remote_tmp: /tmp
+    groups:
+      - httpd_pod_group
+    name: "{{ httpd_pod_name }}"
