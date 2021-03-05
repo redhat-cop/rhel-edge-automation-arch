@@ -1,0 +1,9 @@
+- name: Generate In-Memory Inventory of httpd Pod
+  hosts: localhost
+  roles:
+    - role: openshift-httpd-pod-imi
+
+- name: Download RHEL KVM Image
+  hosts: httpd_pod_group
+  roles:
+    - role: download-rhel-kvm-image

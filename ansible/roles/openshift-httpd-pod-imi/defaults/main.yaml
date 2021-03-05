@@ -1,0 +1,2 @@
+httpd_pod_label_selector: deployment=httpd
+httpd_pod_namespace: rfe
