@@ -5,6 +5,7 @@ namespace: rfe
 
 resources:
   - redhat-portal-credentials-sealed-secret.yaml
-  - image-builder-vm.yaml
   - image-builder-ssh-key-sealed-secret.yaml
+  - rhel-image-download-ansible-job.yaml
   - image-builder-vm-ansible-job.yaml
+  - image-builder-vm.yaml
