@@ -6,3 +6,5 @@ bases:
 
 resources:
   - kubevirt-config-configmap.yaml
+  - image-builder-ssh-key-sealed-secret.yaml
+  - redhat-portal-credentials-sealed-secret.yaml 

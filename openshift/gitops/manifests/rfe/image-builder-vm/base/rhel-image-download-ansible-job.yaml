@@ -1,0 +1,49 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  annotations:
+    argocd.argoproj.io/hook: Sync
+    argocd.argoproj.io/hook-delete-policy: HookSucceeded
+  labels:
+    run: rhel-image-download-ansible-job
+  name: rhel-image-download-ansible-job
+  namespace: rfe
+spec:
+  template:
+    spec:
+      activeDeadlineSeconds: 600
+      containers:
+        - image: image-registry.openshift-image-registry.svc:5000/rfe/ansible-rfe-runner:latest
+          env:
+            - name: GIT_DIRECTORY
+              value: "/tmp/git/rhel-edge-automation-arch"
+            - name: GIT_URL
+              value: "https://github.com/redhat-cop/rhel-edge-automation-arch.git"
+            - name: ANSIBLE_PLAYBOOK
+              value: "ansible/playbooks/download-rhel-kvm-image.yaml"
+            - name: ANSIBLE_CONFIG
+              value: $GIT_DIRECTORY/ansible/ansible.cfg
+          command:
+            - /bin/bash
+            - -c
+            - |
+              mkdir -p $GIT_DIRECTORY
+              git clone $GIT_URL $GIT_DIRECTORY
+              ansible-galaxy collection install -r $GIT_DIRECTORY/ansible/collections/requirements.yaml
+              ansible-playbook $GIT_DIRECTORY/$ANSIBLE_PLAYBOOK
+          volumeMounts:
+            - name: redhat-portal-credentials
+              mountPath: /var/secrets/redhat-portal-credentials
+              readOnly: yes
+          imagePullPolicy: Always
+          name: ansible-rfe-runner
+      volumes:
+        - name: redhat-portal-credentials
+          secret:
+            secretName: redhat-portal-credentials
+            defaultMode: 0400
+      dnsPolicy: ClusterFirst
+      restartPolicy: OnFailure
+      serviceAccount: rfe-automation
+      serviceAccountName: rfe-automation
+      terminationGracePeriodSeconds: 30
