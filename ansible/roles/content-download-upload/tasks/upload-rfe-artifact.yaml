@@ -22,9 +22,13 @@
           - nexus_username is defined
           - nexus_password is defined
 
+    - name: Set destination path
+      set_fact:
+        nexus_destination_path: "repository/{{ nexus_repository }}/{{ nexus_repository_folder + '/' if nexus_repository_folder is defined }}{{ uploaded_filename_override | default(file_to_upload | basename) }}"
+
     - name: Upload file to Nexus
       uri:
-        url: "{{ nexus_http_scheme }}://{{ nexus_service_name }}:{{ nexus_service_port }}/repository/{{ nexus_repository }}/{{ nexus_repository_folder + '/' if nexus_repository_folder is defined }}{{ uploaded_filename_override | default(file_to_upload | basename) }}"
+        url: "{{ nexus_http_scheme }}://{{ nexus_service_name }}:{{ nexus_service_port }}/{{ nexus_destination_path }}"
         method: PUT
         src: "{{ file_to_upload }}"
         user: "{{ nexus_username }}"
@@ -35,10 +39,39 @@
         validate_certs: no
         status_code:
           - 201
+
+    - name: Get Nexus Route
+      community.kubernetes.k8s_info:
+        api_key: "{{ lookup('file', '/var/run/secrets/kubernetes.io/serviceaccount/token') }}"
+        ca_cert: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+        host: https://kubernetes.default.svc
+        kind: Route
+        api_version: route.openshift.io/v1
+        namespace: rfe
+        name: nexus
+        validate_certs: yes
+      register: nexus_route
+
+    - name: Save Nexus Destination to File
+      copy:
+        dest: "{{ artifact_repository_url_output_file }}"
+        content: "{{ ('https://' if nexus_route.resources[0].spec.tls is defined else 'http://') + nexus_route.resources[0].spec.host }}/{{ nexus_destination_path }}"
   when: skip_nexus_upload is not defined or (not skip_nexus_upload|bool)
 
 - name: Copy to HTTPD
   block:
+    - name: Get HTTPD Route
+      community.kubernetes.k8s_info:
+        api_key: "{{ lookup('file', '/var/run/secrets/kubernetes.io/serviceaccount/token') }}"
+        ca_cert: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+        host: https://kubernetes.default.svc
+        kind: Route
+        api_version: route.openshift.io/v1
+        namespace: rfe
+        name: httpd
+        validate_certs: yes
+      register: httpd_route
+
     - name: Set name of HTTPD Pod
       set_fact:
         httpd_pod: "{{ (lookup('community.kubernetes.k8s', kind='Pod', namespace='rfe', label_selector=httpd_pod_label_selector, ca_cert='/var/run/secrets/kubernetes.io/serviceaccount/ca.crt', api_key=lookup('file', '/var/run/secrets/kubernetes.io/serviceaccount/token'),validate_certs=true, host='https://kubernetes.default.svc')).metadata.name }}"
@@ -53,23 +86,33 @@
       block:
         - name: Set Path of Destination
           set_fact:
-            uploaded_file_dest: "{{ httpd_html_dir }}/{{ httpd_dest_dir + '/' if httpd_dest_dir is defined }}{{ uploaded_filename_override | default(file_to_upload | basename) }}"
+            uploaded_file_dest: "/{{ httpd_dest_dir + '/' if httpd_dest_dir is defined }}{{ uploaded_filename_override | default(file_to_upload | basename) }}"
+
+        - name: Set Remote Path of Destination
+          set_fact:
+            uploaded_remote_file_dest: "{{ httpd_html_dir }}/{{ uploaded_file_dest }}"
 
         - name: Create Parent Directory
           file:
             state: directory
-            path: "{{ uploaded_file_dest | dirname }}/"
+            path: "{{ uploaded_remote_file_dest | dirname }}/"
 
         - name: Copy File to HTTPD Server
           copy:
             src: "{{ file_to_upload }}"
-            dest: "{{ uploaded_file_dest }}"
+            dest: "{{ uploaded_remote_file_dest }}"
           when: not httpd_unarchive_file|bool
 
         - name: Copy Archive to HTTPD Server
           unarchive:
             src: "{{ file_to_upload }}"
-            dest: "{{ uploaded_file_dest | dirname }}/"
+            dest: "{{ uploaded_remote_file_dest | dirname }}/"
           when: httpd_unarchive_file|bool
       delegate_to: "{{ httpd_pod }}"
+
+    - name: Save HTTPD Destination to File
+      copy:
+        dest: "{{ storage_url_output_file }}"
+        content: "{{ ('https://' if httpd_route.resources[0].spec.tls is defined else 'http://') + httpd_route.resources[0].spec.host }}{{ (uploaded_file_dest | dirname if httpd_unarchive_file else uploaded_file_dest) }}"
+
   when: skip_httpd_upload is not defined or (not skip_httpd_upload|bool)

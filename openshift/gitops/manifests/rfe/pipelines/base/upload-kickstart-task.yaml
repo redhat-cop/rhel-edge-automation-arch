@@ -21,6 +21,11 @@ spec:
       description: Extra Ansible variables
       default: ""
       type: string
+  results:
+    - name: artifact-repository-storage-url
+      description: Location where the asset is stored in the artifact repository
+    - name: serving-storage-url
+      description: Location where the asset is served
   steps:
     - name: build-rfe-tarball
       image: image-registry.openshift-image-registry.svc:5000/rfe/ansible-rfe-runner:latest
@@ -29,7 +34,7 @@ spec:
         - |-
           cd tooling/ansible
           ansible-galaxy collection install -r collections/requirements.yaml
-          ansible-playbook playbooks/upload-kickstart.yaml -e rfe_tarball_url=$(params.rfe-tarball-url) -e kickstart_file=$(params.kickstart-path) -e kickstart_destination_dir=$(params.kickstart-destination-dir) $(params.extra-ansible-variables)
+          ansible-playbook playbooks/upload-kickstart.yaml -e rfe_tarball_url=$(params.rfe-tarball-url) -e kickstart_file=$(params.kickstart-path) -e kickstart_destination_dir=$(params.kickstart-destination-dir) -e artifact_repository_url_output_file=$(results.artifact-repository-storage-url.path) -e storage_url_output_file=$(results.serving-storage-url.path) $(params.extra-ansible-variables)
       command:
         - /bin/bash
         - -c

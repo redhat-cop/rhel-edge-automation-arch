@@ -78,6 +78,9 @@ spec:
         - name: workspace
           workspace: shared-workspace
   results:
-    - name: build-commit
-      description: Commit of the build
-      value: $(tasks.build-rfe-tarball.results.build-commit)
+    - name: artifact-repository-storage-url
+      description: Location where the asset is stored in the artifact repository
+      value: $(tasks.upload-rfe-kickstart.results.artifact-repository-storage-url)
+    - name: serving-storage-url
+      description: Location where the asset is served
+      value: $(tasks.upload-rfe-kickstart.results.serving-storage-url)
