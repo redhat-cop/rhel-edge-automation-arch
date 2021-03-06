@@ -16,3 +16,6 @@ base_rpm_ostree_dir: /opt/rfe-rpm-ostree
 base_rpm_ostree_builds_dir: "{{ base_rpm_ostree_dir }}/builds"
 
 local_rpm_ostree_build_dir: "/tmp/rfe-rpm-ostree-build"
+
+artifact_repository_url_output_file: "/tmp/artifact-repository-storage-url"
+storage_url_output_file: "/tmp/serving-storage-url"
