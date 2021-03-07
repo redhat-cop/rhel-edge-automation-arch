@@ -1,0 +1,23 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+bases:
+  - ../../../../environments/overlays/bootstrap
+
+resources:
+  - ../../../../environments/overlays/rfe/rfe-namespace.yaml
+  - ../../../../manifests/configs/cnv/base/namespace.yaml
+
+secretGenerator:
+  - name: redhat-portal-credentials
+    namespace: rfe
+    envs:
+      - redhat-portal-credentials
+  - name: image-builder-ssh-key
+    namespace: rfe
+    type: kubernetes.io/ssh-auth
+    files:
+      - ssh-privatekey=image-builder-ssh-key
+
+generatorOptions:
+  disableNameSuffixHash: true
