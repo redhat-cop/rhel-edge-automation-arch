@@ -81,6 +81,10 @@
       -V "{{ iso_source_label.stdout | quote }}" .
   register: rfe_iso_results
 
+- name: Build EFI Bootable Image
+  ansible.builtin.shell:
+    cmd: isohybrid --uefi {{ edge_iso_path | quote }}/{{ edge_iso_name | quote }}
+
 - name: Remove ISO Mount
   ansible.posix.mount:
     path: "{{ iso_mount_path }}"
