@@ -1,0 +1,12 @@
+#iso_source_path: /var/www/html/iso
+iso_source_path: /tmp
+iso_source_name: rhel-8.3-x86_64-boot.iso
+iso_mount_base_path: /tmp/boot-iso
+
+#edge_iso_path: /var/www/html/iso
+edge_iso_path: /tmp
+edge_iso_name: rfe-8.3-x86_64-auto-kickstart.iso
+
+scratch_base_path: /tmp/boot-iso-scratch
+
+kickstart_url: http://httpd-rfe.apps.cluster-399a.399a.sandbox381.opentlc.com/kickstarts/hello-world/kickstart.ks

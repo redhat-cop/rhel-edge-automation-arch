@@ -1,0 +1,5 @@
+- name: Generate RFE ISO w/ Embedded kickstart
+  become: yes
+  hosts: localhost
+  roles:
+    - role: iso-generator
