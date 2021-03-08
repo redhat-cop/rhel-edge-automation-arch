@@ -5,8 +5,8 @@ metadata:
     argocd.argoproj.io/hook: Sync
     argocd.argoproj.io/hook-delete-policy: HookSucceeded
   labels:
-    run: rhel-image-download-ansible-job
-  name: rhel-image-download-ansible-job
+    run: redhat-image-downloader-ansible-job
+  name: redhat-image-downloader-ansible-job
   namespace: rfe
 spec:
   template:
@@ -20,7 +20,7 @@ spec:
             - name: GIT_URL
               value: "https://github.com/redhat-cop/rhel-edge-automation-arch.git"
             - name: ANSIBLE_PLAYBOOK
-              value: "ansible/playbooks/download-rhel-kvm-image.yaml"
+              value: "ansible/playbooks/redhat-image-downloader.yaml"
             - name: ANSIBLE_CONFIG
               value: $GIT_DIRECTORY/ansible/ansible.cfg
           command:

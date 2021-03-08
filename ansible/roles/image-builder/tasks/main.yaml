@@ -22,6 +22,8 @@
       - cockpit-composer
       - bash-completion
       - firewalld
+      - genisoimage
+      - syslinux
 
 - name: Enable Cockpit/Composer/Firewalld
   ansible.builtin.systemd:

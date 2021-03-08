@@ -1,0 +1,99 @@
+- name: Generate Random String
+  ansible.builtin.shell:
+    cmd: cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 8 | head -n 1
+  register: random_string
+
+- name: Set Scratch Path
+  ansible.builtin.set_fact:
+    scratch_path: "{{ scratch_base_path }}-{{ random_string.stdout }}"
+    iso_mount_path: "{{ iso_mount_base_path }}-{{ random_string.stdout }}"
+
+- name: Get ISO Label
+  ansible.builtin.shell:
+    cmd: blkid -s LABEL -o value {{ iso_source_path | quote }}/{{ iso_source_name | quote }}
+  register: iso_source_label
+
+- name: Create Working Directories
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    mode: "0755"
+  loop:
+    - "{{ scratch_path }}"
+    - "{{ iso_mount_path }}"
+
+- name: Mount ISO
+  ansible.posix.mount:
+    boot: no
+    fstype: iso9660
+    opts: loop
+    path: "{{ iso_mount_path }}"
+    src: "{{ iso_source_path }}/{{ iso_source_name }}"
+    state: mounted
+  
+- name: Copy ISO Contents to Scratch Directory
+  ansible.posix.synchronize:
+    dest: "{{ scratch_path }}/"
+    recursive: yes
+    src: "{{ iso_mount_path }}/"
+  delegate_to: "{{ inventory_hostname }}"
+
+- name: Copy Kickstart File to Scratch Directory
+  ansible.builtin.get_url:
+    dest: "{{ scratch_path }}/kickstart.ks"
+    url: "{{ kickstart_url }}"
+    validate_certs: no
+
+- name: Copy Updated Grub Configuration
+  ansible.builtin.template:
+    dest: "{{ scratch_path }}/EFI/BOOT/grub.cfg"
+    group: root
+    mode: "0644"
+    owner: root
+    src: grub.cfg.j2
+    
+- name: Copy Updated ISOLINUX Configuration
+  ansible.builtin.template:
+    dest: "{{ scratch_path }}/isolinux/isolinux.cfg"
+    group: root
+    mode: "0644"
+    owner: root
+    src: isolinux.cfg.j2
+
+- name: Generate Bootable ISO
+  ansible.builtin.shell:
+    chdir: "{{ scratch_path }}"
+    cmd: |
+      mkisofs \
+      -o {{ edge_iso_path | quote }}/{{ edge_iso_name | quote }} \
+      -b isolinux/isolinux.bin \
+      -J \
+      -R \
+      -l \
+      -c isolinux/boot.cat \
+      -no-emul-boot \
+      -boot-load-size 4 \
+      -boot-info-table \
+      -eltorito-alt-boot \
+      -e images/efiboot.img \
+      -no-emul-boot \
+      -graft-points \
+      -V "{{ iso_source_label.stdout | quote }}" .
+  register: rfe_iso_results
+
+- name: Build EFI Bootable Image
+  ansible.builtin.shell:
+    cmd: isohybrid --uefi {{ edge_iso_path | quote }}/{{ edge_iso_name | quote }}
+
+- name: Remove ISO Mount
+  ansible.posix.mount:
+    path: "{{ iso_mount_path }}"
+    state: absent
+
+- name: Remove Working Directories
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: absent
+  loop:
+    - "{{ scratch_path }}"
+    - "{{ iso_mount_path }}"
