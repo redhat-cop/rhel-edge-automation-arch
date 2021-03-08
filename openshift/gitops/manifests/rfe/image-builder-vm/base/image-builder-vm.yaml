@@ -24,7 +24,7 @@ spec:
           resources:
             requests:
               storage: 100Gi
-          storageClassName: io1
+          storageClassName: gp2
           volumeMode: Filesystem
         source:
           http:
