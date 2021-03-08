@@ -2,7 +2,7 @@
 
 RHEL for Edge (RFE) introduces a new model for building and deploying RHEL. This repository (very much a work in progress) will contain necessary documentation and automation to support a GitOps approach to building and delivering RFE content at scale.
 
-# Areas of Focus
+## Areas of Focus
 
 Our design will focus on the following topics:
 
@@ -18,21 +18,21 @@ Our design will focus on the following topics:
   * Aggregating Logging/Metrics Collection
   * Deploying Containerized Workloads
 
-# Architecture
+## Architecture
 
 The overall architecture is still being defined. We have split out "Above Site" components (things like RFE build orchestration and CI/CD tooling) and "Below Site" (the actual RFE deployments). All Above Site components will be hosted on OpenShift.
 
 ![Overall Architecture](/images/overall-architecture.png)
 
-# Deploying Above Site Components
+## Deploying Above Site Components
 
 All of the Above Site components (see [architecture](#architecture)) will be deployed on OpenShift. Most of these components will be deployed/configured by tools like [Argo CD](https://argoproj.github.io/argo-cd/) and [Resource Locker](https://github.com/redhat-cop/resource-locker-operator). We also chose to use [Sealed Secrets](https://github.com/bitnami-labs/sealed-secrets) to support our GitOps workflow.
 
-## Creating an Ansible Service Account
+### Creating an Ansible Service Account
 
 We will need to create a Service Account so Ansible can interact with the cluster. Run the following command to do this:
 
-```shell
+```yaml
 $ cat << EOF | oc create -f -
 ---
 kind: ServiceAccount
@@ -59,13 +59,12 @@ EOF
 
 The name of the service account is `ansible-sa` and it will be placed in the `openshift-config` namespace. A cluster role binding is also used to grant the service account the `cluster-admin` role.
 
-## Deploying Sealed Secrets Controller
+### Deploying Sealed Secrets Controller
 
 Ansible is used to deploy the Sealed Secrets controller on our Above Site OpenShift cluster. Before we start the installation we need to create our own RSA key pair. Some helper scripts are provided in `util/sealed-secrets` assist. First modify the variables in `variables.sh` accordingly. The default values will result in the key pair being generated in your current working directory with the certificate set to expire in two years (i.e. 730 days).
 
 ```shell
-$ cd util/sealed-secrets
-$ ./generate-key-pair.sh
+$ ./generate-sealed-secrets.sh
 Generating a RSA private key
 ..........++++
 ........................................++++
@@ -81,25 +80,13 @@ base64 -w0 tls.key
 
 ### Additional Vault Variables
 
-We need to provide the Ansible k8s module some additional variables. A best practice is to create a local/vault.yaml file:
-
-```shell
-mkdir local
-touch local/vault.yaml
-```
-
-`Note:` local is already in the gitignore file in this repo.
-
-Add the following to your vault file:
+We need to provide the Ansible k8s module some additional variables. Add the following to your vault:
 
 ```yaml
 openshift_api: https://api.cluster.local:6443
 openshift_ansible_sa: ansible-sa
 openshift_ansible_sa_token: eyJhbGciOiJSUzI...
-apiVersion: v1
 ```
-
-`Note:`(The commands to get the variables needed are below):
 
 You can find your API endpoint by running the `oc cluster-info` command. The token used to authenticate the service account is stored in a secret. To find the secret, run the following command:
 
