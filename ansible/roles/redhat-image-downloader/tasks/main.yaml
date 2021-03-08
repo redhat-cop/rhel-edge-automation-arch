@@ -1,0 +1,45 @@
+- name: Generate Access Token
+  ansible.builtin.uri:
+    body:
+      client_id: rhsm-api
+      grant_type: refresh_token
+      refresh_token: "{{ lookup('file', '/var/secrets/redhat-portal-credentials/offline_token') }}"
+    body_format: form-urlencoded
+    method: POST
+    url: "{{ redhat_sso_url }}"
+  register: access_token
+
+- name: Generate Image Download URLs
+  ansible.builtin.uri:
+    follow_redirects: none
+    headers:
+      Authorization: "Bearer {{ access_token.json.access_token }}"
+    status_code: 307
+    url: "{{ redhat_api_url }}/images/{{ item }}/download"
+  register: image_urls
+  loop: "{{ image_checksums }}"
+
+- name: Ensure Path in Document Root Exists
+  ansible.builtin.file:
+    path: "{{ images_path }}"
+    state: directory
+
+# Images are initially downloaded to initial_download_path and subsequently moved to
+# images_path to prevent VM instance from installing with a partially downloaded image.
+
+- name: Download Red Hat Images
+  ansible.builtin.get_url:
+    checksum: "sha256:{{ item.item }}"
+    dest: "{{ initial_download_path }}/{{ item.json.body.filename }}"
+    url: "{{ item.json.body.href }}"
+  loop: "{{ image_urls.results }}"
+
+- name: Move Red Hat Images to Final Destination
+  ansible.builtin.command:
+    argv:
+      - /usr/bin/mv
+      - "{{ initial_download_path | quote }}/{{ item.json.body.filename | quote }}"
+      - "{{ images_path | quote }}/{{ item.json.body.filename | quote }}"
+    creates: "{{ images_path }}/{{ item.json.body.filename }}"
+    removes: "{{ initial_download_path }}/{{ item.json.body.filename }}"
+  loop: "{{ image_urls.results }}"
