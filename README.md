@@ -1,3 +1,5 @@
+[![Lint Code Base](https://github.com/redhat-cop/rhel-edge-automation-arch/workflows/Lint%20Code%20Base/badge.svg)](https://github.com/redhat-cop/rhel-edge-automation-arch/actions)
+
 # Introduction
 
 RHEL for Edge (RFE) introduces a new model for building and deploying RHEL. This repository (very much a work in progress) will contain necessary documentation and automation to support a GitOps approach to building and delivering RFE content at scale.
@@ -10,13 +12,13 @@ Our design will focus on the following topics:
 * Management of Blueprint Definitions
 * Building RFE Images
 * Managing/Hosting RFE Artifacts
-	- Kickstarts
-	- RFE Tarballs
+  * Kickstarts
+  * RFE Tarballs
 * CI/CD Tooling/Process
 * End to End Installation/Update of RFE Deployments
 * Managing RFE Deployments at Scale
-	- Aggregating Logging/Metrics Collection
-	- Deploying Containerized Workloads
+  * Aggregating Logging/Metrics Collection
+  * Deploying Containerized Workloads
 
 # Architecture
 
@@ -32,7 +34,7 @@ All of the Above Site components (see [architecture](#architecture)) will be dep
 
 We will need to create a Service Account so Ansible can interact with the cluster. Run the following command to do this:
 
-```
+```shell
 $ cat << EOF | oc create -f -
 ---
 kind: ServiceAccount
@@ -63,8 +65,9 @@ The name of the service account is `ansible-sa` and it will be placed in the `op
 
 Ansible is used to deploy the Sealed Secrets controller on our Above Site OpenShift cluster. Before we start the installation we need to create our own RSA key pair. Some helper scripts are provided in `util/sealed-secrets` assist. First modify the variables in `variables.sh` accordingly. The default values will result in the key pair being generated in your current working directory with the certificate set to expire in two years (i.e. 730 days).
 
-```
-$ ./generate-sealed-secrets.sh
+```shell
+$ cd util/sealed-secrets
+$ ./generate-key-pair.sh
 Generating a RSA private key
 ..........++++
 ........................................++++
@@ -74,40 +77,51 @@ writing new private key to './tls.key'
 
 After running the `generate-sealed-secrets.sh` script, ensure the files `tls.key` and `tls.crt` are present. Next, create an Ansible vault and store base64 encoded contents of each file in the variables `sealed_secrets_keypair_crt` and `sealed_secrets_keypair_key`. Be sure to disable wrapping when encoding the files, for example:
 
-```
-$ base64 -w0 tls.key
+```shell
+base64 -w0 tls.key
 ```
 
 ### Additional Vault Variables
 
-We need to provide the Ansible k8s module some additional variables. Add the following to your vault:
+We need to provide the Ansible k8s module some additional variables. A best practice is to create a local/vault.yaml file:
+
+```shell
+mkdir local
+touch local/vault.yaml
+```
+
+`Note:` local is already in the gitignore file in this repo.
+
+Add the following to your vault file:
 
 ```yaml
 openshift_api: https://api.cluster.local:6443
 openshift_ansible_sa: ansible-sa
 openshift_ansible_sa_token: eyJhbGciOiJSUzI...
-
+apiVersion: v1
 ```
+
+`Note:`(The commands to get the variables needed are below):
 
 You can find your API endpoint by running the `oc cluster-info` command. The token used to authenticate the service account is stored in a secret. To find the secret, run the following command:
 
-```
+```shell
 $ oc get serviceaccount ansible-sa -n openshift-config -ojson | jq -r '.secrets[] | select(.name | contains("token")) | .name'
 ansible-sa-token-qm66j
 ```
 
 To extract the token from the secret, run the following:
 
-```
-$ oc get secret ansible-sa-token-qm66j -n openshift-config -ojson | jq -r .data.token | base64 -d
+```shell
+oc get secret ansible-sa-token-qm66j -n openshift-config -ojson | jq -r .data.token | base64 -d
 ```
 
 ### Running Playbook
 
 To deploy the Sealed Secrets controller, run the following:
 
-```
-$ ansible-playbook --ask-vault-pass -e @../local/vault.yaml deploy-sealed-secrets.yaml
+```shell
+ansible-playbook --ask-vault-pass -e @../local/vault.yaml deploy-sealed-secrets.yaml
 ```
 
 Be sure to adjust the path to your `vault.yaml` accordingly.
