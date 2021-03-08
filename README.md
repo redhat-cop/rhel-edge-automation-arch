@@ -26,7 +26,8 @@ The overall architecture is still being defined. We have split out "Above Site" 
 
 ## Deploying Above Site Components
 
-All of the Above Site components (see [architecture](#architecture)) will be deployed on OpenShift. Most of these components will be deployed/configured by tools like [Argo CD](https://argoproj.github.io/argo-cd/) and [Resource Locker](https://github.com/redhat-cop/resource-locker-operator). We also chose to use [Sealed Secrets](https://github.com/bitnami-labs/sealed-secrets) to support our GitOps workflow.
+All of the Above Site components (see [architecture](#architecture)) will be deployed on OpenShift. Most of these components will be deployed/configured by tools like [Argo CD](https://argoproj.github.io/argo-cd/) and [Resource Locker](https://github.com/redhat-cop/resource-locker-operator).
+We also chose to use [Sealed Secrets](https://github.com/bitnami-labs/sealed-secrets) to support our GitOps workflow.
 
 ### Creating an Ansible Service Account
 
@@ -61,7 +62,8 @@ The name of the service account is `ansible-sa` and it will be placed in the `op
 
 ### Deploying Sealed Secrets Controller
 
-Ansible is used to deploy the Sealed Secrets controller on our Above Site OpenShift cluster. Before we start the installation we need to create our own RSA key pair. Some helper scripts are provided in `util/sealed-secrets` assist. First modify the variables in `variables.sh` accordingly. The default values will result in the key pair being generated in your current working directory with the certificate set to expire in two years (i.e. 730 days).
+Ansible is used to deploy the Sealed Secrets controller on our Above Site OpenShift cluster. Before we start the installation we need to create our own RSA key pair. Some helper scripts are provided in `util/sealed-secrets` assist.
+First modify the variables in `variables.sh` accordingly. The default values will result in the key pair being generated in your current working directory with the certificate set to expire in two years (i.e. 730 days).
 
 ```shell
 $ ./generate-sealed-secrets.sh
