@@ -17,7 +17,8 @@ secretGenerator:
     namespace: rfe
     type: kubernetes.io/ssh-auth
     files:
-      - ssh-privatekey=image-builder-ssh-key
+      - ssh-privatekey=image-builder-ssh-private-key
+      - ssh-publickey=image-builder-ssh-public-key
 
 generatorOptions:
   disableNameSuffixHash: true

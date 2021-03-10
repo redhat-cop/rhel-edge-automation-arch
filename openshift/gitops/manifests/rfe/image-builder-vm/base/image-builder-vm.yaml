@@ -24,7 +24,6 @@ spec:
           resources:
             requests:
               storage: 100Gi
-          storageClassName: gp2
           volumeMode: Filesystem
         source:
           http:
@@ -52,6 +51,18 @@ spec:
             - disk:
                 bus: virtio
               name: cloudinitdisk
+            - disk:
+                bus: virtio
+              name: redhat-portal-credentials
+              serial: rhpc
+            - disk:
+                bus: virtio
+              name: image-builder-ssh-key
+              serial: ibsk
+            - disk:
+                bus: virtio
+              name: serviceaccount
+              serial: seac
           interfaces:
             - masquerade: {}
               model: virtio
@@ -78,9 +89,22 @@ spec:
               #cloud-config
               name: default
               hostname: image-builder
-              ssh_authorized_keys:
-                - >-
-                  ssh-rsa
-                  AAAAB3NzaC1yc2EAAAADAQABAAACAQDaUm7UZ7QT2a/tOWC9k1tSTOj9vMFBoTtI14jHASKw6iPu9WbCh3MfzzqwFsUjfvSXPgvO6L5qK/ALT6c7wY0mdf31cg+D55RdH/lZ2hp9uZDanV6s2sPCf42R1HdLfZb1Qr/Haf3/7aBLt+kvyYvggKnzTY2t32Q8mQb9FWg6a5ZBTSG405GrFIe6EyL1C4onhWR0ZNDZP8XfZhvOP5SNof/VUXiWzDZJ3krcScUKunjeMniyUtEAwkD3n4slO+98CXOryWATzxg8UWGGbKAxX71mft/jGvRBenKITFqh0hE5yWQ1Fp+PEQnEFQ2dC2DQG557hEzu6TaJZTLxMMmyZtfV+2PJNDKroYpYknF8b6dPEovKvn20CLjZA7HaEuAhh1io1LHkaLXCpNm1jyAQIwoLsNcGLSPn3IUhdiXNvQ4Opj+UJeO12SIR4WNfwNVC6uB73pvDf78inSYbjZKkj2M/DBJWnJo5559B9NjMCkW+Cre7TkPnhm6sjqv4mc/QoZU+V1LqbPOVObGNlPhwsQIVDjWC/oRPPCzkM2eSXXHM3LDRmK7oNKFQN0ADx7lZJzZotHBiptz9ZBebF/5++HjEsY1NB5PbaCorvQFFtOCi4PX2YaDBBN2Ij61nuR8vV0LB7EFQy9KUyxnLMN2LdSZ2SM05s5ytooEHM90aLw==
-                  cloud-user@cnv
+              user: cloud-user
+              bootcmd:
+                - "mkdir -p /home/cloud-user/.ssh && chown -R 1000:1000 /home/cloud-user"
+                - "mkdir -p /var/secrets/{redhat-portal-credentials,image-builder-ssh-key,serviceaccount}"
+                - "mount -o overriderockperm,mode=0400,uid=0,gid=0 /dev/disk/by-id/virtio-rhpc /var/secrets/redhat-portal-credentials"
+                - "mount -o overriderockperm,mode=0400,uid=0,gid=0 /dev/disk/by-id/virtio-ibsk /var/secrets/image-builder-ssh-key"
+                - "mount -o overriderockperm,mode=0400,uid=0,gid=0 /dev/disk/by-id/virtio-seac /var/secrets/serviceaccount"
+                - "cp /var/secrets/image-builder-ssh-key/ssh-publickey /home/cloud-user/.ssh/authorized_keys"
+                - "chmod 644 /home/cloud-user/.ssh/authorized_keys"
           name: cloudinitdisk
+        - name: redhat-portal-credentials
+          secret:
+            secretName: redhat-portal-credentials
+        - name: image-builder-ssh-key
+          secret:
+            secretName: image-builder-ssh-key
+        - name: serviceaccount
+          serviceAccount:
+            serviceAccountName: rfe-automation
