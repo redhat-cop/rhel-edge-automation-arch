@@ -33,4 +33,4 @@ fi
 
 source variables.sh
 
-kubeseal -o yaml --cert "${RSA_CRT}" --scope $1 < $2
+kubeseal -o yaml --cert "${RSA_CRT}" --scope "$1" < "$2"
