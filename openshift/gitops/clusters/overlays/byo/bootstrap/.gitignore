@@ -1,2 +1,3 @@
-image-builder-ssh-key
 redhat-portal-credentials
+image-builder-ssh-private-key
+image-builder-ssh-public-key
