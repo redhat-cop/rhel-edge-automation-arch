@@ -31,6 +31,7 @@ then
 	exit
 fi
 
+# shellcheck disable=SC1091
 source variables.sh
 
 kubeseal -o yaml --cert "${RSA_CRT}" --scope "$1" < "$2"
