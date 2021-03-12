@@ -42,7 +42,7 @@ Then run the following to deploy an instance of Argo CD.
 $ until oc apply -k openshift/gitops/manifests/bootstrap/argocd/base; do sleep 2; done
 ```
 
-Some secrets will need to be created to support the deployment. An SSH key will be needed as well as credentials for the Red Hat Portal. A table of the specific components are laid out below:
+Some secrets will need to be created to support the deployment. We will use the Kustomize Secrets Generator to source specific values from files. An SSH key will be needed as well as credentials for the Red Hat Portal. A table of the specific components are laid out below:
 
 |Component|Description|
 |:---|:---|
