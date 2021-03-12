@@ -26,11 +26,16 @@ The overall architecture is still being defined. We have split out "Above Site" 
 
 ## Deploying Above Site Components
 
-All of the Above Site components (see [architecture](#architecture)) will be deployed on OpenShift. Most of these components will be deployed/configured by tools like [Argo CD](https://argoproj.github.io/argo-cd/). We also chose to use [Sealed Secrets](https://github.com/bitnami-labs/sealed-secrets) to support our GitOps workflow. We leverage an "app of apps" methodology to deploy all of the components and two overlays are provided. The `shared` overylay is used to provision a shared development environment, but most users will want to leverage the `byo` overlay.
+All of the Above Site components (see [architecture](#architecture)) will be deployed on OpenShift. Most of these components will be deployed/configured by tools like [Argo CD](https://argoproj.github.io/argo-cd/).
+We also chose to use [Sealed Secrets](https://github.com/bitnami-labs/sealed-secrets) to support our GitOps workflow. We leverage an "app of apps" methodology to deploy all of the components and two overlays are provided. The `shared` overylay is used to provision a shared development environment, but most users will want to leverage the `byo` overlay.
 
 ### Deploying BYO Overlay
 
-To deploy the above site components we first need to deploy Argo CD. Argo CD is installed using the GitOps operator in OpenShift. From the root of the repository, run the following command to install the operator:
+To deploy the above site components we first need to deploy Argo CD. Argo CD is installed using the GitOps operator in OpenShift. If Argo CD is already installed, you can skip to the next [section](#bootstrapping-environment)
+
+#### Argo CD
+
+From the root of the repository, run the following command to install the operator:
 
 ```shell
 oc apply -k openshift/gitops/manifests/bootstrap/argocd-operator/base
@@ -41,6 +46,8 @@ Then run the following to deploy an instance of Argo CD.
 ```shell
 until oc apply -k openshift/gitops/manifests/bootstrap/argocd/base; do sleep 2; done
 ```
+
+#### Bootstrapping Environment
 
 Some secrets will need to be created to support the deployment. We will use the Kustomize Secrets Generator to source specific values from files. An SSH key will be needed as well as credentials for the Red Hat Portal. A table of the specific components are laid out below:
 
@@ -67,6 +74,8 @@ We are now ready to bootstrap the environment. To do this, run:
 ```shell
 kustomize build --load-restrictor=LoadRestrictionsNone openshift/gitops/clusters/overlays/byo/bootstrap/ | oc apply -f -
 ```
+
+#### Deploying
 
 Finally, deploy all of the above site components by running the following:
 
