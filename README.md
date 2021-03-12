@@ -33,13 +33,13 @@ All of the Above Site components (see [architecture](#architecture)) will be dep
 To deploy the above site components we first need to deploy Argo CD. Argo CD is installed using the GitOps operator in OpenShift. From the root of the repository, run the following command to install the operator:
 
 ```shell
-$ oc apply -k openshift/gitops/manifests/bootstrap/argocd-operator/base
+oc apply -k openshift/gitops/manifests/bootstrap/argocd-operator/base
 ```
 
 Then run the following to deploy an instance of Argo CD.
 
 ```shell
-$ until oc apply -k openshift/gitops/manifests/bootstrap/argocd/base; do sleep 2; done
+until oc apply -k openshift/gitops/manifests/bootstrap/argocd/base; do sleep 2; done
 ```
 
 Some secrets will need to be created to support the deployment. We will use the Kustomize Secrets Generator to source specific values from files. An SSH key will be needed as well as credentials for the Red Hat Portal. A table of the specific components are laid out below:
@@ -55,7 +55,7 @@ Some secrets will need to be created to support the deployment. We will use the 
 To generate an SSH key, run the following command:
 
 ```shell
-$ ssh-keygen -t rsa -b 4096 -C cloud-user@image-builder -f ~/.ssh/image-builder
+ssh-keygen -t rsa -b 4096 -C cloud-user@image-builder -f ~/.ssh/image-builder
 ```
 
 Place the contents of the SSH private key (`~/.ssh/image-builder`) in `openshift/gitops/clusters/overlays/byo/bootstrap/image-builder-ssh-private-key` and the contents of the SSH public key (`~/.ssh/image-builder-ssh-public-key`) in `openshift/gitops/clusters/overlays/byo/bootstrap/image-builder-ssh-public-key`.
@@ -65,13 +65,13 @@ Next, modify `openshift/gitops/clusters/overlays/byo/bootstrap/redhat-portal-cre
 We are now ready to bootstrap the environment. To do this, run:
 
 ```shell
-$ kustomize build --load-restrictor=LoadRestrictionsNone openshift/gitops/clusters/overlays/byo/bootstrap/ | oc apply -f -
+kustomize build --load-restrictor=LoadRestrictionsNone openshift/gitops/clusters/overlays/byo/bootstrap/ | oc apply -f -
 ```
 
 Finally, deploy all of the above site components by running the following:
 
 ```shell
-$ kustomize build openshift/gitops/clusters/overlays/byo/argocd/manager | oc apply -f -
+kustomize build openshift/gitops/clusters/overlays/byo/argocd/manager | oc apply -f -
 ```
 
 [![Lint Code Base](https://github.com/redhat-cop/rhel-edge-automation-arch/workflows/Lint%20Code%20Base/badge.svg)](https://github.com/redhat-cop/rhel-edge-automation-arch/actions)
