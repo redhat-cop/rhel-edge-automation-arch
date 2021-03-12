@@ -26,91 +26,61 @@ The overall architecture is still being defined. We have split out "Above Site" 
 
 ## Deploying Above Site Components
 
-All of the Above Site components (see [architecture](#architecture)) will be deployed on OpenShift. Most of these components will be deployed/configured by tools like [Argo CD](https://argoproj.github.io/argo-cd/) and [Resource Locker](https://github.com/redhat-cop/resource-locker-operator).
-We also chose to use [Sealed Secrets](https://github.com/bitnami-labs/sealed-secrets) to support our GitOps workflow.
+All of the Above Site components (see [architecture](#architecture)) will be deployed on OpenShift. Most of these components will be deployed/configured by tools like [Argo CD](https://argoproj.github.io/argo-cd/).
+We also chose to use [Sealed Secrets](https://github.com/bitnami-labs/sealed-secrets) to support our GitOps workflow. We leverage an "app of apps" methodology to deploy all of the components and two overlays are provided. The `shared` overylay is used to provision a shared development environment, but most users will want to leverage the `byo` overlay.
 
-### Creating an Ansible Service Account
+### Deploying BYO Overlay
 
-We will need to create a Service Account so Ansible can interact with the cluster. Run the following command to do this:
+To deploy the above site components we first need to deploy Argo CD. Argo CD is installed using the GitOps operator in OpenShift. If Argo CD is already installed, you can skip to the next [section](#bootstrapping-environment)
 
-```yaml
-$ cat << EOF | oc create -f -
----
-kind: ServiceAccount
-apiVersion: v1
-metadata:
-  name: ansible-sa
-  namespace: openshift-config
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRoleBinding
-metadata:
-  name: ansible-sa-cluster-admin
-  namespace: openshift-config
-subjects:
-  - kind: ServiceAccount
-    name: ansible-sa
-    namespace: openshift-config
-roleRef:
-  kind: ClusterRole
-  apiGroup: rbac.authorization.k8s.io
-  name: cluster-admin
-EOF
-```
+#### Argo CD
 
-The name of the service account is `ansible-sa` and it will be placed in the `openshift-config` namespace. A cluster role binding is also used to grant the service account the `cluster-admin` role.
-
-### Deploying Sealed Secrets Controller
-
-Ansible is used to deploy the Sealed Secrets controller on our Above Site OpenShift cluster. Before we start the installation we need to create our own RSA key pair. Some helper scripts are provided in `util/sealed-secrets` assist.
-First modify the variables in `variables.sh` accordingly. The default values will result in the key pair being generated in your current working directory with the certificate set to expire in two years (i.e. 730 days).
+From the root of the repository, run the following command to install the operator:
 
 ```shell
-$ ./generate-sealed-secrets.sh
-Generating a RSA private key
-..........++++
-........................................++++
-writing new private key to './tls.key'
------
+oc apply -k openshift/gitops/manifests/bootstrap/argocd-operator/base
 ```
 
-After running the `generate-sealed-secrets.sh` script, ensure the files `tls.key` and `tls.crt` are present. Next, create an Ansible vault and store base64 encoded contents of each file in the variables `sealed_secrets_keypair_crt` and `sealed_secrets_keypair_key`. Be sure to disable wrapping when encoding the files, for example:
+Then run the following to deploy an instance of Argo CD.
 
 ```shell
-base64 -w0 tls.key
+until oc apply -k openshift/gitops/manifests/bootstrap/argocd/base; do sleep 2; done
 ```
 
-### Additional Vault Variables
+#### Bootstrapping Environment
 
-We need to provide the Ansible k8s module some additional variables. Add the following to your vault:
+Some secrets will need to be created to support the deployment. We will use the Kustomize Secrets Generator to source specific values from files. An SSH key will be needed as well as credentials for the Red Hat Portal. A table of the specific components are laid out below:
 
-```yaml
-openshift_api: https://api.cluster.local:6443
-openshift_ansible_sa: ansible-sa
-openshift_ansible_sa_token: eyJhbGciOiJSUzI...
-```
+|Component|Description|
+|:---|:---|
+|SSH Key|Use to support key based authentication to the Image Builder VM|
+|Red Hat Portal Username|Username to subscribe Image Builder VM|
+|Red Hat Portal Password|Password to subscribe Image Builder VM|
+|Pool ID|Pool ID use to map the appropriate subscription to the Image Builder VM|
+|Red Hat Portal Offline Token|Token used to access the Red Hat API and download RHEL images|
 
-You can find your API endpoint by running the `oc cluster-info` command. The token used to authenticate the service account is stored in a secret. To find the secret, run the following command:
+To generate an SSH key, run the following command:
 
 ```shell
-$ oc get serviceaccount ansible-sa -n openshift-config -ojson | jq -r '.secrets[] | select(.name | contains("token")) | .name'
-ansible-sa-token-qm66j
+ssh-keygen -t rsa -b 4096 -C cloud-user@image-builder -f ~/.ssh/image-builder
 ```
 
-To extract the token from the secret, run the following:
+Place the contents of the SSH private key (`~/.ssh/image-builder`) in `openshift/gitops/clusters/overlays/byo/bootstrap/image-builder-ssh-private-key` and the contents of the SSH public key (`~/.ssh/image-builder-ssh-public-key`) in `openshift/gitops/clusters/overlays/byo/bootstrap/image-builder-ssh-public-key`.
+
+Next, modify `openshift/gitops/clusters/overlays/byo/bootstrap/redhat-portal-credentials` and add the Red Hat Portal Username, Password, Pool ID and Offline Token to the appropriate variables. More information about generating an Offline Token can be found [here](https://access.redhat.com/articles/3626371).
+
+We are now ready to bootstrap the environment. To do this, run:
 
 ```shell
-oc get secret ansible-sa-token-qm66j -n openshift-config -ojson | jq -r .data.token | base64 -d
+kustomize build --load-restrictor=LoadRestrictionsNone openshift/gitops/clusters/overlays/byo/bootstrap/ | oc apply -f -
 ```
 
-### Running Playbook
+#### Deploying
 
-To deploy the Sealed Secrets controller, run the following:
+Finally, deploy all of the above site components by running the following:
 
 ```shell
-ansible-playbook --ask-vault-pass -e @../local/vault.yaml deploy-sealed-secrets.yaml
+kustomize build openshift/gitops/clusters/overlays/byo/argocd/manager | oc apply -f -
 ```
-
-Be sure to adjust the path to your `vault.yaml` accordingly.
 
 [![Lint Code Base](https://github.com/redhat-cop/rhel-edge-automation-arch/workflows/Lint%20Code%20Base/badge.svg)](https://github.com/redhat-cop/rhel-edge-automation-arch/actions)
