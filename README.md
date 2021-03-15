@@ -1,4 +1,8 @@
-# Introduction
+# RHEL for Edge Automation Architecture
+
+[![Lint Code Base](https://github.com/redhat-cop/rhel-edge-automation-arch/workflows/Lint%20Code%20Base/badge.svg)](https://github.com/redhat-cop/rhel-edge-automation-arch/actions)
+
+## Introduction
 
 RHEL for Edge (RFE) introduces a new model for building and deploying RHEL. This repository (very much a work in progress) will contain necessary documentation and automation to support a GitOps approach to building and delivering RFE content at scale.
 
@@ -83,4 +87,8 @@ Finally, deploy all of the above site components by running the following:
 kustomize build openshift/gitops/clusters/overlays/byo/argocd/manager | oc apply -f -
 ```
 
-[![Lint Code Base](https://github.com/redhat-cop/rhel-edge-automation-arch/workflows/Lint%20Code%20Base/badge.svg)](https://github.com/redhat-cop/rhel-edge-automation-arch/actions)
+## Basic Walkthrough
+
+A basic workthrough to demonstrate the end to end flow of building RHEL for Edge content and using it to create a RHEL for Edge instance can be found below:
+
+* [Basic Walkthrough](docs/basic-walkthrough.md)
