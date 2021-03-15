@@ -8,6 +8,11 @@
     scratch_path: "{{ scratch_base_path }}-{{ random_string.stdout }}"
     iso_mount_path: "{{ iso_mount_base_path }}-{{ random_string.stdout }}"
 
+- name: Fetch RHEL ISO
+  ansible.builtin.get_url:
+    dest: "{{ iso_source_path }}/{{ iso_source_name }}"
+    url: "{{ iso_fetch_path }}/{{ iso_source_name }}"
+
 - name: Get ISO Label
   ansible.builtin.shell:
     cmd: blkid -s LABEL -o value {{ iso_source_path | quote }}/{{ iso_source_name | quote }}
@@ -84,6 +89,18 @@
 - name: Build EFI Bootable Image
   ansible.builtin.shell:
     cmd: isohybrid --uefi {{ edge_iso_path | quote }}/{{ edge_iso_name | quote }}
+
+- name: Fetch Edge ISO from Image Builder VM
+  ansible.builtin.fetch:
+    dest: "/tmp/{{ edge_iso_name }}"
+    src: "{{ edge_iso_path }}/{{ edge_iso_name }}"
+
+- name: Copy Edge ISO to httpd Pod
+  ansible.builtin.copy:
+    dest: "{{ edge_iso_remote_path }}/{{ edge_iso_name }}"
+    src: "/tmp/{{ edge_iso_name }}"
+  become: no
+  delegate_to: "{{ groups.httpd_pod_group[0] }}"
 
 - name: Remove ISO Mount
   ansible.posix.mount:
