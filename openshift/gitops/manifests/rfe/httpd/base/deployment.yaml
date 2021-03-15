@@ -30,10 +30,10 @@ spec:
               protocol: TCP
           resources:
             requests:
-              memory: "64Mi"
-              cpu: "250m"
+              memory: "512Mi"
+              cpu: "500m"
             limits:
-              memory: "128Mi"
+              memory: "512Mi"
               cpu: "500m"
           volumeMounts:
             - mountPath: /opt/rh/httpd24/root/var/www/html
