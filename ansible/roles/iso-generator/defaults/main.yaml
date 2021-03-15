@@ -1,12 +1,18 @@
-#iso_source_path: /var/www/html/iso
-iso_source_path: /tmp
+iso_fetch_path: http://httpd:8080/images
+
 iso_source_name: rhel-8.3-x86_64-boot.iso
+iso_source_path: /tmp
+
 iso_mount_base_path: /tmp/boot-iso
 
-#edge_iso_path: /var/www/html/iso
-edge_iso_path: /tmp
+# Default name. Can override by passing
+# -e "edge_iso_name=<name>" to ansible-playbook command.
 edge_iso_name: rfe-8.3-x86_64-auto-kickstart.iso
+edge_iso_path: /tmp
+edge_iso_remote_path: /var/www/html/images
 
 scratch_base_path: /tmp/boot-iso-scratch
 
-kickstart_url: http://httpd-rfe.apps.cluster-399a.399a.sandbox381.opentlc.com/kickstarts/hello-world/kickstart.ks
+# Default hello-world kickstart. Can override by passing
+# -e "kickstart_url=<url>" to ansible-playbook command.
+kickstart_url: http://httpd:8080/kickstarts/hello-world/kickstart.ks
