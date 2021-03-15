@@ -20,11 +20,11 @@ The following requirements must be satisfied prior to beginning the walkthrough:
 This walkthrough will illustrate the ease of building, publishing and consuming RHEL for Edge content. For the sample use case, an edge node with the [IBM Developer Model Asset Exchange: Weather Forecaster](https://github.com/IBM/MAX-Weather-Forecaster) application running in a container will be built and deployed. This process consists of the following
 
 * Building a RHEL for Edge node
-* Creating a Kickstart file referencing the previously build RHEL for Edge Image with the configuration to run the container workload
+* Creating a Kickstart file referencing the previously built RHEL for Edge Image with the configuration to run the container workload
 
 ## Building a RHEL for Edge Image
 
-The process of building a RHEL for edge image involves composing a Blueprint containing list of packages to include, entry modules for packages, as well as any customizations to the resulting image. The architecture includes a Tekton pipeline with the purpose of building an RHEL for Edge Image from an exiting blueprint. Sample blueprints are found on the [blueprints](https://github.com/redhat-cop/rhel-edge-automation-arch/tree/blueprints) branch of this repository.
+The process of building a RHEL for edge image involves composing a Blueprint containing list of packages to include, entry modules for packages, as well as any customizations to the resulting image. The architecture includes a Tekton pipeline with the purpose of building an RHEL for Edge Image from an existing blueprint. Sample blueprints are found on the [blueprints](https://github.com/redhat-cop/rhel-edge-automation-arch/tree/blueprints) branch of this repository.
 
 For the most basic configurations, a sample [hello-world](https://github.com/redhat-cop/rhel-edge-automation-arch/tree/blueprints/hello-world) blueprint is available and provides necessary configuration to run the containerized application.
 
@@ -54,7 +54,7 @@ To break down the preceding command:
 6. `-p blueprint-dir=hello-world` - The directory containing the blueprint file in the cloned repository. By default, the _blueprints_ branch of this repository will be used
 7. `-s rfe-automation` - THe name of the Service Account to run the pipeline as
 
-The output of the command wil provided a command to view the progress of the build.
+The output of the command will provide a command to view the progress of the build.
 
 _Note: The process of building a RHEL for Edge image takes time_
 
@@ -112,7 +112,7 @@ To break down the preceding command:
 7. `-s rfe-automation` - THe name of the Service Account to run the pipeline as
 8. `rfe-tarball-url=<URL_FROM_PRIOR_PIPELINE>` - The location of the kickstart to use in the referenced repository. By default, the _kickstarts_ branch of this repository will be used
 
-The output of the command wil provided a command to view the progress of the build.
+The output of the command will provide a command to view the progress of the build.
 
 ### Verification
 
