@@ -95,6 +95,13 @@
     dest: "/tmp/{{ edge_iso_name }}"
     src: "{{ edge_iso_path }}/{{ edge_iso_name }}"
 
+- name: Ensure Remote Directory in httpd Pod Exists
+  ansible.builtin.file:
+    path: "{{ edge_iso_remote_path }}"
+    state: directory
+  become: no
+  delegate_to: "{{ groups.httpd_pod_group[0] }}"
+
 - name: Copy Edge ISO to httpd Pod
   ansible.builtin.copy:
     dest: "{{ edge_iso_remote_path }}/{{ edge_iso_name }}"
@@ -107,10 +114,11 @@
     path: "{{ iso_mount_path }}"
     state: absent
 
-- name: Remove Working Directories
+- name: Remove Working Directories and Files
   ansible.builtin.file:
     path: "{{ item }}"
     state: absent
   loop:
     - "{{ scratch_path }}"
     - "{{ iso_mount_path }}"
+    - "/tmp/{{ edge_iso_name }}"
