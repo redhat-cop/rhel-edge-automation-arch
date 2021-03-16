@@ -1,0 +1,45 @@
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+    argocd.argoproj.io/sync-wave: "5"
+  name: generate-iso
+spec:
+  workspaces:
+    - name: workspace
+  params:
+    - name: kickstart-url
+      description: URL pointing to kickstart location
+      type: string
+    - name: rfe-iso-name
+      description: Name of the RFE ISO
+      type: string
+    - name: extra-ansible-variables
+      description: Extra Ansible variables
+      default: ""
+      type: string
+  results:
+    - name: iso-storage-url
+      description: Location where the asset is served
+  steps:
+    - name: run-playbook
+      image: image-registry.openshift-image-registry.svc:5000/rfe/ansible-rfe-runner:latest
+      workingDir: /workspace/workspace
+      args:
+        - |-
+          cd tooling/ansible
+          ansible-galaxy collection install -r collections/requirements.yaml
+          ansible-playbook -vv -u cloud-user --private-key /var/secrets/image-builder-ssh-key/ssh-privatekey playbooks/iso-generator.yaml -e edge_iso_name=$(params.rfe-iso-name) -e kickstart_url=$(params.kickstart-url) $(params.extra-ansible-variables)
+      command:
+        - /bin/bash
+        - -c
+      volumeMounts:
+      - name: image-builder-ssh-key
+        mountPath: /var/secrets/image-builder-ssh-key
+        readOnly: yes
+  volumes:
+  - name: image-builder-ssh-key
+    secret:
+      secretName: image-builder-ssh-key
+      defaultMode: 0400
