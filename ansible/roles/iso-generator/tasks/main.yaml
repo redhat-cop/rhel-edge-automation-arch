@@ -93,6 +93,7 @@
 - name: Fetch Edge ISO from Image Builder VM
   ansible.builtin.fetch:
     dest: "/tmp/{{ edge_iso_name }}"
+    flat: yes
     src: "{{ edge_iso_path }}/{{ edge_iso_name }}"
 
 - name: Ensure Remote Directory in httpd Pod Exists

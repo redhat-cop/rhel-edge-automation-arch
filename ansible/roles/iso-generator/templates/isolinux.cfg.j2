@@ -1,5 +1,5 @@
 default vesamenu.c32
-timeout 600
+timeout 5
 
 display boot.msg
 
@@ -63,6 +63,5 @@ label rfe-kickstart
   menu default
   kernel vmlinuz
   append initrd=initrd.img inst.stage2=hd:LABEL={{ iso_source_label.stdout }} inst.ks=cdrom:/kickstart.ks
-  kernel memtest
 
 menu end
