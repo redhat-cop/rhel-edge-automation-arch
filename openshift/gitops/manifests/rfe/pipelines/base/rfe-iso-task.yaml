@@ -30,7 +30,7 @@ spec:
         - |-
           cd tooling/ansible
           ansible-galaxy collection install -r collections/requirements.yaml
-          ansible-playbook -u cloud-user --private-key /var/secrets/image-builder-ssh-key/ssh-privatekey playbooks/iso-generator.yaml -e edge_iso_name=$(params.rfe-iso-name) -e kickstart_url=$(params.kickstart-url) $(params.extra-ansible-variables)
+          ansible-playbook -u cloud-user --private-key /var/secrets/image-builder-ssh-key/ssh-privatekey playbooks/iso-generator.yaml -e edge_iso_name=$(params.rfe-iso-name) -e kickstart_url=$(params.kickstart-url) -e iso_storage_url=$(results.iso-storage-url.path) $(params.extra-ansible-variables)
       command:
         - /bin/bash
         - -c
