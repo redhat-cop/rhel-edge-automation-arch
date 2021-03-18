@@ -55,13 +55,13 @@ until oc apply -k openshift/gitops/manifests/bootstrap/argocd/base; do sleep 2; 
 
 Some secrets will need to be created to support the deployment. We will use the Kustomize Secrets Generator to source specific values from files. An SSH key will be needed as well as credentials for the Red Hat Portal. A table of the specific components are laid out below:
 
-|Component|Description|
-|:---|:---|
-|SSH Key|Use to support key based authentication to the Image Builder VM|
-|Red Hat Portal Username|Username to subscribe Image Builder VM|
-|Red Hat Portal Password|Password to subscribe Image Builder VM|
-|Pool ID|Pool ID use to map the appropriate subscription to the Image Builder VM|
-|Red Hat Portal Offline Token|Token used to access the Red Hat API and download RHEL images|
+| Component                    | Description                                                             |
+|:-----------------------------|:------------------------------------------------------------------------|
+| SSH Key                      | Use to support key based authentication to the Image Builder VM         |
+| Red Hat Portal Username      | Username to subscribe Image Builder VM                                  |
+| Red Hat Portal Password      | Password to subscribe Image Builder VM                                  |
+| Pool ID                      | Pool ID use to map the appropriate subscription to the Image Builder VM |
+| Red Hat Portal Offline Token | Token used to access the Red Hat API and download RHEL images           |
 
 To generate an SSH key, run the following command:
 
@@ -76,6 +76,7 @@ Next, modify `openshift/gitops/clusters/overlays/byo/bootstrap/redhat-portal-cre
 We are now ready to bootstrap the environment. To do this, run:
 
 ```shell
+oc project openshift-gitops
 kustomize build --load-restrictor=LoadRestrictionsNone openshift/gitops/clusters/overlays/byo/bootstrap/ | oc apply -f -
 ```
 
