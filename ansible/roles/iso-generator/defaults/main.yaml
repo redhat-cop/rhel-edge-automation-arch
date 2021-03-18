@@ -16,3 +16,6 @@ scratch_base_path: /tmp/boot-iso-scratch
 # Default hello-world kickstart. Can override by passing
 # -e "kickstart_url=<url>" to ansible-playbook command.
 kickstart_url: http://httpd:8080/kickstarts/hello-world/kickstart.ks
+
+# Override with -e iso_storage_url=$(results.iso-storage-url.path)
+iso_storage_url: /tmp/iso-storage-url
