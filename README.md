@@ -67,15 +67,19 @@ To generate an SSH key, run the following command:
 ssh-keygen -t rsa -b 4096 -C cloud-user@image-builder -f ~/.ssh/image-builder
 ```
 
-Place the contents of the SSH private key (`~/.ssh/image-builder`) in `openshift/gitops/clusters/overlays/byo/bootstrap/image-builder-ssh-private-key` and the contents of the SSH public key (`~/.ssh/image-builder-ssh-public-key`) in `openshift/gitops/clusters/overlays/byo/bootstrap/image-builder-ssh-public-key`.
+Create symlinks to key you just created into the project:
+
+```shell
+ln -s ~/.ssh/image-builder openshift/gitops/clusters/overlays/byo/bootstrap/image-builder-ssh-private-key
+ln -s ~/.ssh/image-builder.pub openshift/gitops/clusters/overlays/byo/bootstrap/image-builder-ssh-public-key
+```
 
 Next, modify `openshift/gitops/clusters/overlays/byo/bootstrap/redhat-portal-credentials` and add the Red Hat Portal Username, Password, Pool ID and Offline Token to the appropriate variables. More information about generating an Offline Token can be found [here](https://access.redhat.com/articles/3626371).
 
 We are now ready to bootstrap the environment. To do this, run:
 
 ```shell
-oc project openshift-gitops
-kustomize build --load_restrictor=LoadRestrictionsNone openshift/gitops/clusters/overlays/byo/bootstrap/ | oc apply -f -
+kustomize build --load-restrictor=LoadRestrictionsNone openshift/gitops/clusters/overlays/byo/bootstrap/ | oc apply -f -
 ```
 
 #### Deploying
