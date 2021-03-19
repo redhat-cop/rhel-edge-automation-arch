@@ -74,7 +74,7 @@ ln -s ~/.ssh/image-builder openshift/gitops/clusters/overlays/byo/bootstrap/imag
 ln -s ~/.ssh/image-builder.pub openshift/gitops/clusters/overlays/byo/bootstrap/image-builder-ssh-public-key
 ```
 
-Next, modify `openshift/gitops/clusters/overlays/byo/bootstrap/redhat-portal-credentials` and add the Offline Token by replacing the `#REPLACE_ME#` with the token. More information about generating an Offline Token can be found [here](https://access.redhat.com/articles/3626371).
+Next, modify `openshift/gitops/clusters/overlays/byo/bootstrap/redhat-portal-credentials` and add the Red Hat Portal Username, Password, Pool ID and Offline Token to the appropriate variables. More information about generating an Offline Token can be found [here](https://access.redhat.com/articles/3626371).
 
 We are now ready to bootstrap the environment. To do this, run:
 
