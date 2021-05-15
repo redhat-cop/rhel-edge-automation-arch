@@ -79,7 +79,7 @@ Next, modify `openshift/gitops/clusters/overlays/byo/bootstrap/redhat-portal-cre
 We are now ready to bootstrap the environment. To do this, run:
 
 ```shell
-kustomize build --load-restrictor=LoadRestrictionsNone openshift/gitops/clusters/overlays/byo/bootstrap/ | oc apply -f -
+kustomize build --load_restrictor=LoadRestrictionsNone openshift/gitops/clusters/overlays/byo/bootstrap/ | oc apply -f -
 ```
 
 #### Deploying
