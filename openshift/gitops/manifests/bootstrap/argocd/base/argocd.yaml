@@ -1,14 +1,21 @@
 apiVersion: argoproj.io/v1alpha1
 kind: ArgoCD
 metadata:
-  name: argocd-cluster
+  name: openshift-gitops
   namespace: openshift-gitops
 spec:
+  dex:
+    openShiftOAuth: true
+    version: sha256:77bfea96e8d8f3e4197b9f6020c8f5dedbb701245c19afd69a15747ae4bf2804
   rbac:
     defaultPolicy: "role:admin"
   server:
+    insecure: true
     route:
       enabled: true
+    tls:
+      insecureEdgeTerminationPolicy: Redirect
+      termination: edge
   resourceCustomizations: |
     route.openshift.io/Route:
       ignoreDifferences: |

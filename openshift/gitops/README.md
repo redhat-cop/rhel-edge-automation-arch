@@ -32,7 +32,7 @@ Place this secret into a file located at `environments/overlays/bootstrap/sealed
 Bootstrap the environment by executing the following command:
 
 ```
-kustomize build clusters/overlays/rhpds/argocd/manager | oc apply -f-
+kustomize build clusters/overlays/shared/argocd/manager | oc apply -f-
 ```
 
 ## Accessing Argo CD
