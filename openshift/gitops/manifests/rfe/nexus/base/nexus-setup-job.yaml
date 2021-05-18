@@ -102,6 +102,6 @@ spec:
           name: nexus-setup
       dnsPolicy: ClusterFirst
       restartPolicy: OnFailure
-      serviceAccount: default
-      serviceAccountName: default
+      serviceAccount: nexus-setup
+      serviceAccountName: nexus-setup
       terminationGracePeriodSeconds: 30
