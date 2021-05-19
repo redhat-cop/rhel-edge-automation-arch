@@ -12,3 +12,4 @@ bases:
   - ../../../manifests/argocd/apps/configs/cnv/base
   - ../../../manifests/argocd/apps/configs/ocs/base
   - ../../../manifests/argocd/apps/configs/pipelines/base
+  - ../../../manifests/argocd/apps/configs/quay/base
