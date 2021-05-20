@@ -5,12 +5,12 @@ redhat_sso_url: https://sso.redhat.com/auth/realms/redhat-external/protocol/open
 redhat_api_url: https://api.access.redhat.com/management/v1
 
 # image_checksums represents a list of SHA-256 hashes that correspond to specific
-# Red Hat images.  The RHEL 8.3 KVM QCOW2 Image followed by the RHEL 8.3 Boot ISO
+# Red Hat images.  The RHEL 8.4 KVM QCOW2 Image followed by the RHEL 8.4 Boot ISO
 # are defaults in this list.
 # 
 # The latest can be found here:
-# https://access.redhat.com/downloads/content/479/ver=/rhel---8/8.3/x86_64/product-software
+# https://access.redhat.com/downloads/content/479/ver=/rhel---8/8.4/x86_64/product-software
 
 image_checksums:
-  - "321c20a732419472ba584ea34cd2cab79db2ea1790abe467ea3c0e2ca521a6b7"
-  - "1b73ebfebd1f9424c806032168873b067259d8b29f4e9d39ae0e4009cce49b93"
+  - "df9660e770711f797b311a04946ce45db19843ddb1c60ccadca8b77fa0444e4f"
+  - "5fa79f357dab40056e1052cb4b03ff9fe7a502b519df7e3789f8899b3f461945"
