@@ -34,7 +34,7 @@ spec:
           volumeMounts:
             - name: redhat-portal-credentials
               mountPath: /var/secrets/redhat-portal-credentials
-              readOnly: yes
+              readOnly: true
           imagePullPolicy: Always
           name: ansible-rfe-runner
       volumes:
