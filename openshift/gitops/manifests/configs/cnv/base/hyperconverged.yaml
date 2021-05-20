@@ -5,6 +5,11 @@ metadata:
   name: kubevirt-hyperconverged
   annotations:
     argocd.argoproj.io/sync-wave: "5"
+    argocd.argoproj.io/compare-options: IgnoreExtraneous
     argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+    deployOVS: "false"
+  labels:
+    app: kubevirt-hyperconverged
 spec:
-  bareMetalPlatform: false
+  infra: {}
+  workloads: {}
