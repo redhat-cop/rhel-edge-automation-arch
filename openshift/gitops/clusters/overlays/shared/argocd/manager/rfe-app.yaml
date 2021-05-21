@@ -11,7 +11,7 @@ spec:
   source:
     path: openshift/gitops/clusters/overlays/shared/argocd/rfe
     repoURL: https://github.com/redhat-cop/rhel-edge-automation-arch.git
-    targetRevision: main
+    targetRevision: v1
   syncPolicy:
     automated:
       prune: false

@@ -15,7 +15,7 @@ spec:
   source:
     path: openshift/gitops/manifests/configs/ocs/base
     repoURL: https://github.com/redhat-cop/rhel-edge-automation-arch.git
-    targetRevision: main
+    targetRevision: v1
   syncPolicy:
     automated:
       prune: false
