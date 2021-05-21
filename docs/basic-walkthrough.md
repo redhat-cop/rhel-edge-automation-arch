@@ -49,7 +49,7 @@ To break down the preceding command:
 1. `tkn` - Tekton CLI
 2. `pipeline` - Resource to manage
 3. `start` - Action to perform. Starts a pipeline
-4. `--workspace name=shared-workspace,volumeClaimTemplateFile=openshift/resources/pipelines/volumeclaimtemplate.yaml` - Specifies that a PersistentVolumeClaim should be used to back the Tekton workspace using a template found in the file [openshift/resources/pipelines/volumeclaimtemplate.yaml](openshift/resources/pipelines/volumeclaimtemplate.yaml).
+4. `--workspace name=shared-workspace,volumeClaimTemplateFile=openshift/resources/pipelines/volumeclaimtemplate.yaml` - Specifies that a PersistentVolumeClaim should be used to back the Tekton workspace using a template found in the file [https://github.com/redhat-cop/rhel-edge-automation-arch/blob/main/openshift/resources/pipelines/volumeclaimtemplate.yaml](openshift/resources/pipelines/volumeclaimtemplate.yaml).
 5. `--use-param-default` - The default Pipeline parameters will be applied unless explicitly specified
 6. `-p blueprint-dir=hello-world` - The directory containing the blueprint file in the cloned repository. By default, the _blueprints_ branch of this repository will be used
 7. `-s rfe-automation` - THe name of the Service Account to run the pipeline as
