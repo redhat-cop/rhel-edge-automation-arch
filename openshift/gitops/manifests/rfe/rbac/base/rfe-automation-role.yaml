@@ -10,7 +10,11 @@ rules:
       - secrets
       - configmaps
     verbs:
-      - "*"
+      - create
+      - patch
+      - list
+      - update
+      - get
   - apiGroups:
       - "*"
     resources:
