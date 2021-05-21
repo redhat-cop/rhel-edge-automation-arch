@@ -21,7 +21,7 @@ spec:
       type: string
     - name: tooling-git-revision
       description: Tooling Repository URL Reference
-      default: main
+      default: v1
       type: string
     - name: rfe-tarball-url
       description: HTTP Location of RFE Tarball
