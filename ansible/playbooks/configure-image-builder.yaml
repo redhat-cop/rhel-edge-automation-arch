@@ -83,7 +83,7 @@
             "{{ find_cert.files[0].path | regex_search('[0-9]+.pem$') }}": "{{ lookup('file', find_cert.files[0].path) | b64encode }}"
           kind: Secret
           metadata:
-            name: etc-pki-entitlement-test
+            name: etc-pki-entitlement
             namespace: rfe
           type: Opaque
       become: no
@@ -102,7 +102,7 @@
             "redhat-uep.pem": "{{ lookup('file', '/tmp/rhsm/ca/redhat-uep.pem') | b64encode }}"
           kind: Secret
           metadata:
-            name: rhsm-ca-test
+            name: rhsm-ca
             namespace: rfe
           type: Opaque
       become: no
@@ -120,7 +120,7 @@
             "rhsm.conf": "{{ lookup('file', '/tmp/rhsm/conf/rhsm.conf') | b64encode }}"
           kind: Secret
           metadata:
-            name: rhsm-conf-test
+            name: rhsm-conf
             namespace: rfe
           type: Opaque
       become: no
