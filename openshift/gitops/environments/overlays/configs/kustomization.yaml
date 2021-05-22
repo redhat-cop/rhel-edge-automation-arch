@@ -11,3 +11,4 @@ bases:
   - ../../../manifests/argocd/apps/configs/user-workload-monitoring/base
   - ../../../manifests/argocd/apps/configs/cnv/base
   - ../../../manifests/argocd/apps/configs/pipelines/base
+  - ../../../manifests/argocd/apps/configs/resource-locker/base

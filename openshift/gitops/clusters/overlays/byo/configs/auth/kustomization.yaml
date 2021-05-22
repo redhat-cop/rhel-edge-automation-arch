@@ -8,7 +8,7 @@ resources:
   - rhel-edge-admins-group.yaml
 
 patchesStrategicMerge:
-  - oauth.yaml
+  - oauth-patch.yaml
 
 secretGenerator:
   - name: htpasswd-secret
