@@ -1,0 +1,11 @@
+apiVersion: redhatcop.redhat.io/v1alpha1
+kind: ResourceLocker
+metadata:
+  name: oauth-patch
+  namespace: resource-locker-operator
+  annotations:
+    argocd.argoproj.io/compare-options: IgnoreExtraneous
+    argocd.argoproj.io/sync-options: Prune=false
+spec:
+  serviceAccountRef:
+    name: resource-locker-oauth-sa

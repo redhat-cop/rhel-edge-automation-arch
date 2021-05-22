@@ -12,14 +12,11 @@ spec:
       patchTemplate: |
         spec:
           identityProviders:
-            - github:
-                clientID: d4ad09a6d67182e85fc3
-                clientSecret:
-                  name: github
-                teams:
-                  - redhat-cop/rhel-edge-automation-arch
+            - name: RFE
               mappingMethod: claim
-              name: RFE
-              type: GitHub
+              type: HTPasswd
+              htpasswd:
+                fileData:
+                  name: htpasswd-secret
       id: oauth-patch
       patchType: application/merge-patch+json
