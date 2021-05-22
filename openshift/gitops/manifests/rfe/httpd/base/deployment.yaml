@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   annotations:
-    image.openshift.io/triggers: '[{"from":{"kind":"ImageStreamTag","name":"httpd-ostree:latest","namespace":"rfe"},"fieldPath":"spec.template.spec.containers[?(@.name==\"httpd-ostree\")].image"}]'
+    image.openshift.io/triggers: '[{"from":{"kind":"ImageStreamTag","name":"httpd-ostree:latest","namespace":"rfe"},"fieldPath":"spec.template.spec.containers[?(@.name==\"httpd\")].image"}]'
   labels:
     app: httpd
     app.kubernetes.io/component: httpd
