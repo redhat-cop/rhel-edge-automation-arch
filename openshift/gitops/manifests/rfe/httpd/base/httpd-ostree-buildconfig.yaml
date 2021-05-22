@@ -13,7 +13,7 @@ spec:
   runPolicy: Serial
   source:
     dockerfile: |
-      FROM registry.access.redhat.com/ubi8/httpd-24
+      FROM registry.redhat.io/rhel8/httpd-24
       USER 0
       COPY ./etc-pki-entitlement /etc/pki/entitlement
       COPY ./rhsm-conf /etc/rhsm
@@ -38,11 +38,11 @@ spec:
         name: rhsm-conf
     type: Dockerfile
   strategy:
-    dockerStrategy:
+    sourceStrategy:
       from:
-        kind: DockerImage
-        name: registry.access.redhat.com/ubi8/httpd-24
-    type: Docker
+        kind: "ImageStreamTag"
+        name: "httpd:2.4-el8"
+        namespace: openshift
   successfulBuildsHistoryLimit: 5
   triggers:
   - type: ConfigChange
