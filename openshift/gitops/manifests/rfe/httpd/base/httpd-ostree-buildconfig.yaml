@@ -38,7 +38,8 @@ spec:
         name: rhsm-conf
     type: Dockerfile
   strategy:
-    sourceStrategy:
+    type: Docker
+    dockerStrategy:
       from:
         kind: "ImageStreamTag"
         name: "httpd:2.4-el8"
