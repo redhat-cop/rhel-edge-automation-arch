@@ -1,0 +1,48 @@
+kind: BuildConfig
+apiVersion: build.openshift.io/v1
+metadata:
+  name: httpd-ostree
+  namespace: rfe
+spec:
+  output:
+    to:
+      kind: ImageStreamTag
+      name: httpd-ostree:latest
+  postCommit: {}
+  resources: {}
+  runPolicy: Serial
+  source:
+    dockerfile: |
+      FROM registry.redhat.io/rhel8/httpd-24
+      USER 0
+      COPY ./etc-pki-entitlement /etc/pki/entitlement
+      COPY ./rhsm-conf /etc/rhsm
+      COPY ./rhsm-ca /etc/rhsm/ca
+      RUN rm /etc/rhsm-host && \
+        dnf repolist --disablerepo=* && \
+        subscription-manager repos --enable rhel-8-for-x86_64-baseos-rpms --enable rhel-8-for-x86_64-appstream-rpms && \
+        dnf update -y && \
+        dnf install -y ostree && \
+        rm -rf /etc/pki/entitlement && \
+        rm -rf /etc/rhsm
+      USER 1001
+    secrets:
+    - destinationDir: etc-pki-entitlement
+      secret:
+        name: etc-pki-entitlement
+    - destinationDir: rhsm-ca
+      secret:
+        name: rhsm-ca
+    - destinationDir: rhsm-conf
+      secret:
+        name: rhsm-conf
+    type: Dockerfile
+  strategy:
+    sourceStrategy:
+      from:
+        kind: "ImageStreamTag"
+        name: "httpd:2.4-el8"
+        namespace: openshift
+  successfulBuildsHistoryLimit: 5
+  triggers:
+  - type: ConfigChange
