@@ -8,3 +8,5 @@ resources:
   - service.yaml
   - deployment.yaml
   - route.yaml
+  - httpd-ostree-imagestream.yaml
+  - httpd-ostree-buildconfig.yaml
