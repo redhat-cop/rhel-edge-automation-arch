@@ -19,6 +19,8 @@ spec:
               value: "/tmp/git/rhel-edge-automation-arch"
             - name: GIT_URL
               value: "https://github.com/redhat-cop/rhel-edge-automation-arch.git"
+            - name: GIT_BRANCH
+              value: "v1"
             - name: SSH_KEY
               value: "/var/secrets/image-builder-ssh-key/ssh-privatekey"
             - name: ANSIBLE_PLAYBOOK
@@ -30,7 +32,7 @@ spec:
             - -c
             - |
               mkdir -p $GIT_DIRECTORY
-              git clone $GIT_URL $GIT_DIRECTORY
+              git clone -b $GIT_BRANCH $GIT_URL $GIT_DIRECTORY
               ansible-galaxy collection install -r $GIT_DIRECTORY/ansible/collections/requirements.yaml
               ansible-playbook -u cloud-user --private-key=$SSH_KEY $GIT_DIRECTORY/$ANSIBLE_PLAYBOOK
           volumeMounts:
