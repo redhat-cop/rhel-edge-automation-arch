@@ -5,7 +5,7 @@ metadata:
   namespace: resource-locker-operator
   annotations:
     argocd.argoproj.io/compare-options: IgnoreExtraneous
-    argocd.argoproj.io/sync-options: Prune=false
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
 spec:
   serviceAccountRef:
     name: resource-locker-oauth-sa
