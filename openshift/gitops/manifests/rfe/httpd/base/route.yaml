@@ -7,9 +7,6 @@ metadata:
     app.kubernetes.io/instance: httpd
   name: httpd
 spec:
-  tls:
-    insecureEdgeTerminationPolicy: Redirect
-    termination: edge
   port:
     targetPort: 8080-tcp
   to:
