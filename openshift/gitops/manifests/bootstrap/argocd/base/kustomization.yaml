@@ -3,5 +3,4 @@ kind: Kustomization
 
 resources:
   - argocd.yaml
-  - argocd-application-clusterrolebinding.yaml
-  - argocd-applicationset-clusterrolebinding.yaml
+  - argocd-clusterrolebinding.yaml
