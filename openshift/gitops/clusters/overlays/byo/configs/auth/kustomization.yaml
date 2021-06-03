@@ -7,14 +7,15 @@ bases:
 resources:
   - rhel-edge-admins-group.yaml
 
-patchesStrategicMerge:
-  - oauth-patch.yaml
-
 secretGenerator:
   - name: htpasswd-secret
     namespace: openshift-config
     files:
       - htpasswd=users.htpasswd
+  - name: rfe-oauth
+    namespace: openshift-config
+    files:
+      - oauth.yaml
 
 generatorOptions:
   disableNameSuffixHash: true
