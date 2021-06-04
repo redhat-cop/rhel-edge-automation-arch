@@ -1,0 +1,60 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  annotations:
+    argocd.argoproj.io/hook: PostSync
+    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation
+  labels:
+    run: merge-oauth-identity-providers
+  name: merge-oauth-identity-providers
+  namespace: openshift-config
+spec:
+  template:
+    spec:
+      activeDeadlineSeconds: 600
+      containers:
+        - image: registry.redhat.io/openshift4/ose-tools-rhel8:v4.7
+          env:
+            - name: MERGE_IDENTITY_PROVIDERS_SCRIPT
+              value: /etc//config/scripts/merge_oauth_identity_providers.py
+            - name: CLUSTER_OAUTH_LOCATION
+              value: /tmp/cluster-oauth.json
+            - name: GITOPS_OAUTH_LOCATION_YMAL
+              value: /etc/config/gitops/oauth.yaml
+            - name: GITOPS_OAUTH_LOCATION
+              value: /tmp/gitops-oauth.json
+          command:
+            - /bin/bash
+            - -c
+            - |
+              set -e
+
+              export HOME=/tmp/merge-oauth-identity-providers
+
+              oc get oauth cluster -o json > $CLUSTER_OAUTH_LOCATION
+
+              oc create -f $GITOPS_OAUTH_LOCATION_YMAL --dry-run=client -o json > $GITOPS_OAUTH_LOCATION
+
+              python $MERGE_IDENTITY_PROVIDERS_SCRIPT
+
+              oc apply -f $CLUSTER_OAUTH_LOCATION
+
+          imagePullPolicy: IfNotPresent
+          name: merge-oauth-identity-providers
+          volumeMounts:
+            - name: scripts
+              mountPath: /etc/config/scripts
+            - name: gitops
+              mountPath: /etc/config/gitops
+      volumes:
+        - name: scripts
+          configMap:
+            name: merge-oauth-identity-providers
+        - name: gitops
+          secret:
+            secretName: rfe-oauth
+      dnsPolicy: ClusterFirst
+      restartPolicy: OnFailure
+      serviceAccount: rfe-oauth
+      serviceAccountName: rfe-oauth
+      terminationGracePeriodSeconds: 30

@@ -4,9 +4,6 @@ kind: Kustomization
 bases:
   - ../../../../../manifests/configs/auth/base
 
-patchesStrategicMerge:
-  - oauth.yaml
-
 resources:
   - group-sync-github-secret.yaml
   - oauth-github-secret.yaml
@@ -14,3 +11,12 @@ resources:
   - group-sync-operator-operatorgroup.yaml
   - group-sync-operator-subscription.yaml
   - groupsync.yaml
+
+secretGenerator:
+  - name: rfe-oauth
+    namespace: openshift-config
+    files:
+      - oauth.yaml
+
+generatorOptions:
+  disableNameSuffixHash: true

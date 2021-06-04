@@ -1,25 +1,15 @@
-apiVersion: redhatcop.redhat.io/v1alpha1
-kind: ResourceLocker
+apiVersion: config.openshift.io/v1
+kind: OAuth
 metadata:
-  name: oauth-patch
-  namespace: resource-locker-operator
+  name: cluster
 spec:
-  patches:
-    - targetObjectRef:
-        apiVersion: config.openshift.io/v1
-        kind: OAuth
-        name: cluster
-      patchTemplate: |
-        spec:
-          identityProviders:
-            - github:
-                clientID: d4ad09a6d67182e85fc3
-                clientSecret:
-                  name: github
-                teams:
-                  - redhat-cop/rhel-edge-automation-arch
-              mappingMethod: claim
-              name: RFE
-              type: GitHub
-      id: oauth-patch
-      patchType: application/merge-patch+json
+  identityProviders:
+    - github:
+        clientID: d4ad09a6d67182e85fc3
+        clientSecret:
+          name: github
+        teams:
+          - redhat-cop/rhel-edge-automation-arch
+      mappingMethod: claim
+      name: RFE
+      type: GitHub
