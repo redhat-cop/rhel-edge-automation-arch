@@ -19,27 +19,9 @@
   register: image_urls
   loop: "{{ image_checksums }}"
 
-- name: Ensure Path in Document Root Exists
-  ansible.builtin.file:
-    path: "{{ images_path }}"
-    state: directory
-
-# Images are initially downloaded to initial_download_path and subsequently moved to
-# images_path to prevent VM instance from installing with a partially downloaded image.
-
 - name: Download Red Hat Images
   ansible.builtin.get_url:
     checksum: "sha256:{{ item.item }}"
     dest: "{{ initial_download_path }}/{{ item.json.body.filename }}"
     url: "{{ item.json.body.href }}"
-  loop: "{{ image_urls.results }}"
-
-- name: Move Red Hat Images to Final Destination
-  ansible.builtin.command:
-    argv:
-      - /usr/bin/mv
-      - "{{ initial_download_path | quote }}/{{ item.json.body.filename | quote }}"
-      - "{{ images_path | quote }}/{{ item.json.body.filename | quote }}"
-    creates: "{{ images_path }}/{{ item.json.body.filename }}"
-    removes: "{{ initial_download_path }}/{{ item.json.body.filename }}"
   loop: "{{ image_urls.results }}"

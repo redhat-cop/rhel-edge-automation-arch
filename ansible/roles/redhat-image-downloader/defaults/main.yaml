@@ -1,5 +1,4 @@
 initial_download_path: /tmp
-images_path: /var/www/html/images
 
 redhat_sso_url: https://sso.redhat.com/auth/realms/redhat-external/protocol/openid-connect/token
 redhat_api_url: https://api.access.redhat.com/management/v1

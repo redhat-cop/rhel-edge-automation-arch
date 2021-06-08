@@ -27,7 +27,7 @@ spec:
           volumeMode: Filesystem
         source:
           http:
-            url: 'http://httpd:8080/images/rhel-8.4-x86_64-kvm.qcow2'
+            url: 'http://nexus:8081/repository/rfe-rhel-media/rhel-8.4-x86_64-kvm.qcow2'
   running: true
   template:
     metadata:

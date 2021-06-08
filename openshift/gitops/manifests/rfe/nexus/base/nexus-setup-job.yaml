@@ -17,7 +17,7 @@ spec:
             - name: SERVICE_NAME
               value: nexus
             - name: NEXUS_REPOSITORIES
-              value: "rfe-kickstarts,rfe-tarballs"
+              value: "rfe-kickstarts,rfe-tarballs,rfe-rhel-media"
             - name: RFE_NEXUS_SECRET
               value: "nexus-rfe-credentials"
             - name: RFE_NEXUS_USERNAME
