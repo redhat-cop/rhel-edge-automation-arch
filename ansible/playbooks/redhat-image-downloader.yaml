@@ -1,5 +1,7 @@
 - name: Download Red Hat Images
   hosts: localhost
+  vars:
+    nexus_credentials_secret_name: nexus-rfe-credentials
   roles:
     - role: redhat-image-downloader
   tasks:
