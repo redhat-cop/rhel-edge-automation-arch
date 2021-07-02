@@ -5,3 +5,4 @@ collections:
     source: https://galaxy.ansible.com
   - name: community.kubernetes
     source: https://galaxy.ansible.com
+    version: ">=1.2.0,<2.0.0"
