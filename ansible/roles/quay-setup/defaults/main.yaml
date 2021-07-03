@@ -1,0 +1,7 @@
+csrf_pattern: ".*window.__token\ =\ '(.*)';.*"
+quay_namespace: quay
+quay_registry_name: quay
+quay_rfe_namespace: rfe
+quay_rfe_organization: rfe
+quay_rfe_secret_name: quay-rfe-setup
+quay_rfe_username: rfe-user

@@ -1,0 +1,4 @@
+- name: Setup Quay Registry
+  hosts: localhost
+  roles:
+    - role: quay-setup

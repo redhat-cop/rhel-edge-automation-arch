@@ -1,0 +1,160 @@
+- name: Query Quay RFE Setup Secret
+  community.kubernetes.k8s_info:
+    #api_key: "{{ lookup('file', '/var/run/secrets/kubernetes.io/serviceaccount/token') }}"
+    api_version: v1
+    #ca_cert: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+    #host: https://kubernetes.default.svc
+    kind: Secret
+    name: "{{ quay_rfe_secret_name }}"
+    namespace: "{{ quay_rfe_namespace }}"
+    validate_certs: no
+  register: quay_setup_secret
+
+- name: Create Quay RFE Setup Secret
+  block:
+    - name: Generate Initial Quay User Password
+      ansible.builtin.shell:
+        cmd: cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 15 | head -n 1
+      register: quay_rfe_random_password
+
+    - name: Set Password Fact
+      ansible.builtin.set_fact:
+        quay_rfe_password: "{{ quay_rfe_random_password.stdout }}"
+
+    - name: Create Secret Resource
+      community.kubernetes.k8s:
+        #api_key: "{{ lookup('file', '/var/run/secrets/kubernetes.io/serviceaccount/token') }}"
+        api_version: v1
+        #ca_cert: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+        #host: https://kubernetes.default.svc
+        resource_definition: "{{ lookup('template', 'templates/quay-setup-secret.j2') | from_yaml }}"
+        state: present
+        validate_certs: no
+  when:
+    - quay_setup_secret.resources | count == 0
+
+- name: Populate Quay RFE Facts from Secret
+  block:
+    - name: Assert Data Exists in Secret
+      ansible.builtin.assert:
+        fail_msg: >-
+          Make sure the Quay RFE setup secret contains the fields:
+            - org
+            - password
+            - username
+        that:
+          - quay_setup_secret.resources[0].data.org is defined
+          - quay_setup_secret.resources[0].data.password is defined
+          - quay_setup_secret.resources[0].data.username is defined
+
+    - name: Set Initial Quay Username/Password/Organization Facts
+      ansible.builtin.set_fact:
+        quay_rfe_organization: "{{ quay_setup_secret.resources[0].data.org | b64decode }}"
+        quay_rfe_password: "{{ quay_setup_secret.resources[0].data.password | b64decode }}"
+        quay_rfe_username: "{{ quay_setup_secret.resources[0].data.username | b64decode }}"
+  when:
+    - quay_setup_secret.resources | count == 1
+
+- name: Query Quay Registry
+  vars:
+    json_query_filter: "resources[0].status.conditions[?reason=='HealthChecksPassing'].status"
+  community.kubernetes.k8s_info:
+    #api_key: "{{ lookup('file', '/var/run/secrets/kubernetes.io/serviceaccount/token') }}"
+    api_version: quay.redhat.com/v1
+    #ca_cert: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+    #host: https://kubernetes.default.svc
+    kind: QuayRegistry
+    name: "{{ quay_registry_name }}"
+    namespace: "{{ quay_namespace }}"
+    validate_certs: no
+  delay: 10
+  register: quay_registry_response
+  retries: 60
+  until:
+    - quay_registry_response | json_query(json_query_filter) | first == "True"
+
+- name: Set Quay Route Fact
+  ansible.builtin.set_fact:
+    quay_route: "{{ quay_registry_response.resources[0].status.registryEndpoint }}"
+
+- name: Wait for Quay Application and Load Initial CSRF Token
+  ansible.builtin.uri:
+    return_content: yes
+    status_code: 200
+    url: "{{ quay_route }}"
+    validate_certs: no
+  delay: 10
+  register: quay_app_response
+  retries: 60
+
+- name: Set CSRF Token
+  ansible.builtin.set_fact:
+    initial_csrf_token: "{{ quay_app_response.content | regex_search(csrf_pattern, '\\1', multiline=True) | first }}"
+
+- name: Create Quay RFE User
+  vars:
+    uri: "/api/v1/user/?_csrf_token={{ initial_csrf_token | urlencode }}"
+  ansible.builtin.uri:
+    body_format: json
+    body:
+      username: "{{ quay_rfe_username }}"
+      email: "{{ quay_rfe_username }}@quay.local"
+      password: "{{ quay_rfe_password }}"
+      repeatPassword: "{{ quay_rfe_password }}"
+    headers:
+      Cookie: "{{ quay_app_response.cookies_string }}"
+    method: POST
+    url: "{{ quay_route + uri }}"
+    validate_certs: no
+  register: quay_user_response
+  failed_when:
+    - quay_user_response.status != 200
+    - '"The username already exists" not in quay_user_response.json.error_message'
+
+- name: Load Login Page
+  ansible.builtin.uri:
+    return_content: yes
+    status_code: 200
+    url: "{{ quay_route }}"
+    validate_certs: no
+  delay: 10
+  register: quay_app_response
+  retries: 60
+
+- name: Set CSRF Token
+  ansible.builtin.set_fact:
+    initial_csrf_token: "{{ quay_app_response.content | regex_search(csrf_pattern, '\\1', multiline=True) | first }}"
+
+- name: Login to Quay
+  vars:
+    uri: "/api/v1/signin?_csrf_token={{ initial_csrf_token | urlencode }}"
+  ansible.builtin.uri:
+    body_format: json
+    body:
+      username: "{{ quay_rfe_username }}"
+      password: "{{ quay_rfe_password }}"
+    headers:
+      Cookie: "{{ quay_app_response.cookies_string }}"
+    method: POST
+    return_content: yes
+    url: "{{ quay_route + uri }}"
+    validate_certs: no
+  register: quay_login_response
+
+- name: Create Organization
+  vars:
+    uri: "/api/v1/organization/?_csrf_token={{ quay_login_response.x_next_csrf_token | urlencode }}"
+  ansible.builtin.uri:
+    body_format: json
+    body:
+      name: "{{ quay_rfe_organization }}"
+    headers:
+      Cookie: "{{ quay_login_response.cookies_string }}"
+    method: POST
+    return_content: yes
+    url: "{{ quay_route + uri }}"
+    validate_certs: no
+  register: quay_org_response
+  failed_when:
+    - quay_org_response.status != 201
+    - '"A user or organization with this name already exists" not in quay_org_response.json.error_message'
