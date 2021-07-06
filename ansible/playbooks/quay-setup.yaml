@@ -11,19 +11,19 @@
     quay_rfe_robot_description: Account to Publish RFE Container Images
     quay_rfe_robot_name: publisher
     quay_rfe_secret_name: quay-rfe-setup
+    quay_rfe_username: rfe-user
     quay_rfe_user_email: "{{ quay_rfe_username }}@quay.local"
-    quay_rfe_username: rfe-user-test
   tasks:
     - name: Check for Quay RFE Setup Secret
       community.kubernetes.k8s_info:
-        #api_key: "{{ lookup('file', '/var/run/secrets/kubernetes.io/serviceaccount/token') }}"
+        api_key: "{{ lookup('file', '/var/run/secrets/kubernetes.io/serviceaccount/token') }}"
         api_version: v1
-        #ca_cert: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
-        #host: https://kubernetes.default.svc
+        ca_cert: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+        host: https://kubernetes.default.svc
         kind: Secret
         name: "{{ quay_rfe_secret_name }}"
         namespace: "{{ quay_rfe_namespace }}"
-        validate_certs: no
+        validate_certs: yes
       register: quay_setup_secret
 
     - name: Create Quay RFE Setup Secret if Missing
@@ -39,10 +39,10 @@
 
         - name: Create Secret Resource
           community.kubernetes.k8s:
-            #api_key: "{{ lookup('file', '/var/run/secrets/kubernetes.io/serviceaccount/token') }}"
+            api_key: "{{ lookup('file', '/var/run/secrets/kubernetes.io/serviceaccount/token') }}"
             api_version: v1
-            #ca_cert: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
-            #host: https://kubernetes.default.svc
+            ca_cert: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+            host: https://kubernetes.default.svc
             resource_definition:
               apiVersion: v1
               data:
@@ -55,7 +55,7 @@
                 namespace: "{{ quay_rfe_namespace }}"
               type: Opaque
             state: present
-            validate_certs: no
+            validate_certs: yes
       when:
         - quay_setup_secret.resources | count == 0
 
@@ -85,14 +85,14 @@
       vars:
         json_query_filter: "resources[0].status.conditions[?reason=='HealthChecksPassing'].status"
       community.kubernetes.k8s_info:
-        #api_key: "{{ lookup('file', '/var/run/secrets/kubernetes.io/serviceaccount/token') }}"
+        api_key: "{{ lookup('file', '/var/run/secrets/kubernetes.io/serviceaccount/token') }}"
         api_version: quay.redhat.com/v1
-        #ca_cert: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
-        #host: https://kubernetes.default.svc
+        ca_cert: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+        host: https://kubernetes.default.svc
         kind: QuayRegistry
         name: "{{ quay_registry_name }}"
         namespace: "{{ quay_namespace }}"
-        validate_certs: no
+        validate_certs: yes
       delay: 10
       register: quay_registry_response
       retries: 60
@@ -187,10 +187,10 @@
 
     - name: Create/Update RFE Robot Secret
       community.kubernetes.k8s:
-        #api_key: "{{ lookup('file', '/var/run/secrets/kubernetes.io/serviceaccount/token') }}"
+        api_key: "{{ lookup('file', '/var/run/secrets/kubernetes.io/serviceaccount/token') }}"
         api_version: v1
-        #ca_cert: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
-        #host: https://kubernetes.default.svc
+        ca_cert: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+        host: https://kubernetes.default.svc
         resource_definition:
           apiVersion: v1
           data:
@@ -202,7 +202,7 @@
             namespace: "{{ quay_rfe_namespace }}"
           type: Opaque
         state: present
-        validate_certs: no
+        validate_certs: yes
 
     - name: Add RFE Robot Account Permissions to RFE Repository
       vars:
