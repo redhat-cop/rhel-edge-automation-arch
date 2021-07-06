@@ -1,0 +1,58 @@
+- name: Assert Required Variables are Defined
+  ansible.builtin.assert:
+    fail_msg: >
+      Make sure the following variables are defined before using this role:
+        - quay_api_body
+        - quay_api_status_codes
+        - quay_api_uri
+        - quay_api_verb
+        - quay_route
+    that:
+      - quay_api_body is defined
+      - quay_api_status_codes is defined
+      - quay_api_uri is defined
+      - quay_api_verb is defined
+      - quay_route is defined
+
+- name: Wait for Quay Application and Load Initial CSRF Token
+  ansible.builtin.uri:
+    return_content: yes
+    url: "{{ quay_route }}"
+    validate_certs: no
+  delay: 10
+  register: quay_app_response
+  retries: 60
+
+- name: Set CSRF Token
+  ansible.builtin.set_fact:
+    x_csrf_token: "{{ quay_app_response.content | regex_search(csrf_pattern, '\\1', multiline=True) | first }}"
+
+- name: Login to Quay
+  ansible.builtin.uri:
+    body_format: json
+    body:
+      username: "{{ quay_rfe_username }}"
+      password: "{{ quay_rfe_password }}"
+    headers:
+      cookie: "{{ quay_app_response.cookies_string }}"
+      x-csrf-token: "{{ x_csrf_token | urlencode }}"
+    method: POST
+    return_content: yes
+    url: "{{ quay_route }}/api/v1/signin"
+    validate_certs: no
+  register: quay_login_response
+
+- name: "Call Quay API at Endpoint {{ quay_api_uri }}"
+  ansible.builtin.uri:
+    body_format: json
+    body: "{{ quay_api_body }}"
+    headers:
+      cookie: "{{ quay_login_response.cookies_string }}"
+      x-csrf-token: "{{ quay_login_response.x_next_csrf_token | urlencode }}"
+    method: "{{ quay_api_verb }}"
+    return_content: yes
+    status_code: "{{ quay_api_status_codes }}"
+    url: "{{ quay_route + quay_api_uri }}"
+    validate_certs: no
+  register: quay_api_response
+  
