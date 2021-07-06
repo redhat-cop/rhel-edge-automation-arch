@@ -6,6 +6,8 @@
     quay_registry_name: quay
     quay_rfe_namespace: rfe
     quay_rfe_organization: rfe
+    quay_rfe_repository_description: Repoistory Hosting RFE Container Images
+    quay_rfe_repository_name: rfe-images
     quay_rfe_robot_description: Account to Publish RFE Container Images
     quay_rfe_robot_name: publisher
     quay_rfe_secret_name: quay-rfe-setup
@@ -106,7 +108,7 @@
         quay_password: "{{ quay_rfe_password }}"
         quay_user_email: "{{ quay_rfe_user_email }}"
         quay_username: "{{ quay_rfe_username }}"
-      include_role:
+      ansible.builtin.include_role:
         name: quay-raw-create-user
 
     - name: Create RFE Organization
@@ -118,7 +120,7 @@
           - 400
         quay_api_uri: "/api/v1/organization/"
         quay_api_verb: POST
-      include_role:
+      ansible.builtin.include_role:
         name: quay-raw-api
 
     - name: "Check for Failure Conditions for Task: Create RFE Organization"
@@ -128,6 +130,30 @@
         - quay_api_response.status != 201
         - '"A user or organization with this name already exists" not in quay_api_response.json.error_message'
 
+    - name: Create RFE Repository
+      vars:
+        quay_api_body:
+          description: "{{ quay_rfe_repository_description }}"
+          namespace: "{{ quay_rfe_organization }}"
+          repo_kind: image
+          repository: "{{ quay_rfe_repository_name }}"
+          visibility: private
+        quay_api_status_codes:
+          - 201
+          - 400
+        quay_api_uri:
+          "/api/v1/repository"
+        quay_api_verb: POST
+      ansible.builtin.include_role:
+        name: quay-raw-api
+
+    - name: "Check for Failure Conditions for Task: Create RFE Repository"
+      ansible.builtin.fail:
+        msg: "Create RFE Organization Failed"
+      when:
+        - quay_api_response.status != 201
+        - '"Repository already exists" not in quay_api_response.json.error_message'
+
     - name: Query RFE Robot Account
       vars:
         quay_api_body: ""
@@ -136,7 +162,7 @@
           - 400
         quay_api_uri: "/api/v1/organization/{{ quay_rfe_organization }}/robots/{{ quay_rfe_robot_name }}"
         quay_api_verb: GET
-      include_role:
+      ansible.builtin.include_role:
         name: quay-raw-api
   
     - name: "Check for Failure Conditions for Task: Query RFE Robot Account"
@@ -154,7 +180,7 @@
           - 201
         quay_api_uri: "/api/v1/organization/{{ quay_rfe_organization }}/robots/{{ quay_rfe_robot_name }}"
         quay_api_verb: PUT
-      include_role:
+      ansible.builtin.include_role:
         name: quay-raw-api
       when:
         - quay_api_response.status != 200
@@ -177,3 +203,14 @@
           type: Opaque
         state: present
         validate_certs: no
+
+    - name: Add RFE Robot Account Permissions to RFE Repository
+      vars:
+        quay_api_body:
+          role: write
+        quay_api_status_codes:
+          - 200
+        quay_api_uri: "/api/v1/repository/{{ quay_rfe_organization }}/{{ quay_rfe_repository_name }}/permissions/user/{{ quay_rfe_organization }}+{{ quay_rfe_robot_name }}"
+        quay_api_verb: PUT
+      ansible.builtin.include_role:
+        name: quay-raw-api
