@@ -186,6 +186,15 @@
         - quay_api_response.status != 200
 
     - name: Create/Update RFE Robot Secret
+      vars:
+        dockerconfigjson: |
+          {
+            "auths": {
+              "{{ quay_route | regex_replace('https://') }}": {
+                "auth": "{{ (quay_api_response.json.name + ':' + quay_api_response.json.token) | b64encode }}"
+              }
+            }
+          }
       community.kubernetes.k8s:
         api_key: "{{ lookup('file', '/var/run/secrets/kubernetes.io/serviceaccount/token') }}"
         api_version: v1
@@ -194,13 +203,12 @@
         resource_definition:
           apiVersion: v1
           data:
-            name: "{{ quay_api_response.json.name | b64encode }}"
-            token: "{{ quay_api_response.json.token | b64encode }}"
+            .dockerconfigjson: "{{ dockerconfigjson | to_nice_json | b64encode }}"
           kind: Secret
           metadata:
             name: "{{ quay_rfe_robot_name }}"
             namespace: "{{ quay_rfe_namespace }}"
-          type: Opaque
+          type: kubernetes.io/dockerconfigjson
         state: present
         validate_certs: yes
 
