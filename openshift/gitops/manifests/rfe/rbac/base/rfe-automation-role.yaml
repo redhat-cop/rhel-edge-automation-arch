@@ -44,10 +44,3 @@ rules:
     verbs:
       - get
       - list
-  - apiGroups:
-      - quay.redhat.com
-    resources:
-      - QuayRegistry
-    verbs:
-      - get
-      - list
