@@ -1,0 +1,224 @@
+- name: Setup Quay Registry
+  gather_facts: no
+  hosts: localhost
+  vars:
+    quay_namespace: quay
+    quay_registry_name: quay
+    quay_rfe_namespace: rfe
+    quay_rfe_organization: rfe
+    quay_rfe_repository_description: Repoistory Hosting RFE Container Images
+    quay_rfe_repository_name: rfe-images
+    quay_rfe_robot_description: Account to Publish RFE Container Images
+    quay_rfe_robot_name: publisher
+    quay_rfe_secret_name: quay-rfe-setup
+    quay_rfe_username: rfe-user
+    quay_rfe_user_email: "{{ quay_rfe_username }}@quay.local"
+  tasks:
+    - name: Check for Quay RFE Setup Secret
+      community.kubernetes.k8s_info:
+        api_key: "{{ lookup('file', '/var/run/secrets/kubernetes.io/serviceaccount/token') }}"
+        api_version: v1
+        ca_cert: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+        host: https://kubernetes.default.svc
+        kind: Secret
+        name: "{{ quay_rfe_secret_name }}"
+        namespace: "{{ quay_rfe_namespace }}"
+        validate_certs: yes
+      register: quay_setup_secret
+
+    - name: Create Quay RFE Setup Secret if Missing
+      block:
+        - name: Generate Initial Quay User Password
+          ansible.builtin.shell:
+            cmd: cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 15 | head -n 1
+          register: random_password
+
+        - name: Set Password Fact
+          ansible.builtin.set_fact:
+            quay_rfe_password: "{{ random_password.stdout }}"
+
+        - name: Create Secret Resource
+          community.kubernetes.k8s:
+            api_key: "{{ lookup('file', '/var/run/secrets/kubernetes.io/serviceaccount/token') }}"
+            api_version: v1
+            ca_cert: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+            host: https://kubernetes.default.svc
+            resource_definition:
+              apiVersion: v1
+              data:
+                org: "{{ quay_rfe_organization | b64encode }}"
+                password: "{{ quay_rfe_password | b64encode }}"
+                username: "{{ quay_rfe_username | b64encode }}"
+              kind: Secret
+              metadata:
+                name: "{{ quay_rfe_secret_name }}"
+                namespace: "{{ quay_rfe_namespace }}"
+              type: Opaque
+            state: present
+            validate_certs: yes
+      when:
+        - quay_setup_secret.resources | count == 0
+
+    - name: Populate Quay RFE Facts from Secret
+      block:
+        - name: Assert Data Exists in Secret
+          ansible.builtin.assert:
+            fail_msg: >
+              Make sure the Quay RFE setup secret contains the fields:
+                - org
+                - password
+                - username
+            that:
+              - quay_setup_secret.resources[0].data.org is defined
+              - quay_setup_secret.resources[0].data.password is defined
+              - quay_setup_secret.resources[0].data.username is defined
+
+        - name: Set Initial Quay Username/Password/Organization Facts
+          ansible.builtin.set_fact:
+            quay_rfe_organization: "{{ quay_setup_secret.resources[0].data.org | b64decode }}"
+            quay_rfe_password: "{{ quay_setup_secret.resources[0].data.password | b64decode }}"
+            quay_rfe_username: "{{ quay_setup_secret.resources[0].data.username | b64decode }}"
+      when:
+        - quay_setup_secret.resources | count == 1
+
+    - name: Query Quay Registry
+      vars:
+        json_query_filter: "resources[0].status.conditions[?reason=='HealthChecksPassing'].status"
+      community.kubernetes.k8s_info:
+        api_key: "{{ lookup('file', '/var/run/secrets/kubernetes.io/serviceaccount/token') }}"
+        api_version: quay.redhat.com/v1
+        ca_cert: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+        host: https://kubernetes.default.svc
+        kind: QuayRegistry
+        name: "{{ quay_registry_name }}"
+        namespace: "{{ quay_namespace }}"
+        validate_certs: yes
+      delay: 10
+      register: quay_registry_response
+      retries: 120
+      until:
+        - quay_registry_response | json_query(json_query_filter) | first == "True"
+
+    - name: Set Quay Route Fact
+      ansible.builtin.set_fact:
+        quay_route: "{{ quay_registry_response.resources[0].status.registryEndpoint }}"
+
+    - name: Create RFE User
+      vars:
+        quay_password: "{{ quay_rfe_password }}"
+        quay_user_email: "{{ quay_rfe_user_email }}"
+        quay_username: "{{ quay_rfe_username }}"
+      ansible.builtin.include_role:
+        name: quay-raw-create-user
+
+    - name: Create RFE Organization
+      vars:
+        quay_api_body:
+          name: "{{ quay_rfe_organization }}"
+        quay_api_status_codes:
+          - 201
+          - 400
+        quay_api_uri: "/api/v1/organization/"
+        quay_api_verb: POST
+      ansible.builtin.include_role:
+        name: quay-raw-api
+
+    - name: "Check for Failure Conditions for Task: Create RFE Organization"
+      ansible.builtin.fail:
+        msg: "Create RFE Organization Failed"
+      when:
+        - quay_api_response.status != 201
+        - '"A user or organization with this name already exists" not in quay_api_response.json.error_message'
+
+    - name: Create RFE Repository
+      vars:
+        quay_api_body:
+          description: "{{ quay_rfe_repository_description }}"
+          namespace: "{{ quay_rfe_organization }}"
+          repo_kind: image
+          repository: "{{ quay_rfe_repository_name }}"
+          visibility: private
+        quay_api_status_codes:
+          - 201
+          - 400
+        quay_api_uri:
+          "/api/v1/repository"
+        quay_api_verb: POST
+      ansible.builtin.include_role:
+        name: quay-raw-api
+
+    - name: "Check for Failure Conditions for Task: Create RFE Repository"
+      ansible.builtin.fail:
+        msg: "Create RFE Organization Failed"
+      when:
+        - quay_api_response.status != 201
+        - '"Repository already exists" not in quay_api_response.json.error_message'
+
+    - name: Query RFE Robot Account
+      vars:
+        quay_api_body: ""
+        quay_api_status_codes:
+          - 200
+          - 400
+        quay_api_uri: "/api/v1/organization/{{ quay_rfe_organization }}/robots/{{ quay_rfe_robot_name }}"
+        quay_api_verb: GET
+      ansible.builtin.include_role:
+        name: quay-raw-api
+  
+    - name: "Check for Failure Conditions for Task: Query RFE Robot Account"
+      ansible.builtin.fail:
+        msg: "Create RFE Robot Account Failed"
+      when:
+        - quay_api_response.status != 200
+        - '"Could not find robot with specified username" not in quay_api_response.json.message'
+
+    - name: Create RFE Robot Account if Missing
+      vars:
+        quay_api_body:
+          description: "{{ quay_rfe_robot_description | default('') }}"
+        quay_api_status_codes:
+          - 201
+        quay_api_uri: "/api/v1/organization/{{ quay_rfe_organization }}/robots/{{ quay_rfe_robot_name }}"
+        quay_api_verb: PUT
+      ansible.builtin.include_role:
+        name: quay-raw-api
+      when:
+        - quay_api_response.status != 200
+
+    - name: Create/Update RFE Robot Secret
+      vars:
+        dockerconfigjson: |
+          {
+            "auths": {
+              "{{ quay_route | regex_replace('https://') }}": {
+                "auth": "{{ (quay_api_response.json.name + ':' + quay_api_response.json.token) | b64encode }}"
+              }
+            }
+          }
+      community.kubernetes.k8s:
+        api_key: "{{ lookup('file', '/var/run/secrets/kubernetes.io/serviceaccount/token') }}"
+        api_version: v1
+        ca_cert: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+        host: https://kubernetes.default.svc
+        resource_definition:
+          apiVersion: v1
+          data:
+            .dockerconfigjson: "{{ dockerconfigjson | to_nice_json | b64encode }}"
+          kind: Secret
+          metadata:
+            name: "{{ quay_rfe_robot_name }}"
+            namespace: "{{ quay_rfe_namespace }}"
+          type: kubernetes.io/dockerconfigjson
+        state: present
+        validate_certs: yes
+
+    - name: Add RFE Robot Account Permissions to RFE Repository
+      vars:
+        quay_api_body:
+          role: write
+        quay_api_status_codes:
+          - 200
+        quay_api_uri: "/api/v1/repository/{{ quay_rfe_organization }}/{{ quay_rfe_repository_name }}/permissions/user/{{ quay_rfe_organization }}+{{ quay_rfe_robot_name }}"
+        quay_api_verb: PUT
+      ansible.builtin.include_role:
+        name: quay-raw-api

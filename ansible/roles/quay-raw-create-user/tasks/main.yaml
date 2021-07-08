@@ -1,0 +1,46 @@
+- name: Assert Required Variables are Defined
+  ansible.builtin.assert:
+    fail_msg: >
+      Make sure the following variables are defined before using this role:
+        - quay_password
+        - quay_route
+        - quay_user_email
+        - quay_username
+    that:
+      - quay_password is defined
+      - quay_route is defined
+      - quay_user_email is defined
+      - quay_username is defined
+
+- name: Wait for Quay Application and Load Initial CSRF Token
+  ansible.builtin.uri:
+    return_content: yes
+    status_code: 200
+    url: "{{ quay_route }}"
+    validate_certs: no
+  delay: 10
+  register: quay_app_response
+  retries: 60
+
+- name: Set CSRF Token
+  ansible.builtin.set_fact:
+    x_csrf_token: "{{ quay_app_response.content | regex_search(csrf_pattern, '\\1', multiline=True) | first }}"
+
+- name: Create Quay User
+  ansible.builtin.uri:
+    body_format: json
+    body:
+      username: "{{ quay_username }}"
+      email: "{{ quay_user_email }}"
+      password: "{{ quay_password }}"
+      repeatPassword: "{{ quay_password }}"
+    headers:
+      cookie: "{{ quay_app_response.cookies_string }}"
+      x-csrf-token: "{{ x_csrf_token | urlencode }}"
+    method: POST
+    url: "{{ quay_route }}/api/v1/user/"
+    validate_certs: no
+  register: quay_user_response
+  failed_when:
+    - quay_user_response.status != 200
+    - '"The username already exists" not in quay_user_response.json.error_message'
