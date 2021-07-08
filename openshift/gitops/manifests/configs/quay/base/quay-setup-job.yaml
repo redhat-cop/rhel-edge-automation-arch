@@ -30,7 +30,7 @@ spec:
               mkdir -p $GIT_DIRECTORY
               git clone $GIT_URL $GIT_DIRECTORY
               ansible-galaxy collection install -r $GIT_DIRECTORY/ansible/collections/requirements.yaml
-              ansible-playbook GIT_DIRECTORY/$ANSIBLE_PLAYBOOK
+              ansible-playbook $GIT_DIRECTORY/$ANSIBLE_PLAYBOOK
           imagePullPolicy: Always
           name: ansible-rfe-runner
       dnsPolicy: ClusterFirst
