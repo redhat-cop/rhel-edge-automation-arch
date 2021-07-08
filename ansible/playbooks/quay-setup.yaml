@@ -95,7 +95,7 @@
         validate_certs: yes
       delay: 10
       register: quay_registry_response
-      retries: 60
+      retries: 120
       until:
         - quay_registry_response | json_query(json_query_filter) | first == "True"
 
