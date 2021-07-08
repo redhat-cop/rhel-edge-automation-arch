@@ -12,6 +12,9 @@ spec:
     - name: blueprint-dir
       description: Directory Contaning blueprint.toml File
       type: string
+    - name: repository-name
+      description: Name of the Quay Repository
+      type: string
   steps:
     - name: create-quay-repository
       image: image-registry.openshift-image-registry.svc:5000/rfe/ansible-rfe-runner:latest
