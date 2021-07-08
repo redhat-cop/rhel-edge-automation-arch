@@ -1,0 +1,77 @@
+- name: Verify Blueprint Source Directory is Defined
+  ansible.builtin.assert:
+    fail_msg: Blueprints Source Directory Must be Defined
+    that:
+      - blueprint_source_dir is defined
+
+- name: Validate Blueprint Directory and Blueprint file Exists
+  local_action: ansible.builtin.stat path="{{ item }}"
+  become: no
+  register: blueprint_exists
+  failed_when: not blueprint_exists.stat.exists
+  connection: local
+  loop:
+    - "{{ blueprint_source_dir }}"
+    - "{{ blueprint_source_dir }}/blueprint.toml"
+
+- name: Create Blueprints Directory
+  ansible.builtin.file:
+    path: "{{ base_rpm_ostree_blueprints_dir }}"
+    state: directory
+
+- name: Set Blueprint Facts
+  ansible.builtin.set_fact:
+    blueprint_name: "{{ blueprint_source_dir | basename }}"
+    build_blueprint_dir: "{{ base_rpm_ostree_blueprints_dir }}/{{ blueprint_source_dir | basename }}"
+
+- name: Copy Blueprints Directory to Image Builder
+  ansible.builtin.copy:
+    dest: "{{ build_blueprint_dir }}/"
+    src: "{{ blueprint_source_dir }}/"
+
+- name: Push Blueprint to Server
+  ansible.builtin.command: >
+    composer-cli blueprints push "{{ build_blueprint_dir }}/blueprint.toml"
+
+- name: Resolve Dependencies
+  ansible.builtin.command: >
+    composer-cli blueprints depsolve {{ blueprint_name }}
+
+- name: Freeze Blueprint
+  ansible.builtin.command: >
+    composer-cli -j blueprints freeze {{ blueprint_name }}
+  register: frozen_blueprint
+
+- name: Set Blueprint Version Number
+  ansible.builtin.set_fact:
+    blueprint_version: "{{ (frozen_blueprint.stdout | from_json).blueprints[0].blueprint.version }}"
+
+- name: Image Builder
+  block:
+    - name: Compose Image
+      ansible.builtin.command: >
+        composer-cli -j compose start-ostree {{ blueprint_name }} rhel-edge-commit
+      register: composed_image
+
+    - name: Set Build Number
+      ansible.builtin.set_fact:
+        build_id: "{{ (composed_image.stdout | from_json).build_id }}"
+
+    - name: Wait for Image Build to Complete
+      ansible.builtin.command: >
+        composer-cli -j compose status
+      changed_when: false
+      delay: 30
+      failed_when: >
+        not (image_build_status.stdout | from_json | selectattr('id', 'equalto', build_id) | list | first).finished and
+        (image_build_status.stdout | from_json | selectattr('id', 'equalto', build_id) | list | first).status != "FINISHED"
+      register: image_build_status
+      retries: 200
+      until: >
+        (image_build_status.stdout | from_json | selectattr('id', 'equalto', build_id) | list | first).finished and
+        (image_build_status.stdout | from_json | selectattr('id', 'equalto', build_id) | list | first).status == "FINISHED"
+
+- name: Save Commit ID to File
+  local_action: ansible.builtin.copy content="{{ build_id }}" dest="{{ build_commit_output_file }}"
+  become: no
+  connection: local

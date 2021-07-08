@@ -72,3 +72,17 @@ spec:
       workspaces:
         - name: workspace
           workspace: shared-workspace
+    - name: rfe-oci-build-image
+      taskRef:
+        name: rfe-oci-build-image
+        kind: Task
+      params:
+        - name: blueprint-dir
+          value: /workspace/workspace/blueprints/$(params.blueprint-dir)
+      runAfter:
+        - "git-clone-blueprints"
+        - "git-clone-tooling"
+        - "rfe-oci-quay-repository"
+      workspaces:
+        - name: workspace
+          workspace: shared-workspace
