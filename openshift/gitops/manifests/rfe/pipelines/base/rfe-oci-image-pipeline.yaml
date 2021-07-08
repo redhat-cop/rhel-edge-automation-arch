@@ -1,0 +1,74 @@
+apiVersion: tekton.dev/v1beta1
+kind: Pipeline
+metadata:
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+    argocd.argoproj.io/sync-wave: "5"
+  name: rfe-oci-pipeline
+spec:
+  params:
+    - name: blueprints-git-url
+      description: Blueprint Repository URL
+      default: https://github.com/redhat-cop/rhel-edge-automation-arch.git
+      type: string
+    - name: blueprints-git-revision
+      description: Blueprint Repository URL Reference
+      default: blueprints
+      type: string
+    - name: tooling-git-url
+      description: Tooling Repository URL
+      default: https://github.com/nasx/rhel-edge-automation-arch.git
+      type: string
+    - name: tooling-git-revision
+      description: Tooling Repository URL Reference
+      default: oci-pipeline
+      type: string
+    - name: blueprint-dir
+      description: Directory in Blueprints repository containing blueprint
+      type: string
+  workspaces:
+    - name: shared-workspace
+  tasks:
+    - name: git-clone-tooling
+      taskRef:
+        name: git-clone
+        kind: ClusterTask
+      params:
+        - name: url
+          value: $(params.tooling-git-url)
+        - name: revision
+          value: $(params.tooling-git-revision)
+        - name: subdirectory
+          value: "tooling"
+      workspaces:
+        - name: output
+          workspace: shared-workspace
+    - name: git-clone-blueprints
+      taskRef:
+        name: git-clone
+        kind: ClusterTask
+      params:
+        - name: url
+          value: $(params.blueprints-git-url)
+        - name: revision
+          value: $(params.blueprints-git-revision)
+        - name: subdirectory
+          value: "blueprints"
+      workspaces:
+        - name: output
+          workspace: shared-workspace
+    - name: rfe-oci-quay-repository
+      taskRef:
+        name: rfe-oci-quay-repository
+        kind: Task
+      params:
+        - name: blueprint-dir
+          value: /workspace/workspace/blueprints/$(params.blueprint-dir)
+        - name: repository-name
+          value: $(params.blueprint-dir)
+      runAfter:
+        - "git-clone-blueprints"
+        - "git-clone-tooling"
+      workspaces:
+        - name: workspace
+          workspace: shared-workspace
