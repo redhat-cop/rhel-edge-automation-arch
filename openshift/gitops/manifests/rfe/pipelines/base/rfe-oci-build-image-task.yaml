@@ -16,6 +16,9 @@ spec:
       description: Name of the secret containing the SSH key for the image builder
       default: "image-builder-ssh-key"
       type: string
+  results:
+    - name: build-commit
+      description: Commit ID of the Build
   steps:
     - name: rfe-oci-build-image
       image: image-registry.openshift-image-registry.svc:5000/rfe/ansible-rfe-runner:latest
