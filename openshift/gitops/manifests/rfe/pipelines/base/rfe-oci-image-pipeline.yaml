@@ -29,7 +29,7 @@ spec:
   results:
     - name: build-commit
       description: Commit ID of the Build
-    - name: image-repository-path
+    - name: image-path
       description: Path to Container Registry
     - name: image-tags
       description: Tags Associated with Image

@@ -15,6 +15,9 @@ spec:
     - name: repository-name
       description: Name of the Quay Repository
       type: string
+  results:
+    - name: image-path
+      description: Path to Container Image
   steps:
     - name: create-quay-repository
       image: image-registry.openshift-image-registry.svc:5000/rfe/ansible-rfe-runner:latest
@@ -23,7 +26,9 @@ spec:
         - |-
           cd tooling/ansible
           ansible-galaxy collection install -r collections/requirements.yaml
-          ansible-playbook playbooks/oci-create-repository.yaml -e quay_repository_name=$(params.repository-name)
+          ansible-playbook playbooks/oci-create-repository.yaml \
+            -e quay_repository_name=$(params.repository-name) \
+            -e quay_image_path_output_file=$(results.image-path.path)
       command:
         - /bin/bash
         - -c

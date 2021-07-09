@@ -13,10 +13,12 @@
       ansible.builtin.assert:
         fail_msg: >
           Make sure the following extra variables are defined before running this playbook:
+            - quay_image_path_output_file
             - quay_repository_name
             - quay_setup_secret_name
             - quay_setup_secret_namespace
         that:
+          - quay_image_path_output_file is defined
           - quay_repository_name is defined
           - quay_setup_secret_name is defined
           - quay_setup_secret_namespace is defined
@@ -112,3 +114,8 @@
         quay_route: "https://{{ quay_endpoint }}"
       ansible.builtin.include_role:
         name: quay-raw-api
+
+    - name: Save Quay Image Path to File
+      ansible.builtin.copy:
+        content: "{{ quay_endpoint }}/{{ quay_organization }}/{{ quay_repository_name }}"
+        dest: "{{ quay_image_path_output_file }}"
