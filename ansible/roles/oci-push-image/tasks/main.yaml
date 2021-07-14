@@ -13,11 +13,12 @@
       - quay_image_path is defined
 
 - name: Validate Blueprint Directory and Blueprint file Exists
-  local_action: ansible.builtin.stat path="{{ item }}"
+  ansible.builtin.stat:
+    path: "{{ item }}"
   become: no
-  register: blueprint_exists
+  delegate_to: localhost
   failed_when: not blueprint_exists.stat.exists
-  connection: local
+  register: blueprint_exists
   loop:
     - "{{ blueprint_source_dir }}"
     - "{{ blueprint_source_dir }}/blueprint.toml"
@@ -40,13 +41,13 @@
 
 - name: Assert Finished Build ID Found
   ansible.builtin.assert:
-    fail_msg: "Did not find a valid finished build for the commit id {{ build_commit }}!"
+    fail_msg: "Did not find a valid finished build for the commit id {{ build_commit_id }}!"
     that:
-      - compose_list.stdout | from_json | selectattr('id', 'equalto', build_commit) | list | length == 1
+      - compose_list.stdout | from_json | selectattr('id', 'equalto', build_commit_id) | list | length == 1
 
 - name: Set Remote Tar Directory
   ansible.builtin.set_fact:
-    tar_directory: "/tmp/{{ build_commit }}"
+    tar_directory: "/tmp/{{ build_commit_id }}"
 
 - name: Create Remote Tar Directory
   ansible.builtin.file:
@@ -54,8 +55,8 @@
     state: directory
 
 - name: Generate Edge Image File
-  command: >
-    composer-cli compose image {{ build_commit }}
+  ansible.builtin.command: >
+    composer-cli compose image {{ build_commit_id }}
   args:
     chdir: "{{ tar_directory }}"
 
@@ -66,7 +67,7 @@
     depth: 0
     paths: "{{ tar_directory }}"
     patterns:
-      - "{{ build_commit }}-.*-container.tar"
+      - "{{ build_commit_id }}-.*-container.tar"
     use_regex: yes
   register: find_results
   failed_when:
@@ -74,9 +75,11 @@
     - find_results.files | list != 1
 
 - name: Create Local Tar Directory
-  local_action: ansible.builtin.file state=directory path="{{ tar_directory }}"
-  connection: local
+  ansible.builtin.file:
+    path: "{{ tar_directory }}"
+    state: directory
   become: no
+  delegate_to: localhost
 
 - name: Fetch RFE Build tar
   become: no
@@ -99,6 +102,8 @@
       - "copy"
       - "oci-archive:{{ find_results.files[0].path | quote }}"
       - "docker://{{ quay_image_path | quote }}:latest"
+  become: no
+  delegate_to: localhost
 
 - name: Add Version Tag
   ansible.builtin.command:
@@ -111,14 +116,20 @@
       - "copy"
       - "docker://{{ quay_image_path | quote }}:latest"
       - "docker://{{ quay_image_path | quote }}:{{ blueprint_version | quote }}"
+  become: no
+  delegate_to: localhost
 
 - name: Set Tag List
   ansible.builtin.set_fact:
     tag_list:
       - latest
       - "{{ blueprint_version }}"
+  become: no
+  delegate_to: localhost
 
 - name: Save Tag List to Output File
   ansible.builtin.copy:
     content: "{{ tag_list | to_json }}"
     dest: "{{ image_tags_output_file }}"
+  become: no
+  delegate_to: localhost
