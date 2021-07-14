@@ -10,7 +10,8 @@ spec:
     dockerfile: |
       FROM registry.access.redhat.com/ubi8/python-38
       USER 0
-      RUN pip install --upgrade pip && \
+      RUN dnf install skopeo -y && \
+          pip install --upgrade pip && \
           pip install openshift && \
           pip install jmespath && \
           pip install netaddr && \

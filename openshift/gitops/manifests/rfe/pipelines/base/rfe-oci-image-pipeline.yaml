@@ -29,10 +29,13 @@ spec:
   results:
     - name: build-commit
       description: Commit ID of the Build
+      value: $(tasks.rfe-oci-build-image.build-commit)
     - name: image-path
       description: Path to Container Registry
+      value: $(tasks.rfe-oci-quay-repository.image-path)
     - name: image-tags
       description: Tags Associated with Image
+      value: $(tasks.rfe-oci-push-image.image-tags)
   workspaces:
     - name: shared-workspace
   tasks:
@@ -88,6 +91,22 @@ spec:
           value: /workspace/workspace/blueprints/$(params.blueprint-dir)
       runAfter:
         - "rfe-oci-quay-repository"
+      workspaces:
+        - name: workspace
+          workspace: shared-workspace
+    - name: rfe-oci-push-image
+      taskRef:
+        name: rfe-oci-push-image
+        kind: Task
+      params:
+        - name: blueprint-dir
+          value: /workspace/workspace/blueprints/$(params.blueprint-dir)
+        - name: build-commit
+          value: $(tasks.rfe-oci-build-image.results.build-commit)
+        - name: image-path
+          value: $(tasks.rfe-oci-quay-repository.results.image-path)
+      runAfter:
+        - "rfe-oci-build-image"
       workspaces:
         - name: workspace
           workspace: shared-workspace

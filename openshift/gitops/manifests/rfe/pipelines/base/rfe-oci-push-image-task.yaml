@@ -4,7 +4,7 @@ metadata:
   annotations:
     argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
     argocd.argoproj.io/sync-wave: "5"
-  name: rfe-oci-build-image
+  name: rfe-oci-push-image
 spec:
   workspaces:
     - name: workspace
@@ -16,9 +16,14 @@ spec:
       description: Name of the secret containing the SSH key for the image builder
       default: "image-builder-ssh-key"
       type: string
-  results:
     - name: build-commit
       description: Commit ID of the Build
+      type: string
+    - name: image-path
+      description: Path to Container Image
+  results:
+    - name: image-tags
+      description: Tags Associated with Image
   steps:
     - name: rfe-oci-build-image
       image: image-registry.openshift-image-registry.svc:5000/rfe/ansible-rfe-runner:latest
@@ -31,8 +36,10 @@ spec:
             -u cloud-user \
             --private-key=/var/secrets/image-builder-ssh/ssh-privatekey \
             -e blueprint_source_dir=$(params.blueprint-dir) \
-            -e build_commit_output_file=$(results.build-commit.path) \
-            playbooks/oci-create-image.yaml
+            -e build_commit_id=$(params.build-commit) \
+            -e quay_image_path=$(params.image-path) \
+            -e image_tags_output_file=$(results.image-tags.path) \
+            playbooks/oci-push-image.yaml 
       command:
         - /bin/bash
         - -c

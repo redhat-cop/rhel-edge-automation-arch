@@ -1,0 +1,2 @@
+base_rpm_ostree_dir: /opt/rfe-rpm-ostree
+build_commit_output_file: /tmp/rfe-rpm-ostree-commit
