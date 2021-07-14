@@ -20,8 +20,8 @@ spec:
     - name: build-commit
       description: Commit ID of the Build
   steps:
-    - name: rfe-oci-build-image
-      image: image-registry.openshift-image-registry.svc:5000/rfe/ansible-rfe-runner-skopeo:latest
+    - name: build-image-playbook
+      image: image-registry.openshift-image-registry.svc:5000/rfe/ansible-rfe-runner:latest
       workingDir: /workspace/workspace
       args:
         - |-

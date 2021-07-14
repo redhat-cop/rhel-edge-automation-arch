@@ -19,8 +19,8 @@ spec:
     - name: image-path
       description: Path to Container Image
   steps:
-    - name: create-quay-repository
-      image: image-registry.openshift-image-registry.svc:5000/rfe/ansible-rfe-runner-skopeo:latest
+    - name: create-quay-repository-playbook
+      image: image-registry.openshift-image-registry.svc:5000/rfe/ansible-rfe-runner:latest
       workingDir: /workspace/workspace
       args:
         - |-
