@@ -26,7 +26,7 @@ spec:
       description: Tags Associated with Image
   steps:
     - name: rfe-oci-build-image
-      image: image-registry.openshift-image-registry.svc:5000/rfe/ansible-rfe-runner:latest
+      image: image-registry.openshift-image-registry.svc:5000/rfe/ansible-rfe-runner-skopeo:latest
       workingDir: /workspace/workspace
       args:
         - |-

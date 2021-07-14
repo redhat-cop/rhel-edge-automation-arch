@@ -20,7 +20,7 @@ spec:
       description: Path to Container Image
   steps:
     - name: create-quay-repository
-      image: image-registry.openshift-image-registry.svc:5000/rfe/ansible-rfe-runner:latest
+      image: image-registry.openshift-image-registry.svc:5000/rfe/ansible-rfe-runner-skopeo:latest
       workingDir: /workspace/workspace
       args:
         - |-
