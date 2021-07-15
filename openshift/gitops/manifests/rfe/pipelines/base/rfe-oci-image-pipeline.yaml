@@ -29,13 +29,13 @@ spec:
   results:
     - name: build-commit
       description: Commit ID of the Build
-      value: $(tasks.rfe-oci-build-image.build-commit)
+      value: $(tasks.rfe-oci-build-image.results.build-commit)
     - name: image-path
       description: Path to Container Registry
-      value: $(tasks.rfe-oci-quay-repository.image-path)
+      value: $(tasks.rfe-oci-quay-repository.results.image-path)
     - name: image-tags
       description: Tags Associated with Image
-      value: $(tasks.rfe-oci-push-image.image-tags)
+      value: $(tasks.rfe-oci-push-image.results.image-tags)
   workspaces:
     - name: shared-workspace
   tasks:
