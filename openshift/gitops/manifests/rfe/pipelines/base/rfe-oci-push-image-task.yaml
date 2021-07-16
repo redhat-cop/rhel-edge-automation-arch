@@ -1,0 +1,68 @@
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+    argocd.argoproj.io/sync-wave: "5"
+  name: rfe-oci-push-image
+spec:
+  workspaces:
+    - name: workspace
+  params:
+    - name: blueprint-dir
+      description: Directory Contaning blueprint.toml File
+      type: string
+    - name: image-builder-secret
+      description: Name of the secret containing the SSH key for the image builder
+      default: "image-builder-ssh-key"
+      type: string
+    - name: build-commit
+      description: Commit ID of the Build
+      type: string
+    - name: image-path
+      description: Path to Container Image
+  results:
+    - name: image-tags
+      description: Tags Associated with Image
+  steps:
+    - name: push-image-playbook
+      image: image-registry.openshift-image-registry.svc:5000/rfe/ansible-rfe-runner:latest
+      workingDir: /workspace/workspace
+      args:
+        - |-
+          cd tooling/ansible
+          ansible-galaxy collection install -r collections/requirements.yaml
+          ansible-playbook \
+            -u cloud-user \
+            --private-key=/var/secrets/image-builder-ssh/ssh-privatekey \
+            -e blueprint_source_dir=$(params.blueprint-dir) \
+            -e build_commit_id=$(params.build-commit) \
+            -e quay_image_path=$(params.image-path) \
+            -e image_tags_output_file=$(results.image-tags.path) \
+            playbooks/oci-push-image.yaml 
+      command:
+        - /bin/bash
+        - -c
+      volumeMounts:
+        - name: publisher
+          mountPath: /var/secrets/publisher
+          readOnly: true
+        - name: quay-rfe-setup
+          mountPath: /var/secrets/quay-rfe-setup
+          readOnly: true
+        - name: image-builder-ssh
+          mountPath: /var/secrets/image-builder-ssh
+          readOnly: true
+  volumes:
+    - name: publisher
+      secret:
+        defaultMode: 0440
+        secretName: publisher
+    - name: quay-rfe-setup
+      secret:
+        defaultMode: 0440
+        secretName: quay-rfe-setup
+    - name: image-builder-ssh
+      secret:
+        defaultMode: 0440
+        secretName: "$(params.image-builder-secret)"

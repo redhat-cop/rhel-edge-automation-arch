@@ -1,0 +1,13 @@
+- name: Generate In-Memory Inventory of OpenShift VMs
+  hosts: localhost
+  roles:
+    - role: openshift-image-builder-imi
+      tags: openshift-image-builder-imi
+
+- name: Push OCI Image
+  hosts: image-builder
+  become: yes
+  tasks:
+    - name: Push OCI Image
+      include_role:
+        name: oci-push-image

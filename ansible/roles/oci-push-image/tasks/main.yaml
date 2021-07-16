@@ -1,0 +1,135 @@
+- name: Assert Extra Variables are Defined
+  ansible.builtin.assert:
+    fail_msg: >
+      Make sure the following extra variables are defined before running this role:
+        - blueprint_source_dir
+        - build_commit_id
+        - image_tags_output_file
+        - quay_image_path
+    that:
+      - blueprint_source_dir is defined
+      - build_commit_id is defined
+      - image_tags_output_file is defined
+      - quay_image_path is defined
+
+- name: Validate Blueprint Directory and Blueprint file Exists
+  ansible.builtin.stat:
+    path: "{{ item }}"
+  become: no
+  delegate_to: localhost
+  failed_when: not blueprint_exists.stat.exists
+  register: blueprint_exists
+  loop:
+    - "{{ blueprint_source_dir }}"
+    - "{{ blueprint_source_dir }}/blueprint.toml"
+
+- name: Load Contents of Blueprint
+  ansible.builtin.set_fact:
+    blueprint_contents: "{{ lookup('file', blueprint_source_dir + '/blueprint.toml') }}"
+  become: no
+  delegate_to: localhost
+
+- name: Extract Blueprint Version
+  ansible.builtin.set_fact:
+    blueprint_version: "{{ blueprint_contents | regex_search('^version.*\"(.*)\"', '\\1', multiline=True) | first }}"
+
+- name: List Finished Builds
+  ansible.builtin.command: >
+    composer-cli -j compose list finished
+  changed_when: false
+  register: compose_list
+
+- name: Assert Finished Build ID Found
+  ansible.builtin.assert:
+    fail_msg: "Did not find a valid finished build for the commit id {{ build_commit_id }}!"
+    that:
+      - compose_list.stdout | from_json | selectattr('id', 'equalto', build_commit_id) | list | length == 1
+
+- name: Set Remote Tar Directory
+  ansible.builtin.set_fact:
+    tar_directory: "/tmp/{{ build_commit_id }}"
+
+- name: Create Remote Tar Directory
+  ansible.builtin.file:
+    path: "{{ tar_directory }}"
+    state: directory
+
+- name: Generate Edge Image File
+  ansible.builtin.command: >
+    composer-cli compose image {{ build_commit_id }}
+  args:
+    chdir: "{{ tar_directory }}"
+
+- name: Find Edge Image File
+  ansible.builtin.find:
+    age: "-5m"
+    age_stamp: ctime
+    depth: 0
+    paths: "{{ tar_directory }}"
+    patterns:
+      - "{{ build_commit_id }}-.*-container.tar"
+    use_regex: yes
+  register: find_results
+  failed_when:
+    - find_results.failed == true
+    - find_results.files | list != 1
+
+- name: Create Local Tar Directory
+  ansible.builtin.file:
+    path: "{{ tar_directory }}"
+    state: directory
+  become: no
+  delegate_to: localhost
+
+- name: Fetch RFE Build tar
+  become: no
+  ansible.builtin.fetch:
+    dest: "{{ find_results.files[0].path }}"
+    flat: yes
+    src: "{{ find_results.files[0].path }}"
+
+- name: Remove Remote Build Directory
+  ansible.builtin.file:
+    path: "{{ tar_directory }}"
+    state: absent
+
+- name: Copy OCI Tar to Quay
+  ansible.builtin.command:
+    argv:
+      - "skopeo"
+      - "--dest-authfile=/var/secrets/publisher/.dockerconfigjson"
+      - "--dest-tls-verify=false"
+      - "copy"
+      - "oci-archive:{{ find_results.files[0].path | quote }}"
+      - "docker://{{ quay_image_path | quote }}:latest"
+  become: no
+  delegate_to: localhost
+
+- name: Add Version Tag
+  ansible.builtin.command:
+    argv:
+      - "skopeo"
+      - "--src-authfile=/var/secrets/publisher/.dockerconfigjson"
+      - "--src-tls-verify=false"
+      - "--dest-authfile=/var/secrets/publisher/.dockerconfigjson"
+      - "--dest-tls-verify=false"
+      - "copy"
+      - "docker://{{ quay_image_path | quote }}:latest"
+      - "docker://{{ quay_image_path | quote }}:{{ blueprint_version | quote }}"
+  become: no
+  delegate_to: localhost
+
+- name: Set Tag List
+  ansible.builtin.set_fact:
+    tag_list:
+      - latest
+      - "{{ blueprint_version }}"
+  become: no
+  delegate_to: localhost
+
+- name: Save Tag List to Output File
+  ansible.builtin.copy:
+    content: "{{ tag_list | to_json }}"
+    dest: "{{ image_tags_output_file }}"
+  become: no
+  delegate_to: localhost
