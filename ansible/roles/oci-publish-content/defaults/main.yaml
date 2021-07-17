@@ -1,0 +1,3 @@
+httpd_web_root: /opt/rh/httpd24/root/var/www/html
+quay_image_path: quay-quay-quay.apps.cluster-c774.c774.sandbox512.opentlc.com/rfe/hello-world
+quay_image_tag: latest

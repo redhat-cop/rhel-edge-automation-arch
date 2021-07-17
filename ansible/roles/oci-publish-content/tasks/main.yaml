@@ -1,0 +1,67 @@
+- name: Assert Extra Variables are Defined
+  ansible.builtin.assert:
+    fail_msg: >
+      Make sure the following extra variables are defined before running this role:
+        - quay_image_path
+        - quay_image_tag
+    that:
+      - quay_image_path is defined
+      - quay_image_tag is defined
+
+- name: Set Quay Image Path Basename
+  ansible.builtin.set_fact:
+    quay_image_path_basename: "{{ quay_image_path | basename }}"
+
+- name: Set Remote Repository Path
+  ansible.builtin.set_fact:
+    repo_remote_path: "{{ httpd_web_root }}/{{ quay_image_path_basename }}/{{ quay_image_tag }}"
+
+- name: Create Remote Content Directory
+  ansible.builtin.file:
+    path: "{{ repo_remote_path }}"
+    state: directory
+
+- name: Initialize OSTree Repository
+  ansible.builtin.command:
+    argv:
+      - "ostree"
+      - "--repo={{ repo_remote_path }}"
+      - "init"
+      - "--mode=archive"
+
+- name: Add Remote OSTree Repository
+  ansible.builtin.command:
+    argv:
+      - "ostree"
+      - "--repo={{ repo_remote_path }}"
+      - "remote"
+      - "add"
+      - "--no-gpg-verify"
+      - "{{ quay_image_path_basename }}-{{ quay_image_tag }}"
+      - "http://{{ quay_image_path_basename }}-{{ quay_image_tag }}-httpd.rfe.svc.cluster.local/repo"
+  ignore_errors: yes
+  register: ostree_remote_add
+
+- name: "Check for Failure Conditions in Task: Add Remote OSTree Repository"
+  ansible.builtin.fail:
+    msg: Add Remote OSTree Repository Failed"
+  when:
+    - '"Remote configuration for \"{{ quay_image_path_basename }}-{{ quay_image_tag }}\" already exists:" not in ostree_remote_add.stderr'
+
+- name: Mirror OStree Repository from Stage
+  ansible.builtin.command:
+    argv:
+      - "ostree"
+      - "--repo={{ repo_remote_path }}"
+      - "pull"
+      - "--mirror"
+      - "{{ quay_image_path_basename }}-{{ quay_image_tag }}"
+      - "rhel/8/x86_64/edge"
+
+- name: Update OSTree Summary Data
+  ansible.builtin.command:
+    argv:
+      - "ostree"
+      - "summary"
+      - "-u"
+      - "--repo={{ repo_remote_path }}"
