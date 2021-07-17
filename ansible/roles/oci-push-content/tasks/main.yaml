@@ -1,0 +1,101 @@
+- name: Assert Extra Variables are Defined
+  ansible.builtin.assert:
+    fail_msg: >
+      Make sure the following extra variables are defined before running this role:
+        - quay_image_path
+        - quay_image_tag
+    that:
+      - quay_image_path is defined
+      - quay_image_tag is defined
+
+- name: Set Quay Image Path Basename
+  ansible.builtin.set_fact:
+    quay_image_path_basename: "{{ quay_image_path | basename }}"
+
+- name: "Create ImageStream for {{ quay_image_path_basename }}"
+  community.kubernetes.k8s:
+    #api_key: "{{ lookup('file', '/var/run/secrets/kubernetes.io/serviceaccount/token') }}"
+    api_version: v1
+    #ca_cert: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+    #host: https://kubernetes.default.svc
+    resource_definition:
+      apiVersion: image.openshift.io/v1
+      kind: ImageStream
+      metadata:
+        name: "{{ quay_image_path_basename }}"
+        namespace: rfe
+      spec:
+        lookupPolicy:
+          local: false
+        tags:
+        - annotations: null
+          from:
+            kind: DockerImage
+            name: "{{ quay_image_path }}:{{ quay_image_tag }}"
+          importPolicy:
+            insecure: true
+          name: latest
+          referencePolicy:
+            type: Local
+    state: present
+    validate_certs: no
+
+- name: Set Deployment Trigger Fact
+  ansible.builtin.set_fact:
+    deployment_trigger: >-
+      [
+        {
+          "from": {
+            "kind": "ImageStreamTag",
+            "name": "{{ quay_image_path_basename }}:{{ quay_image_tag }}",
+            "namespace": "rfe"
+          },
+          "fieldPath": "spec.template.spec.containers[?(@.name==\"httpd\")].image"
+        }
+      ]
+
+- name: "Create Deployment for {{ quay_image_path_basename }}"
+  community.kubernetes.k8s:
+    #api_key: "{{ lookup('file', '/var/run/secrets/kubernetes.io/serviceaccount/token') }}"
+    api_version: v1
+    #ca_cert: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+    #host: https://kubernetes.default.svc
+    resource_definition:
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        annotations:
+          image.openshift.io/triggers: "{{ deployment_trigger | to_json(separators=(',',':')) }}"
+        labels:
+          app: "{{ quay_image_path_basename }}-httpd"
+          app.kubernetes.io/component: "{{ quay_image_path_basename }}-httpd"
+          app.kubernetes.io/instance: "{{ quay_image_path_basename }}-httpd"
+        name: "{{ quay_image_path_basename }}-httpd"
+        namespace: rfe
+      spec:
+        replicas: 1
+        selector:
+          matchLabels:
+            deployment: "{{ quay_image_path_basename }}-httpd"
+        strategy: {}
+        template:
+          metadata:
+            labels:
+              deployment: "{{ quay_image_path_basename }}-httpd"
+          spec:
+            serviceAccountName: oci-rfe-httpd
+            containers:
+              - image: " "
+                name: httpd
+                ports:
+                  - containerPort: 80
+                    protocol: TCP
+                resources:
+                  requests:
+                    memory: "512Mi"
+                    cpu: "500m"
+                  limits:
+                    memory: "512Mi"
+                    cpu: "500m"
+    state: present
+    validate_certs: no

@@ -1,0 +1,3 @@
+quay_image_path: quay-quay-quay.apps.cluster-c774.c774.sandbox512.opentlc.com/rfe/hello-world
+quay_image_tag: latest
+oci_rfe_http_service_account: oci-rfe-httpd

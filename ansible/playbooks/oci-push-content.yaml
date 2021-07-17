@@ -1,0 +1,6 @@
+- name: Push OCI Content
+  hosts: localhost
+  tasks:
+    - name: Push OCI Content
+      include_role:
+        name: oci-push-content
