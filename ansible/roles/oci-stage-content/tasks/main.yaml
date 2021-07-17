@@ -22,7 +22,7 @@
       apiVersion: image.openshift.io/v1
       kind: ImageStream
       metadata:
-        name: "{{ quay_image_path_basename }}"
+        name: "{{ quay_image_path_basename }}-{{ quay_image_tag }}"
         namespace: rfe
       spec:
         lookupPolicy:
@@ -67,21 +67,21 @@
         annotations:
           image.openshift.io/triggers: "{{ deployment_trigger | to_json(separators=(',',':')) }}"
         labels:
-          app: "{{ quay_image_path_basename }}-httpd"
-          app.kubernetes.io/component: "{{ quay_image_path_basename }}-httpd"
-          app.kubernetes.io/instance: "{{ quay_image_path_basename }}-httpd"
-        name: "{{ quay_image_path_basename }}-httpd"
+          app: "{{ quay_image_path_basename }}-{{ quay_image_tag }}-httpd"
+          app.kubernetes.io/component: "{{ quay_image_path_basename }}-{{ quay_image_tag }}-httpd"
+          app.kubernetes.io/instance: "{{ quay_image_path_basename }}-{{ quay_image_tag }}-httpd"
+        name: "{{ quay_image_path_basename }}-{{ quay_image_tag }}-httpd"
         namespace: rfe
       spec:
         replicas: 1
         selector:
           matchLabels:
-            deployment: "{{ quay_image_path_basename }}-httpd"
+            deployment: "{{ quay_image_path_basename }}-{{ quay_image_tag }}-httpd"
         strategy: {}
         template:
           metadata:
             labels:
-              deployment: "{{ quay_image_path_basename }}-httpd"
+              deployment: "{{ quay_image_path_basename }}-{{ quay_image_tag }}-httpd"
           spec:
             serviceAccountName: "{{ oci_rfe_http_service_account }}"
             containers:
@@ -97,5 +97,34 @@
                   limits:
                     memory: "512Mi"
                     cpu: "500m"
+    state: present
+    validate_certs: no
+
+- name: "Create Service for {{ quay_image_path_basename }}"
+  community.kubernetes.k8s:
+    #api_key: "{{ lookup('file', '/var/run/secrets/kubernetes.io/serviceaccount/token') }}"
+    api_version: v1
+    #ca_cert: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+    #host: https://kubernetes.default.svc
+    resource_definition:
+      apiVersion: v1
+      kind: Service
+      metadata:
+        labels:
+          app: "{{ quay_image_path_basename }}-{{ quay_image_tag }}-httpd"
+          app.kubernetes.io/component: "{{ quay_image_path_basename }}-{{ quay_image_tag }}-httpd"
+          app.kubernetes.io/instance: "{{ quay_image_path_basename }}-{{ quay_image_tag }}-httpd"
+        name: "{{ quay_image_path_basename }}-{{ quay_image_tag }}-httpd"
+        namespace: rfe
+      spec:
+        ports:
+        - name: 80-tcp
+          port: 80
+          protocol: TCP
+          targetPort: 80
+        selector:
+          deployment: "{{ quay_image_path_basename }}-{{ quay_image_tag }}-httpd"
+        sessionAffinity: None
+        type: ClusterIP
     state: present
     validate_certs: no
