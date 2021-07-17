@@ -83,7 +83,7 @@
             labels:
               deployment: "{{ quay_image_path_basename }}-httpd"
           spec:
-            serviceAccountName: oci-rfe-httpd
+            serviceAccountName: "{{ oci_rfe_http_service_account }}"
             containers:
               - image: " "
                 name: httpd
