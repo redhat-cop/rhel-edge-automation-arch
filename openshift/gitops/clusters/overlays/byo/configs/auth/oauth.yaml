@@ -9,4 +9,4 @@ spec:
       type: HTPasswd
       htpasswd:
         fileData:
-          name: htpasswd-secret
+          name: rfe-htpasswd-secret
