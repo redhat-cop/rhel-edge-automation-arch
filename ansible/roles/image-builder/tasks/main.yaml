@@ -31,8 +31,8 @@
     enabled: yes
     name: "{{ item }}"
   loop:
-    - osbuild-composer
-    - cockpit
+    - osbuild-composer.socket
+    - cockpit.socket
     - firewalld
     
 - name: Enable Firewall Ports for Cockpit/Composer
