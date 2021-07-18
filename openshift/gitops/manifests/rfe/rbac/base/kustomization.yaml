@@ -7,5 +7,3 @@ resources:
   - rfe-serviceaccount.yaml
   - rfe-automation-role.yaml
   - rfe-automation-rolebinding.yaml
-  - rfe-automation-role-quay.yaml
-  - rfe-automation-rolebinding-quay.yaml
