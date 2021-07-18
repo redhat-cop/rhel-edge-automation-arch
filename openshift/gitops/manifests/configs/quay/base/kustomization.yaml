@@ -5,4 +5,6 @@ resources:
   - namespace.yaml
   - quayappsubscription.yaml
   - quayregistry.yaml
+  - rfe-automation-role-quay.yaml
+  - rfe-automation-rolebinding-quay.yaml
   - quay-setup-job.yaml
