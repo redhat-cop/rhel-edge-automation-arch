@@ -16,6 +16,12 @@
   ansible.builtin.set_fact:
     repo_remote_path: "{{ httpd_web_root }}/{{ quay_image_path_basename }}/{{ quay_image_tag }}"
 
+- name: Wait for Stage Deployment
+  ansible.builtin.uri:
+    url: "http://{{ quay_image_path_basename }}-{{ quay_image_tag }}-httpd.rfe.svc.cluster.local/repo"
+  delay: 10
+  retries: 60
+
 - name: Create Remote Content Directory
   ansible.builtin.file:
     path: "{{ repo_remote_path }}"
@@ -46,7 +52,8 @@
   ansible.builtin.fail:
     msg: Add Remote OSTree Repository Failed"
   when:
-    - '"Remote configuration for \"{{ quay_image_path_basename }}-{{ quay_image_tag }}\" already exists:" not in ostree_remote_add.stderr'
+    - (ostree_remote_add.failed | bool)
+    - '"Remote configuration for \"" + quay_image_path_basename + "-" + quay_image_tag + "\" already exists:" not in ostree_remote_add.stderr'
 
 - name: Mirror OStree Repository from Stage
   ansible.builtin.command:

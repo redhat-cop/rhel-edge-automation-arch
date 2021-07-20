@@ -12,7 +12,7 @@
   ansible.builtin.set_fact:
     quay_image_path_basename: "{{ quay_image_path | basename }}"
 
-- name: "Create ImageStream for {{ quay_image_path_basename }}:{{ quay_image_tag }}"
+- name: "Create ImageStream for {{ quay_image_path_basename }}-{{ quay_image_tag }}:{{ quay_image_tag }}"
   community.kubernetes.k8s:
     #api_key: "{{ lookup('file', '/var/run/secrets/kubernetes.io/serviceaccount/token') }}"
     api_version: v1
@@ -47,7 +47,7 @@
         {
           "from": {
             "kind": "ImageStreamTag",
-            "name": "{{ quay_image_path_basename }}:{{ quay_image_tag }}",
+            "name": "{{ quay_image_path_basename }}-{{ quay_image_tag }}:{{ quay_image_tag }}",
             "namespace": "rfe"
           },
           "fieldPath": "spec.template.spec.containers[?(@.name==\"httpd\")].image"
