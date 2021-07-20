@@ -157,6 +157,10 @@
         wildcardPolicy: None
     state: present
     validate_certs: yes
+  register: stage_route
+
+- debug:
+    var: stage_route
 
 - name: Save OSTree Content Path to Output File
   ansible.builtin.copy:
