@@ -27,31 +27,8 @@ spec:
           ansible-playbook \
             -e quay_image_path=$(params.image-path) \
             -e quay_image_tag=$(params.image-tag) \
-            -e content_path_output_file=$(results.image-path.path) \
+            -e content_path_output_file=$(results.content-path.path) \
             playbooks/oci-stage-content.yaml
       command:
         - /bin/bash
         - -c
-      volumeMounts:
-        - name: publisher
-          mountPath: /var/secrets/publisher
-          readOnly: true
-        - name: quay-rfe-setup
-          mountPath: /var/secrets/quay-rfe-setup
-          readOnly: true
-        - name: image-builder-ssh
-          mountPath: /var/secrets/image-builder-ssh
-          readOnly: true
-  volumes:
-    - name: publisher
-      secret:
-        defaultMode: 0440
-        secretName: publisher
-    - name: quay-rfe-setup
-      secret:
-        defaultMode: 0440
-        secretName: quay-rfe-setup
-    - name: image-builder-ssh
-      secret:
-        defaultMode: 0440
-        secretName: "$(params.image-builder-secret)"
