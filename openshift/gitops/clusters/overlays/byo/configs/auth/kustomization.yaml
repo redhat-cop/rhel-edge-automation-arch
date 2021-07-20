@@ -8,7 +8,7 @@ resources:
   - rhel-edge-admins-group.yaml
 
 secretGenerator:
-  - name: htpasswd-secret
+  - name: rfe-htpasswd-secret
     namespace: openshift-config
     files:
       - htpasswd=users.htpasswd
