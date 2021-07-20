@@ -159,10 +159,7 @@
     validate_certs: yes
   register: stage_route
 
-- debug:
-    var: stage_route
-
 - name: Save OSTree Content Path to Output File
   ansible.builtin.copy:
-    content: "http://{{ quay_image_path_basename }}-{{ quay_image_tag }}-httpd.rfe.svc.cluster.local/repo"
+    content: "{{ stage_route.result.spec.host }}/repo"
     dest: "{{ content_path_output_file }}"
