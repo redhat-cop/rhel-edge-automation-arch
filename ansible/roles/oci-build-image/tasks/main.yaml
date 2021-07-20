@@ -4,15 +4,16 @@
     that:
       - blueprint_source_dir is defined
 
-- name: Validate Blueprint Directory and Blueprint file Exists
-  local_action: ansible.builtin.stat path="{{ item }}"
+- name: Validate Blueprint Directory and Blueprint File Exists
+  ansible.builtin.stat:
+    path: "{{ item }}"
   become: no
-  register: blueprint_exists
+  delegate_to: localhost
   failed_when: not blueprint_exists.stat.exists
-  connection: local
   loop:
     - "{{ blueprint_source_dir }}"
     - "{{ blueprint_source_dir }}/blueprint.toml"
+  register: blueprint_exists
 
 - name: Create Blueprints Directory
   ansible.builtin.file:
@@ -53,9 +54,9 @@
         composer-cli -j compose start-ostree {{ blueprint_name }} rhel-edge-container
       register: composed_image
 
-    - name: Set Build Number
+    - name: Set Build Commit ID
       ansible.builtin.set_fact:
-        build_id: "{{ (composed_image.stdout | from_json).build_id }}"
+        build_commit_id: "{{ (composed_image.stdout | from_json).build_id }}"
 
     - name: Wait for Image Build to Complete
       ansible.builtin.command: >
@@ -63,15 +64,17 @@
       changed_when: false
       delay: 30
       failed_when: >
-        not (image_build_status.stdout | from_json | selectattr('id', 'equalto', build_id) | list | first).finished and
-        (image_build_status.stdout | from_json | selectattr('id', 'equalto', build_id) | list | first).status != "FINISHED"
+        not (image_build_status.stdout | from_json | selectattr('id', 'equalto', build_commit_id) | list | first).finished and
+        (image_build_status.stdout | from_json | selectattr('id', 'equalto', build_commit_id) | list | first).status != "FINISHED"
       register: image_build_status
       retries: 200
       until: >
-        (image_build_status.stdout | from_json | selectattr('id', 'equalto', build_id) | list | first).finished and
-        (image_build_status.stdout | from_json | selectattr('id', 'equalto', build_id) | list | first).status == "FINISHED"
+        (image_build_status.stdout | from_json | selectattr('id', 'equalto', build_commit_id) | list | first).finished and
+        (image_build_status.stdout | from_json | selectattr('id', 'equalto', build_commit_id) | list | first).status == "FINISHED"
 
-- name: Save Commit ID to File
-  local_action: ansible.builtin.copy content="{{ build_id }}" dest="{{ build_commit_output_file }}"
+- name: Save Build Commit ID to File
+  ansible.builtin.copy:
+    content: "{{ build_commit_id }}"
+    dest: "{{ build_commit_output_file }}"
   become: no
-  connection: local
+  delegate_to: localhost

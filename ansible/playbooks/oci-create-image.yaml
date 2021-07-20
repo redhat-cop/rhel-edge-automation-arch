@@ -1,12 +1,14 @@
 - name: Generate In-Memory Inventory of OpenShift VMs
+  gather_facts: no
   hosts: localhost
   roles:
     - role: openshift-image-builder-imi
       tags: openshift-image-builder-imi
 
 - name: Create OCI Image
-  hosts: image-builder
   become: yes
+  gather_facts: no
+  hosts: image-builder
   tasks:
     - name: Build OCI Image
       include_role:

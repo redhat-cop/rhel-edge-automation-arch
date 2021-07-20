@@ -1,0 +1,11 @@
+- name: Generate In-Memory Inventory of httpd Pod
+  gather_facts: no
+  hosts: localhost
+  roles:
+    - role: openshift-httpd-pod-imi
+    
+- name: Publish OCI Content
+  gather_facts: no
+  hosts: httpd_pod_group
+  roles:
+    - role: oci-publish-content
