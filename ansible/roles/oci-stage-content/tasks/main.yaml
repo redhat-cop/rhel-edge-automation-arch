@@ -2,9 +2,11 @@
   ansible.builtin.assert:
     fail_msg: >
       Make sure the following extra variables are defined before running this role:
+        - content_path_output_file
         - quay_image_path
         - quay_image_tag
     that:
+      - content_path_output_file is defined
       - quay_image_path is defined
       - quay_image_tag is defined
 
@@ -14,10 +16,10 @@
 
 - name: "Create ImageStream for {{ quay_image_path_basename }}-{{ quay_image_tag }}:{{ quay_image_tag }}"
   community.kubernetes.k8s:
-    #api_key: "{{ lookup('file', '/var/run/secrets/kubernetes.io/serviceaccount/token') }}"
+    api_key: "{{ lookup('file', '/var/run/secrets/kubernetes.io/serviceaccount/token') }}"
     api_version: v1
-    #ca_cert: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
-    #host: https://kubernetes.default.svc
+    ca_cert: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+    host: https://kubernetes.default.svc
     resource_definition:
       apiVersion: image.openshift.io/v1
       kind: ImageStream
@@ -38,7 +40,7 @@
           referencePolicy:
             type: Local
     state: present
-    validate_certs: no
+    validate_certs: yes
 
 - name: Set Deployment Trigger Fact
   ansible.builtin.set_fact:
@@ -56,10 +58,10 @@
 
 - name: "Create Deployment for {{ quay_image_path_basename }}:{{ quay_image_tag }}"
   community.kubernetes.k8s:
-    #api_key: "{{ lookup('file', '/var/run/secrets/kubernetes.io/serviceaccount/token') }}"
+    api_key: "{{ lookup('file', '/var/run/secrets/kubernetes.io/serviceaccount/token') }}"
     api_version: v1
-    #ca_cert: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
-    #host: https://kubernetes.default.svc
+    ca_cert: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+    host: https://kubernetes.default.svc
     resource_definition:
       apiVersion: apps/v1
       kind: Deployment
@@ -98,14 +100,14 @@
                     memory: "512Mi"
                     cpu: "500m"
     state: present
-    validate_certs: no
+    validate_certs: yes
 
 - name: "Create Service for {{ quay_image_path_basename }}:{{ quay_image_tag }}"
   community.kubernetes.k8s:
-    #api_key: "{{ lookup('file', '/var/run/secrets/kubernetes.io/serviceaccount/token') }}"
+    api_key: "{{ lookup('file', '/var/run/secrets/kubernetes.io/serviceaccount/token') }}"
     api_version: v1
-    #ca_cert: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
-    #host: https://kubernetes.default.svc
+    ca_cert: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+    host: https://kubernetes.default.svc
     resource_definition:
       apiVersion: v1
       kind: Service
@@ -127,14 +129,14 @@
         sessionAffinity: None
         type: ClusterIP
     state: present
-    validate_certs: no
+    validate_certs: yes
 
 - name: "Create Route for {{ quay_image_path_basename }}:{{ quay_image_tag }}"
   community.kubernetes.k8s:
-    #api_key: "{{ lookup('file', '/var/run/secrets/kubernetes.io/serviceaccount/token') }}"
+    api_key: "{{ lookup('file', '/var/run/secrets/kubernetes.io/serviceaccount/token') }}"
     api_version: v1
-    #ca_cert: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
-    #host: https://kubernetes.default.svc
+    ca_cert: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+    host: https://kubernetes.default.svc
     resource_definition:
       kind: Route
       apiVersion: route.openshift.io/v1
@@ -154,4 +156,9 @@
           targetPort: 80-tcp
         wildcardPolicy: None
     state: present
-    validate_certs: no
+    validate_certs: yes
+
+- name: Save OSTree Content Path to Output File
+  ansible.builtin.copy:
+    content: "http://{{ quay_image_path_basename }}-{{ quay_image_tag }}-httpd.rfe.svc.cluster.local/repo"
+    dest: "{{ content_path_output_file }}"
