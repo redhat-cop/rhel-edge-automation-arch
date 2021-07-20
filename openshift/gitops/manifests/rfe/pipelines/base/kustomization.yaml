@@ -11,5 +11,7 @@ resources:
   - upload-kickstart-task.yaml
   - rfe-oci-build-image-task.yaml
   - rfe-oci-image-pipeline.yaml
+  - rfe-oci-publish-content-pipeline.yaml
+  - rfe-oci-publish-content-task.yaml
   - rfe-oci-push-image-task.yaml
   - rfe-oci-quay-repository-task.yaml
