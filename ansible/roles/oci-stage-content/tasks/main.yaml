@@ -161,5 +161,5 @@
 
 - name: Save OSTree Content Path to Output File
   ansible.builtin.copy:
-    content: "{{ stage_route.result.spec.host }}/repo"
+    content: "http://{{ stage_route.result.spec.host }}/repo"
     dest: "{{ content_path_output_file }}"
