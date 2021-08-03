@@ -4,6 +4,11 @@ kind: Kustomization
 namespace: rfe
 
 resources:
-  - rfe-serviceaccount.yaml
-  - rfe-automation-role.yaml
+  - oci-rfe-httpd-rolebinding.yaml
+  - oci-rfe-httpd-role.yaml
+  - oci-rfe-httpd-serviceaccount.yaml
+  - rfe-automation-rolebinding-quay.yaml
   - rfe-automation-rolebinding.yaml
+  - rfe-automation-role-quay.yaml
+  - rfe-automation-role.yaml
+  - rfe-serviceaccount.yaml
