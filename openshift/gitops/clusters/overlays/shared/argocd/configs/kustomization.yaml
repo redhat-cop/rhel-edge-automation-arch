@@ -4,6 +4,9 @@ kind: Kustomization
 bases:
   - ../../../../../environments/overlays/configs
 
+resources:
+  - aws-machineset-app.yaml
+
 patches:
   - target:
       group: argoproj.io
