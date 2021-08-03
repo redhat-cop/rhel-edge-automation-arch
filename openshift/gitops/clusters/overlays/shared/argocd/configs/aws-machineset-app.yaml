@@ -9,7 +9,7 @@ spec:
     server: https://kubernetes.default.svc
   project: cluster-config
   source:
-    path: openshift/gitops/clusters/overlays/shared/infra
+    path: openshift/gitops/clusters/overlays/shared/infra/aws-machineset
     repoURL: https://github.com/redhat-cop/rhel-edge-automation-arch.git
     targetRevision: main
   syncPolicy:
