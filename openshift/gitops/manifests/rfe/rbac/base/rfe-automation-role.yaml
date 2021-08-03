@@ -44,3 +44,20 @@ rules:
     verbs:
       - get
       - list
+  - apiGroups:
+      - machine.openshift.io
+    resources:
+      - machinesets
+    verbs:
+      - create
+      - patch
+      - list
+      - update
+      - get
+  - apiGroups:
+      - config.openshift.io
+    resources:
+      - infrastructures
+    verbs:
+      - get
+      - list

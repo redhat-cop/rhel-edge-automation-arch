@@ -1,0 +1,14 @@
+
+machineset_blockdevices:
+  - ebs:
+      iops: 0
+      volumeSize: 120
+      volumeType: gp2
+machineset_instance_type: c5n.metal
+machineset_machine_role: worker
+machineset_machine_type: worker
+machineset_name: metal-worker
+machineset_node_labels:
+  node-role.kubernetes.io/worker: ""
+machineset_replicas: 1
+machineset_user_data_secret: worker-user-data
