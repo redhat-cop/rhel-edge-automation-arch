@@ -1,0 +1,166 @@
+- name: Assert Extra Variables are Defined
+  ansible.builtin.assert:
+    fail_msg: >
+      Make sure the following extra variables are defined before running this role:
+        - content_path_output_file
+        - quay_image_path
+        - quay_image_tag
+    that:
+      - content_path_output_file is defined
+      - quay_image_path is defined
+      - quay_image_tag is defined
+
+- name: Set Quay Image Path Basename
+  ansible.builtin.set_fact:
+    quay_image_path_basename: "{{ quay_image_path | basename }}"
+
+- name: "Create ImageStream for {{ quay_image_path_basename }}-{{ quay_image_tag }}:{{ quay_image_tag }}"
+  community.kubernetes.k8s:
+    api_key: "{{ lookup('file', '/var/run/secrets/kubernetes.io/serviceaccount/token') }}"
+    api_version: v1
+    ca_cert: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+    host: https://kubernetes.default.svc
+    resource_definition:
+      apiVersion: image.openshift.io/v1
+      kind: ImageStream
+      metadata:
+        name: "{{ quay_image_path_basename }}-{{ quay_image_tag }}"
+        namespace: rfe
+      spec:
+        lookupPolicy:
+          local: false
+        tags:
+        - annotations: null
+          from:
+            kind: DockerImage
+            name: "{{ quay_image_path }}:{{ quay_image_tag }}"
+          importPolicy:
+            insecure: true
+          name: latest
+          referencePolicy:
+            type: Local
+    state: present
+    validate_certs: yes
+
+- name: Set Deployment Trigger Fact
+  ansible.builtin.set_fact:
+    deployment_trigger: >-
+      [
+        {
+          "from": {
+            "kind": "ImageStreamTag",
+            "name": "{{ quay_image_path_basename }}-{{ quay_image_tag }}:{{ quay_image_tag }}",
+            "namespace": "rfe"
+          },
+          "fieldPath": "spec.template.spec.containers[?(@.name==\"httpd\")].image"
+        }
+      ]
+
+- name: "Create Deployment for {{ quay_image_path_basename }}:{{ quay_image_tag }}"
+  community.kubernetes.k8s:
+    api_key: "{{ lookup('file', '/var/run/secrets/kubernetes.io/serviceaccount/token') }}"
+    api_version: v1
+    ca_cert: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+    host: https://kubernetes.default.svc
+    resource_definition:
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        annotations:
+          image.openshift.io/triggers: "{{ deployment_trigger | to_json(separators=(',',':')) }}"
+        labels:
+          app: "{{ quay_image_path_basename }}-{{ quay_image_tag }}-httpd"
+          app.kubernetes.io/component: "{{ quay_image_path_basename }}-{{ quay_image_tag }}-httpd"
+          app.kubernetes.io/instance: "{{ quay_image_path_basename }}-{{ quay_image_tag }}-httpd"
+        name: "{{ quay_image_path_basename }}-{{ quay_image_tag }}-httpd"
+        namespace: rfe
+      spec:
+        replicas: 1
+        selector:
+          matchLabels:
+            deployment: "{{ quay_image_path_basename }}-{{ quay_image_tag }}-httpd"
+        strategy: {}
+        template:
+          metadata:
+            labels:
+              deployment: "{{ quay_image_path_basename }}-{{ quay_image_tag }}-httpd"
+          spec:
+            serviceAccountName: "{{ oci_rfe_http_service_account }}"
+            containers:
+              - image: " "
+                name: httpd
+                ports:
+                  - containerPort: 80
+                    protocol: TCP
+                resources:
+                  requests:
+                    memory: "512Mi"
+                    cpu: "500m"
+                  limits:
+                    memory: "512Mi"
+                    cpu: "500m"
+    state: present
+    validate_certs: yes
+
+- name: "Create Service for {{ quay_image_path_basename }}:{{ quay_image_tag }}"
+  community.kubernetes.k8s:
+    api_key: "{{ lookup('file', '/var/run/secrets/kubernetes.io/serviceaccount/token') }}"
+    api_version: v1
+    ca_cert: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+    host: https://kubernetes.default.svc
+    resource_definition:
+      apiVersion: v1
+      kind: Service
+      metadata:
+        labels:
+          app: "{{ quay_image_path_basename }}-{{ quay_image_tag }}-httpd"
+          app.kubernetes.io/component: "{{ quay_image_path_basename }}-{{ quay_image_tag }}-httpd"
+          app.kubernetes.io/instance: "{{ quay_image_path_basename }}-{{ quay_image_tag }}-httpd"
+        name: "{{ quay_image_path_basename }}-{{ quay_image_tag }}-httpd"
+        namespace: rfe
+      spec:
+        ports:
+        - name: 80-tcp
+          port: 80
+          protocol: TCP
+          targetPort: 80
+        selector:
+          deployment: "{{ quay_image_path_basename }}-{{ quay_image_tag }}-httpd"
+        sessionAffinity: None
+        type: ClusterIP
+    state: present
+    validate_certs: yes
+
+- name: "Create Route for {{ quay_image_path_basename }}:{{ quay_image_tag }}"
+  community.kubernetes.k8s:
+    api_key: "{{ lookup('file', '/var/run/secrets/kubernetes.io/serviceaccount/token') }}"
+    api_version: v1
+    ca_cert: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+    host: https://kubernetes.default.svc
+    resource_definition:
+      kind: Route
+      apiVersion: route.openshift.io/v1
+      metadata:
+        name: "{{ quay_image_path_basename }}-{{ quay_image_tag }}"
+        namespace: rfe
+        labels:
+          app: "{{ quay_image_path_basename }}-{{ quay_image_tag }}-httpd"
+          app.kubernetes.io/component: "{{ quay_image_path_basename }}-{{ quay_image_tag }}-httpd"
+          app.kubernetes.io/instance: "{{ quay_image_path_basename }}-{{ quay_image_tag }}-httpd"
+      spec:
+        to:
+          kind: Service
+          name: "{{ quay_image_path_basename }}-{{ quay_image_tag }}-httpd"
+          weight: 100
+        port:
+          targetPort: 80-tcp
+        host: "{{ route_host }}"
+        wildcardPolicy: None
+    state: present
+    validate_certs: yes
+  register: stage_route
+
+- name: Save OSTree Content Path to Output File
+  ansible.builtin.copy:
+    content: "http://{{ stage_route.result.spec.host }}/repo"
+    dest: "{{ content_path_output_file }}"

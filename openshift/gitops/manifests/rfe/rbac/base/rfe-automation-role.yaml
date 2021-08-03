@@ -5,10 +5,22 @@ metadata:
   namespace: rfe
 rules:
   - apiGroups:
+      - image.openshift.io
+    resources:
+      - imagestreams
+    verbs:
+      - create
+      - patch
+      - list
+      - update
+      - get
+  - apiGroups:
       - "*"
     resources:
       - secrets
+      - services
       - configmaps
+      - deployments
     verbs:
       - create
       - patch
@@ -19,7 +31,6 @@ rules:
       - "*"
     resources:
       - pods
-      - services
     verbs:
       - list
       - get
@@ -42,8 +53,11 @@ rules:
     resources:
       - routes
     verbs:
-      - get
+      - create
+      - patch
       - list
+      - update
+      - get
   - apiGroups:
       - machine.openshift.io
     resources:

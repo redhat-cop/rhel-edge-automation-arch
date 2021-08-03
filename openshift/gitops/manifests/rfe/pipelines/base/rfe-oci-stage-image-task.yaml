@@ -1,0 +1,37 @@
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+    argocd.argoproj.io/sync-wave: "5"
+  name: rfe-oci-stage-image
+spec:
+  workspaces:
+    - name: workspace
+  params:
+    - name: image-path
+      description: Path to RFE Container Image
+    - name: image-tag
+      description: Tag Associated with the RFE Image to Deploy
+    - name: route-host
+      description: Host Field for OpenShift Route Resource
+  results:
+    - name: content-path
+      description: URL to OSTree Content
+  steps:
+    - name: stage-image-playbook
+      image: image-registry.openshift-image-registry.svc:5000/rfe/ansible-rfe-runner:latest
+      workingDir: /workspace/workspace
+      args:
+        - |-
+          cd tooling/ansible
+          ansible-galaxy collection install -r collections/requirements.yaml
+          ansible-playbook \
+            -e quay_image_path=$(params.image-path) \
+            -e quay_image_tag=$(params.image-tag) \
+            -e route_host="$(params.route-host)" \
+            -e content_path_output_file=$(results.content-path.path) \
+            playbooks/oci-stage-content.yaml
+      command:
+        - /bin/bash
+        - -c
