@@ -1,0 +1,4 @@
+- name: Create Metal MachineSet for AWS
+  hosts: localhost
+  roles:
+    - role: machineset-aws
