@@ -9,13 +9,11 @@ spec:
   params:
     - name: tooling-git-url
       description: Tooling Repository URL
-      #default: https://github.com/redhat-cop/rhel-edge-automation-arch.git
-      default: https://github.com/nasx/rhel-edge-automation-arch.git
+      default: https://github.com/redhat-cop/rhel-edge-automation-arch.git
       type: string
     - name: tooling-git-revision
       description: Tooling Repository URL Reference
-      #default: main
-      default: oci-stage
+      default: main
       type: string
     - name: image-path
       description: Path to RFE Container Image

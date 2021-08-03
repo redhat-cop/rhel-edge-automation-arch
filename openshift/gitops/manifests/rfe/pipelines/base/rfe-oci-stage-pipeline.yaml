@@ -9,18 +9,22 @@ spec:
   params:
     - name: tooling-git-url
       description: Tooling Repository URL
-      #default: https://github.com/redhat-cop/rhel-edge-automation-arch.git
-      default: https://github.com/nasx/rhel-edge-automation-arch.git
+      default: https://github.com/redhat-cop/rhel-edge-automation-arch.git
       type: string
     - name: tooling-git-revision
       description: Tooling Repository URL Reference
-      #default: main
-      default: oci-stage
+      default: main
       type: string
     - name: image-path
       description: Path to RFE Container Image
+      type: string
     - name: image-tag
       description: Tag Associated with the RFE Image to Deploy
+      type: string
+    - name: route-host
+      description: Host Field for OpenShift Route Resource
+      default: ""
+      type: string
   results:
     - name: content-path
       description: URL to OSTree Content
@@ -51,6 +55,8 @@ spec:
           value: $(params.image-path)
         - name: image-tag
           value: $(params.image-tag)
+        - name: route-host
+          value: $(params.route-host)
       runAfter:
         - "git-clone-tooling"
       workspaces:
