@@ -3,3 +3,8 @@ kind: Kustomization
 
 resources:
   - aws-machineset-ansible-job.yaml
+  - aws-machineset-infrastructures-clusterrolebinding.yaml
+  - aws-machineset-infrastructures-clusterrole.yaml
+  - aws-machineset-machinesets-rolebinding.yaml
+  - aws-machineset-machinesets-role.yaml
+  - aws-machineset-serviceaccount.yaml
