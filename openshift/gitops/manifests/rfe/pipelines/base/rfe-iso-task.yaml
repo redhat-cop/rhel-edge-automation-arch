@@ -37,7 +37,7 @@ spec:
       volumeMounts:
       - name: image-builder-ssh-key
         mountPath: /var/secrets/image-builder-ssh-key
-        readOnly: yes
+        readOnly: true
   volumes:
   - name: image-builder-ssh-key
     secret:
