@@ -11,6 +11,12 @@ spec:
   destination:
     namespace: openshift-gitops
     server: https://kubernetes.default.svc
+  ignoreDifferences:
+    - jsonPointers:
+        - /imagePullSecrets
+      kind: ServiceAccount
+      name: oci-rfe-httpd
+      namespace: rfe
   project: rfe
   source:
     path: openshift/gitops/manifests/rfe/rbac/base
