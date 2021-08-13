@@ -100,6 +100,7 @@
       - "--command-timeout=10m"
       - "--dest-authfile=/var/secrets/publisher/.dockerconfigjson"
       - "--dest-tls-verify=false"
+      - "--retry-times=10"
       - "copy"
       - "oci-archive:{{ find_results.files[0].path | quote }}"
       - "docker://{{ quay_image_path | quote }}:latest"
