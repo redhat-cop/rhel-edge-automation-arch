@@ -1,0 +1,16 @@
+- name: Verify Blueprint Name is Defined
+  ansible.builtin.assert:
+    fail_msg: Blueprint Name must be Defined
+    that:
+      - blueprint_name is defined
+
+- name: List Blueprints in Image Builder
+  ansible.builtin.command: >
+    composer-cli -j blueprints list
+  register: blueprints_list
+
+- name: Assert Blueprint is in List of Blueprints
+  ansible.builtin.assert:
+    fail_msg: "Blueprint {{ blueprint_name }} is not in list of blueprints!"
+    that:
+      - blueprint_name not in (blueprints_list.stdout.blueprints)

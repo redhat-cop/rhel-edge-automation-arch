@@ -1,0 +1,17 @@
+- name: Generate In-Memory Inventory of Image Builder VM
+  hosts: localhost
+  roles:
+    - role: openshift-image-builder-imi
+
+- name: Generate In-Memory Inventory of httpd Pod
+  hosts: localhost
+  roles:
+    - role: openshift-httpd-pod-imi
+    
+- name: Generate RFE ISO w/ Embedded kickstart
+  become: yes
+  hosts: image-builder
+  vars:
+    blueprint_name: iso-test
+  roles:
+    - role: iso-build-installer-image
