@@ -1,0 +1,14 @@
+name = "iso-test"
+description = ""
+version = "0.0.1"
+packages = []
+modules = []
+groups = []
+
+[customizations]
+
+[[customizations.user]]
+name = "core"
+description = "Initial User"
+password = "$6$/E5qemB7OYQey.AF$3.KC98jzb86/nm74W3oUmQU6Yfy5EfvBaMpN04SmCi8.KklI0ra8B9JAfONbDRqQGL29kOH0SRKpH3fP42UJT."
+groups = ["wheel"]
