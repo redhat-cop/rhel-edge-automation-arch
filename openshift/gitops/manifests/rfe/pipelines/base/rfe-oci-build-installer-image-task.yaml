@@ -23,8 +23,6 @@ spec:
   results:
     - name: build-commit-id
       description: Commit ID of the Build
-    - name: iso-url
-      description: URL for Generated ISO
   steps:
     - name: build-installer-image-playbook
       image: image-registry.openshift-image-registry.svc:5000/rfe/ansible-rfe-runner:latest
@@ -38,30 +36,16 @@ spec:
             --private-key=/var/secrets/image-builder-ssh/ssh-privatekey \
             -e blueprint_name=$(params.iso-blueprint) \
             -e ostree_repo_url=$(params.ostree-repo-url) \
-            -e build_commit_output_file=$(results.build-commit-id.path) \
+            -e build_commit_id_output_file=$(results.build-commit-id.path) \
             playbooks/oci-build-installer-image.yaml
       command:
         - /bin/bash
         - -c
       volumeMounts:
-        - name: publisher
-          mountPath: /var/secrets/publisher
-          readOnly: true
-        - name: quay-rfe-setup
-          mountPath: /var/secrets/quay-rfe-setup
-          readOnly: true
         - name: image-builder-ssh
           mountPath: /var/secrets/image-builder-ssh
           readOnly: true
   volumes:
-    - name: publisher
-      secret:
-        defaultMode: 0440
-        secretName: publisher
-    - name: quay-rfe-setup
-      secret:
-        defaultMode: 0440
-        secretName: quay-rfe-setup
     - name: image-builder-ssh
       secret:
         defaultMode: 0440
