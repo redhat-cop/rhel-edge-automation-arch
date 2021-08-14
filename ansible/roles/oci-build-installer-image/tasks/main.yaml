@@ -1,8 +1,14 @@
-- name: Verify Blueprint Name is Defined
+- name: Assert Extra Variables are Defined
   ansible.builtin.assert:
-    fail_msg: Blueprint Name must be Defined
+    fail_msg: >
+      Make sure the following extra variables are defined before running this role:
+      - blueprint_name
+      - ostree_repo_url
+      - build_commit_id_output_file
     that:
       - blueprint_name is defined
+      - ostree_repo_url is defined
+      - build_commit_id_output_file is defined
 
 - name: List Blueprints in Image Builder
   ansible.builtin.command: >
@@ -13,4 +19,36 @@
   ansible.builtin.assert:
     fail_msg: "Blueprint {{ blueprint_name }} is not in list of blueprints!"
     that:
-      - blueprint_name not in (blueprints_list.stdout.blueprints)
+      - blueprint_name in (blueprints_list.stdout | from_json).blueprints
+
+- name: Generate ISO
+  block:
+    - name: Compose Image
+      ansible.builtin.command: >
+        composer-cli -j compose start-ostree --ref rhel/8/x86_64/edge --url {{ ostree_repo_url }} {{ blueprint_name }} rhel-edge-installer
+      register: composed_image
+
+    - name: Set Build Commit ID
+      ansible.builtin.set_fact:
+        build_commit_id: "{{ (composed_image.stdout | from_json).build_id }}"
+
+    - name: Wait for Image Build to Complete
+      ansible.builtin.command: >
+        composer-cli -j compose status
+      changed_when: false
+      delay: 30
+      failed_when: >
+        not (image_build_status.stdout | from_json | selectattr('id', 'equalto', build_commit_id) | list | first).finished and
+        (image_build_status.stdout | from_json | selectattr('id', 'equalto', build_commit_id) | list | first).status != "FINISHED"
+      register: image_build_status
+      retries: 200
+      until: >
+        (image_build_status.stdout | from_json | selectattr('id', 'equalto', build_commit_id) | list | first).finished and
+        (image_build_status.stdout | from_json | selectattr('id', 'equalto', build_commit_id) | list | first).status == "FINISHED"
+
+- name: Save Build Commit ID to File
+  ansible.builtin.copy:
+    content: "{{ build_commit_id }}"
+    dest: "{{ build_commit_id_output_file }}"
+  become: no
+  delegate_to: localhost

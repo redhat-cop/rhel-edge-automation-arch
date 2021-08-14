@@ -1,0 +1,69 @@
+apiVersion: tekton.dev/v1beta1
+kind: Pipeline
+metadata:
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+    argocd.argoproj.io/sync-wave: "5"
+  name: rfe-oci-iso-pipeline
+spec:
+  params:
+    - name: tooling-git-url
+      description: Tooling Repository URL
+      default: https://github.com/nasx/rhel-edge-automation-arch.git
+      type: string
+    - name: tooling-git-revision
+      description: Tooling Repository URL Reference
+      default: iso-pipeline-v2
+      type: string
+    - name: kickstart-url
+      description: URL Pointing to Kickstart Location
+      type: string
+    - name: ostree-repo-url
+      description: URL Containing the OSTree Content
+      type: string
+    - name: image-builder-secret
+      description: Name of the Secret Containing the SSH Key for the Image Builder Host
+      default: "image-builder-ssh-key"
+      type: string
+    - name: iso-blueprint
+      description: Name of the Blueprint to use for the ISO Build (Should not be Customized)
+      default: "rfe-iso-blueprint"
+      type: string
+  results:
+    results:
+    - name: build-commit-id
+      description: Commit ID of the Build
+      value: $(tasks.rfe-oci-build-installer-image.results.build-commit-id)
+  workspaces:
+    - name: shared-workspace
+  tasks:
+    - name: git-clone-tooling
+      taskRef:
+        name: git-clone
+        kind: ClusterTask
+      params:
+        - name: url
+          value: $(params.tooling-git-url)
+        - name: revision
+          value: $(params.tooling-git-revision)
+        - name: subdirectory
+          value: "tooling"
+      workspaces:
+        - name: output
+          workspace: shared-workspace
+    - name: rfe-oci-build-installer-image
+      taskRef:
+        name: rfe-oci-build-installer-image
+        kind: Task
+      params:
+        - name: ostree-repo-url
+          value: $(params.ostree-repo-url)
+        - name: image-builder-secret
+          value: $(params.image-builder-secret)
+        - name: iso-blueprint
+          value: $(params.iso-blueprint)
+      runAfter:
+        - "git-clone-tooling"
+      workspaces:
+        - name: workspace
+          workspace: shared-workspace

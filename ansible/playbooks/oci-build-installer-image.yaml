@@ -12,6 +12,7 @@
   become: yes
   hosts: image-builder
   vars:
-    blueprint_name: iso-test
+    blueprint_name: rfe-iso-blueprint
+    ostree_repo_url: http://iso-test-latest-rfe.apps.cluster-8874.8874.sandbox1838.opentlc.com/repo
   roles:
-    - role: iso-build-installer-image
+    - role: oci-build-installer-image
