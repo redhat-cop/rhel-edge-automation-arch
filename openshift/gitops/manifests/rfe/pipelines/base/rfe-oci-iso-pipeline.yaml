@@ -30,7 +30,6 @@ spec:
       default: "rfe-iso-blueprint"
       type: string
   results:
-    results:
     - name: build-commit-id
       description: Commit ID of the Build
       value: $(tasks.rfe-oci-build-installer-image.results.build-commit-id)
