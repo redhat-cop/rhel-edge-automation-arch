@@ -1,0 +1,50 @@
+- name: Assert Extra Variables are Defined
+  ansible.builtin.assert:
+    fail_msg: >
+      Make sure the following extra variables are defined before running this role:
+      - build_commit_id
+    that:
+      - build_commit_id is defined
+
+- name: List Finished Builds
+  ansible.builtin.command: >
+    composer-cli -j compose list finished
+  changed_when: false
+  register: compose_list
+
+- name: Assert Finished Build ID Found
+  ansible.builtin.assert:
+    fail_msg: "Did not find a valid finished build for the commit id {{ build_commit_id }}!"
+    that:
+      - compose_list.stdout | from_json | selectattr('id', 'equalto', build_commit_id) | list | length == 1
+
+- name: Set Remote Tar Directory
+  ansible.builtin.set_fact:
+    tar_directory: "/tmp/{{ build_commit_id }}"
+
+- name: Create Remote Tar Directory
+  ansible.builtin.file:
+    path: "{{ tar_directory }}"
+    state: directory
+
+- name: Generate Edge Install ISO Image
+  ansible.builtin.command: >
+    composer-cli compose image {{ build_commit_id }}
+  args:
+    chdir: "{{ tar_directory }}"
+
+- name: Find Edge Image File
+  ansible.builtin.find:
+    age: "-5m"
+    age_stamp: ctime
+    depth: 0
+    paths: "{{ tar_directory }}"
+    patterns:
+      - "{{ build_commit_id }}-.*-boot.iso"
+    use_regex: yes
+  register: find_results
+  failed_when:
+    - find_results.failed == true
+    - find_results.files | list != 1
+
+#find_results.files[0].path

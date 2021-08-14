@@ -3,16 +3,8 @@
   roles:
     - role: openshift-image-builder-imi
 
-- name: Generate In-Memory Inventory of httpd Pod
-  hosts: localhost
-  roles:
-    - role: openshift-httpd-pod-imi
-    
-- name: Generate RFE ISO w/ Embedded kickstart
+- name: Generate RFE Boot ISO Image
   become: yes
   hosts: image-builder
-  vars:
-    blueprint_name: rfe-iso-blueprint
-    ostree_repo_url: http://iso-test-latest-rfe.apps.cluster-8874.8874.sandbox1838.opentlc.com/repo
   roles:
     - role: oci-build-installer-image
