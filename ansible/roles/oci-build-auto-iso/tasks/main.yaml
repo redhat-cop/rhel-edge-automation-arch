@@ -20,25 +20,26 @@
 
 - name: Set Remote Tar Directory
   ansible.builtin.set_fact:
-    tar_directory: "/tmp/{{ build_commit_id }}"
+    iso_directory: "/tmp/{{ build_commit_id }}"
+    edge_iso_path: "/tmp/{{ build_commit_id }}/{{ build_commit_id }}-auto.iso"
 
 - name: Create Remote Tar Directory
   ansible.builtin.file:
-    path: "{{ tar_directory }}"
+    path: "{{ iso_directory }}"
     state: directory
 
 - name: Generate Edge Install ISO Image
   ansible.builtin.command: >
-    composer-cli compose image {{ build_commit_id }}
+    composer-cli compose image {{ build_commit_id | quote }}
   args:
-    chdir: "{{ tar_directory }}"
+    chdir: "{{ iso_directory }}"
 
 - name: Find Edge Image File
   ansible.builtin.find:
     age: "-5m"
     age_stamp: ctime
     depth: 0
-    paths: "{{ tar_directory }}"
+    paths: "{{ iso_directory }}"
     patterns:
       - "{{ build_commit_id }}-.*-boot.iso"
     use_regex: yes
@@ -47,4 +48,138 @@
     - find_results.failed == true
     - find_results.files | list != 1
 
-#find_results.files[0].path
+- name: Set Path Variables
+  ansible.builtin.set_fact:
+    scratch_path: "{{ iso_directory }}/scratch"
+    iso_mount_path: "{{ iso_directory }}/mount"
+    iso_source_path: "{{ find_results.files[0].path }}"
+
+- name: Get ISO Label
+  ansible.builtin.command: >
+    blkid -s LABEL -o value {{ iso_source_path | quote }}
+  register: iso_source_label
+
+- name: Create Working Directories
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    mode: "0755"
+  loop:
+    - "{{ scratch_path }}"
+    - "{{ iso_mount_path }}"
+
+- name: Mount ISO
+  ansible.posix.mount:
+    boot: no
+    fstype: iso9660
+    opts: loop
+    path: "{{ iso_mount_path }}"
+    src: "{{ iso_source_path }}"
+    state: mounted
+  
+- name: Copy ISO Contents to Scratch Directory
+  ansible.posix.synchronize:
+    dest: "{{ scratch_path }}/"
+    recursive: yes
+    src: "{{ iso_mount_path }}/"
+  delegate_to: "{{ inventory_hostname }}"
+
+- name: Copy Kickstart File to Scratch Directory
+  ansible.builtin.get_url:
+    dest: "{{ scratch_path }}/kickstart.ks"
+    url: "{{ kickstart_url }}"
+    validate_certs: no
+
+- name: Copy Updated Grub Configuration
+  ansible.builtin.template:
+    dest: "{{ scratch_path }}/EFI/BOOT/grub.cfg"
+    group: root
+    mode: "0644"
+    owner: root
+    src: grub.cfg.j2
+    
+- name: Copy Updated ISOLINUX Configuration
+  ansible.builtin.template:
+    dest: "{{ scratch_path }}/isolinux/isolinux.cfg"
+    group: root
+    mode: "0644"
+    owner: root
+    src: isolinux.cfg.j2
+
+- name: Generate Bootable ISO
+  ansible.builtin.shell:
+    chdir: "{{ scratch_path }}"
+    cmd: |
+      mkisofs \
+      -o {{ edge_iso_path | quote }}/{{ edge_iso_name | quote }} \
+      -b isolinux/isolinux.bin \
+      -J \
+      -R \
+      -l \
+      -c isolinux/boot.cat \
+      -no-emul-boot \
+      -boot-load-size 4 \
+      -boot-info-table \
+      -eltorito-alt-boot \
+      -e images/efiboot.img \
+      -no-emul-boot \
+      -graft-points \
+      -V "{{ iso_source_label.stdout | quote }}" .
+  register: rfe_iso_results
+
+- name: Build EFI Bootable Image
+  ansible.builtin.shell:
+    cmd: isohybrid --uefi {{ edge_iso_path | quote }}/{{ edge_iso_name | quote }}
+
+- name: Fetch Edge ISO from Image Builder VM
+  ansible.builtin.fetch:
+    dest: "/tmp/{{ edge_iso_name }}"
+    flat: yes
+    src: "{{ edge_iso_path }}/{{ edge_iso_name }}"
+
+- name: Ensure Remote Directory in httpd Pod Exists
+  ansible.builtin.file:
+    path: "{{ edge_iso_remote_path }}"
+    state: directory
+  become: no
+  delegate_to: "{{ groups.httpd_pod_group[0] }}"
+
+- name: Copy Edge ISO to httpd Pod
+  ansible.builtin.copy:
+    dest: "{{ edge_iso_remote_path }}/{{ edge_iso_name }}"
+    src: "/tmp/{{ edge_iso_name }}"
+  become: no
+  delegate_to: "{{ groups.httpd_pod_group[0] }}"
+
+- name: Remove ISO Mount
+  ansible.posix.mount:
+    path: "{{ iso_mount_path }}"
+    state: absent
+
+- name: Remove Working Directories and Files
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: absent
+  loop:
+    - "{{ scratch_path }}"
+    - "{{ iso_mount_path }}"
+    - "/tmp/{{ edge_iso_name }}"
+
+- name: Get httpd Route
+  community.kubernetes.k8s_info:
+    api_key: "{{ lookup('file', '/var/run/secrets/kubernetes.io/serviceaccount/token') }}"
+    api_version: route.openshift.io/v1
+    ca_cert: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+    host: https://kubernetes.default.svc
+    kind: Route
+    name: httpd
+    namespace: rfe
+    validate_certs: yes
+  register: httpd_route
+  delegate_to: localhost
+
+- name: Set iso_storage_url Result
+  ansible.builtin.copy:
+    content: "{{ ('https://' if httpd_route.resources[0].spec.tls is defined else 'http://') + httpd_route.resources[0].spec.host }}/images/{{ edge_iso_name }}"
+    dest: "{{ iso_storage_url }}"
+  delegate_to: localhost

@@ -25,4 +25,4 @@
   ansible.builtin.add_host:
     ansible_ssh_host: "{{ vmi_results.resources[0].status.interfaces[0].ipAddress }}"
     ansible_ssh_port: "22"
-    hostname: image-builder
+    name: image-builder
