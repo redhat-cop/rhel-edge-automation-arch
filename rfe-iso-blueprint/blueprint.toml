@@ -1,0 +1,3 @@
+name = "rfe-iso-blueprint"
+description = "Unmodified Blueprint for RFE ISO Generation"
+version = "0.0.1"
