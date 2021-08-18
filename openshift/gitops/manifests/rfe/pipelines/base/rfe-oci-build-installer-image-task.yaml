@@ -34,7 +34,7 @@ spec:
           ansible-playbook \
             -u cloud-user \
             --private-key=/var/secrets/image-builder-ssh/ssh-privatekey \
-            -e blueprint_name=$(params.iso-blueprint) \
+            -e blueprint_source_dir=$(params.iso-blueprint) \
             -e ostree_repo_url=$(params.ostree-repo-url) \
             -e build_commit_id_output_file=$(results.build-commit-id.path) \
             playbooks/oci-build-installer-image.yaml

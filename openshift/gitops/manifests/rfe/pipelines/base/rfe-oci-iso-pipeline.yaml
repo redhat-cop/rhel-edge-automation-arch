@@ -15,6 +15,14 @@ spec:
       description: Tooling Repository URL Reference
       default: iso-pipeline-v2
       type: string
+    - name: blueprint-dir
+      description: Directory in Blueprints repository containing blueprint
+      default: rfe-iso-blueprint
+      type: string
+    - name: blueprints-git-url
+      description: Blueprint Repository URL
+      default: https://github.com/redhat-cop/rhel-edge-automation-arch.git
+      type: string
     - name: kickstart-url
       description: URL Pointing to Kickstart Location
       type: string
@@ -50,6 +58,20 @@ spec:
       workspaces:
         - name: output
           workspace: shared-workspace
+    - name: git-clone-blueprints
+      taskRef:
+        name: git-clone
+        kind: ClusterTask
+      params:
+        - name: url
+          value: $(params.blueprints-git-url)
+        - name: revision
+          value: $(params.blueprints-git-revision)
+        - name: subdirectory
+          value: "blueprints"
+      workspaces:
+        - name: output
+          workspace: shared-workspace
     - name: rfe-oci-build-installer-image
       taskRef:
         name: rfe-oci-build-installer-image
@@ -63,6 +85,7 @@ spec:
           value: $(params.iso-blueprint)
       runAfter:
         - "git-clone-tooling"
+        - "git-clone-blueprints"
       workspaces:
         - name: workspace
           workspace: shared-workspace
