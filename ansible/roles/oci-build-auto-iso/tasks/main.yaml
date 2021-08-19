@@ -3,8 +3,10 @@
     fail_msg: >
       Make sure the following extra variables are defined before running this role:
       - build_commit_id
+      - kickstart_url
     that:
       - build_commit_id is defined
+      - kickstart_url is defined
 
 - name: List Finished Builds
   ansible.builtin.command: >
@@ -111,7 +113,7 @@
     chdir: "{{ scratch_path }}"
     cmd: |
       mkisofs \
-      -o {{ edge_iso_path | quote }}/{{ edge_iso_name | quote }} \
+      -o {{ edge_iso_path | quote }} \
       -b isolinux/isolinux.bin \
       -J \
       -R \
@@ -129,13 +131,13 @@
 
 - name: Build EFI Bootable Image
   ansible.builtin.shell:
-    cmd: isohybrid --uefi {{ edge_iso_path | quote }}/{{ edge_iso_name | quote }}
+    cmd: isohybrid --uefi {{ edge_iso_path | quote }}
 
 - name: Fetch Edge ISO from Image Builder VM
   ansible.builtin.fetch:
-    dest: "/tmp/{{ edge_iso_name }}"
+    dest: "/tmp/{{ edge_iso_path | basename }}"
     flat: yes
-    src: "{{ edge_iso_path }}/{{ edge_iso_name }}"
+    src: "{{ edge_iso_path }}"
 
 - name: Ensure Remote Directory in httpd Pod Exists
   ansible.builtin.file:
@@ -146,8 +148,8 @@
 
 - name: Copy Edge ISO to httpd Pod
   ansible.builtin.copy:
-    dest: "{{ edge_iso_remote_path }}/{{ edge_iso_name }}"
-    src: "/tmp/{{ edge_iso_name }}"
+    dest: "{{ edge_iso_remote_path }}/{{ edge_iso_path | basename }}"
+    src: "/tmp/{{ edge_iso_path | basename }}"
   become: no
   delegate_to: "{{ groups.httpd_pod_group[0] }}"
 
@@ -163,7 +165,7 @@
   loop:
     - "{{ scratch_path }}"
     - "{{ iso_mount_path }}"
-    - "/tmp/{{ edge_iso_name }}"
+    - "/tmp/{{ edge_iso_path | basename }}"
 
 - name: Get httpd Route
   community.kubernetes.k8s_info:
