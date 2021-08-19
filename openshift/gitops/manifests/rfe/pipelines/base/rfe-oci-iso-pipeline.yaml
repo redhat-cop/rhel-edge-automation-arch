@@ -45,6 +45,9 @@ spec:
     - name: build-commit-id
       description: Commit ID of the Build
       value: $(tasks.rfe-oci-build-installer-image.results.build-commit-id)
+    - name: iso-url
+      description: URL containing Autobooting Image
+      value: $(tasks.rfe-oci-build-auto-iso.results.iso-url)
   workspaces:
     - name: shared-workspace
   tasks:
@@ -90,6 +93,20 @@ spec:
       runAfter:
         - "git-clone-tooling"
         - "git-clone-blueprints"
+      workspaces:
+        - name: workspace
+          workspace: shared-workspace
+    - name: rfe-oci-build-auto-iso
+      taskRef:
+        name: rfe-oci-build-auto-iso
+        kind: Task
+      params:
+        - name: build-commit-id
+          value: $(tasks.rfe-oci-build-installer-image.results.build-commit-id)
+        - name: image-builder-secret
+          value: $(params.kickstart-url)
+      runAfter:
+        - "rfe-oci-build-installer-image"
       workspaces:
         - name: workspace
           workspace: shared-workspace

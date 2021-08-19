@@ -1,0 +1,52 @@
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+    argocd.argoproj.io/sync-wave: "5"
+  name: rfe-oci-auto-build-iso
+spec:
+  workspaces:
+    - name: workspace
+  params:
+    - name: kickstart-url
+      description: URL Containing the Kickstart File
+      type: string
+    - name: image-builder-secret
+      description: Name of the Secret Containing the SSH Key for the Image Builder Host
+      default: "image-builder-ssh-key"
+      type: string
+    - name: build-commit-id
+      description: Commit ID of the RFE Installer Build
+      type: string
+  results:
+    - name: iso-url
+      description: URL Containing the Autobooting Image
+  steps:
+    - name: build-installer-image-playbook
+      image: image-registry.openshift-image-registry.svc:5000/rfe/ansible-rfe-runner:latest
+      workingDir: /workspace/workspace
+      args:
+        - |-
+          cd tooling/ansible
+          ansible-galaxy collection install -r collections/requirements.yaml
+          ansible-playbook \
+            -u cloud-user \
+            --private-key=/var/secrets/image-builder-ssh/ssh-privatekey \
+            -e kickstart_url=$(params.kickstart-url) \
+            -e ostree_repo_url=$(params.ostree-repo-url) \
+            -e build_commit_id=$(params.build-commit-id) \
+            -e iso_url_output_file=$(results.iso-url.path) \
+            playbooks/oci-build-installer-image.yaml
+      command:
+        - /bin/bash
+        - -c
+      volumeMounts:
+        - name: image-builder-ssh
+          mountPath: /var/secrets/image-builder-ssh
+          readOnly: true
+  volumes:
+    - name: image-builder-ssh
+      secret:
+        defaultMode: 0440
+        secretName: "$(params.image-builder-secret)"
