@@ -104,6 +104,8 @@ spec:
         - name: build-commit-id
           value: $(tasks.rfe-oci-build-installer-image.results.build-commit-id)
         - name: image-builder-secret
+          value: $(params.image-builder-secret)
+        - name: kickstart-url
           value: $(params.kickstart-url)
       runAfter:
         - "rfe-oci-build-installer-image"

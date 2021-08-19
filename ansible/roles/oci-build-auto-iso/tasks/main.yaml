@@ -39,8 +39,8 @@
     chdir: "{{ iso_directory }}"
   register: compose_image_results
   failed_when:
-    - compose_image_results.rc not 0
-    - "skipping download" not in compose_image_results.stdout
+    - compose_image_results.rc != 0
+    - '"skipping download" not in compose_image_results.stdout'
 
 - name: Find Edge Image File
   ansible.builtin.find:

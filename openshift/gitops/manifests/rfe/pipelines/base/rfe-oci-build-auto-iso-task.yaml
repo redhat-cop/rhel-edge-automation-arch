@@ -4,7 +4,7 @@ metadata:
   annotations:
     argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
     argocd.argoproj.io/sync-wave: "5"
-  name: rfe-oci-auto-build-iso
+  name: rfe-oci-build-auto-iso
 spec:
   workspaces:
     - name: workspace
@@ -23,7 +23,7 @@ spec:
     - name: iso-url
       description: URL Containing the Autobooting Image
   steps:
-    - name: build-installer-image-playbook
+    - name: build-auto-iso-playbook
       image: image-registry.openshift-image-registry.svc:5000/rfe/ansible-rfe-runner:latest
       workingDir: /workspace/workspace
       args:
@@ -36,7 +36,7 @@ spec:
             -e kickstart_url=$(params.kickstart-url) \
             -e build_commit_id=$(params.build-commit-id) \
             -e iso_url_output_file=$(results.iso-url.path) \
-            playbooks/oci-build-installer-image.yaml
+            playbooks/oci-build-auto-iso.yaml
       command:
         - /bin/bash
         - -c
