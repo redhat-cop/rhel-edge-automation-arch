@@ -168,6 +168,7 @@
     name: httpd
     namespace: rfe
     validate_certs: yes
+  become: no
   register: httpd_route
   delegate_to: localhost
 
@@ -175,4 +176,5 @@
   ansible.builtin.copy:
     content: "{{ ('https://' if httpd_route.resources[0].spec.tls is defined else 'http://') + httpd_route.resources[0].spec.host }}/images/{{ edge_iso_path | basename }}"
     dest: "{{ iso_url_output_file }}"
+  become: no
   delegate_to: localhost
