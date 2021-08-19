@@ -34,7 +34,6 @@ spec:
             -u cloud-user \
             --private-key=/var/secrets/image-builder-ssh/ssh-privatekey \
             -e kickstart_url=$(params.kickstart-url) \
-            -e ostree_repo_url=$(params.ostree-repo-url) \
             -e build_commit_id=$(params.build-commit-id) \
             -e iso_url_output_file=$(results.iso-url.path) \
             playbooks/oci-build-installer-image.yaml
