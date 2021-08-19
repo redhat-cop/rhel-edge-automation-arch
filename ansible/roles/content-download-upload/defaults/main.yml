@@ -7,7 +7,7 @@ nexus_service_port: 8081
 #uploaded_filename_override
 httpd_pod_label_selector: "deployment=httpd"
 
-httpd_html_dir: /opt/rh/httpd24/root/var/www/html
+httpd_html_dir: /var/www/html
 httpd_dest_dir: /
 httpd_unarchive_file: false
 #build_commit:

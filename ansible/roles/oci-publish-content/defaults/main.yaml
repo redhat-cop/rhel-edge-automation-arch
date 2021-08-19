@@ -1,1 +1,1 @@
-httpd_web_root: /opt/rh/httpd24/root/var/www/html
+httpd_web_root: /var/www/html
