@@ -23,9 +23,10 @@
       - bash-completion
       - firewalld
       - genisoimage
+      - httpd
       - syslinux
 
-- name: Enable Cockpit/Composer/Firewalld
+- name: Enable Cockpit/Composer/Firewalld/Apache
   ansible.builtin.systemd:
     state: started
     enabled: yes
@@ -33,10 +34,14 @@
   loop:
     - osbuild-composer.socket
     - cockpit.socket
+    - httpd
     - firewalld
     
-- name: Enable Firewall Ports for Cockpit/Composer
+- name: Enable Firewall Ports for Cockpit/Composer/Apache
   ansible.posix.firewalld:
-    service: cockpit
+    service: "{{ item }}"
     permanent: yes
     state: enabled
+  loop:
+    - cockpit
+    - http
