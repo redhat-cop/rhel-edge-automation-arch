@@ -172,9 +172,9 @@
   register: httpd_route
   delegate_to: localhost
 
-- name: Set iso_storage_url Result
+- name: Set iso-url Result
   ansible.builtin.copy:
-    content: "{{ ('https://' if httpd_route.resources[0].spec.tls is defined else 'http://') + httpd_route.resources[0].spec.host }}/images/{{ edge_iso_path | basename }}"
+    content: "{{ ('https://' if httpd_route.resources[0].spec.tls is defined else 'http://') + httpd_route.resources[0].spec.host }}/{{ edge_iso_path | basename }}"
     dest: "{{ iso_url_output_file }}"
   become: no
   delegate_to: localhost
