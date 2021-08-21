@@ -207,7 +207,7 @@ This command is similar to the previous pipeline run, but the following paramete
 Once the pipeline runs, the OSTree Commit is synchronized to the production webserver. Verify the hash by running the following command:
 
 ```shell
-$ curl https://(oc get route httpd -ojsonpath='{.spec.host}')/iso-test/latest/refs/heads/rhel/8/x86_64/edge
+$ curl https://$(oc get route httpd -ojsonpath='{.spec.host}')/iso-test/latest/refs/heads/rhel/8/x86_64/edge
 ed9e194df0c2f70c49942c00696edbdcd86f7c06e1b930c2ed3cb0a0a99a87c5
 ```
 
