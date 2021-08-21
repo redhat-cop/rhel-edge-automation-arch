@@ -1,32 +1,37 @@
 # Basic Walkthrough
 
-This guide will help familiarize yourself with the process of building your first RHEL for Edge image using this architecture. By the end of this walkthrough, you will
+This guide will help familiarize yourself with the process of building your first RHEL for Edge image using this architecture. By the end of this walk-through, you will:
 
 * Understand the primary components in the architecture
-* Build a RHEL for Edge Image from a Blueprint
-* Publish a Kickstart file referencing the previously built RHEL for Edge Image
+* Build a RHEL for Edge image from a Blueprint
+* Publish a Kickstart file referencing the previously built RHEL for Edge image
 
 ## Prerequisites
 
-The following requirements must be satisfied prior to beginning the walkthrough:
+The following requirements must be satisfied prior to beginning the walk-through:
 
-1. OpenShift Command Line tool
-2. Tekton Command Line Tool
+1. OpenShift CLI Tool
+2. Tekton CLI Tool
 3. An OpenShift cluster provisioned with the tooling associated in this repository
-3. Access to the OpenShift Cluster as a user with `cluster-admin` access.
+3. Access to the OpenShift cluster as a user with `cluster-admin` access.
 
 ## Use Case Overview
 
-This walkthrough will illustrate the ease of building, publishing and consuming RHEL for Edge content. For the sample use case, an edge node with the [IBM Developer Model Asset Exchange: Weather Forecaster](https://github.com/IBM/MAX-Weather-Forecaster) application running in a container will be built and deployed. This process consists of the following
+This walk-through will illustrate the ease of building, publishing and consuming RHEL for Edge content. For the sample use case, an edge node with the [IBM Developer Model Asset Exchange: Weather Forecaster](https://github.com/IBM/MAX-Weather-Forecaster) application running in a container will be built and deployed. This process consists of the following:
 
-* Building a RHEL for Edge node
-* Creating a Kickstart file referencing the previously built RHEL for Edge Image with the configuration to run the container workload
+* Run a series of pipelines that: 
+  + Use Image Builder to create a custom RHEL for Edge image (OSTree commit) using compose image type `rhel-edge-container`
+  + Push generated OCI tar archive to Quay
+  + Deploy OCI container on OpenShift for staging
+  + Synchronize OStree content in web server running on OpenShift for production
+* Creating a Kickstart file with the configuration to run the container workload
+* Generate auto-booting RHEL for Edge installer ISO with embedded OSTree commit and Kickstart
 
 ## Building a RHEL for Edge Image
 
-The process of building a RHEL for edge image involves composing a Blueprint containing list of packages to include, entry modules for packages, as well as any customizations to the resulting image. The architecture includes a Tekton pipeline with the purpose of building an RHEL for Edge Image from an existing blueprint. Sample blueprints are found on the [blueprints](https://github.com/redhat-cop/rhel-edge-automation-arch/tree/blueprints) branch of this repository.
+The process of building a RHEL for edge image involves composing a Blueprint containing a list of packages, entry modules for packages, as well as any customizations to the resulting image. The architecture includes a Tekton pipeline with the purpose of building an RHEL for Edge image from an existing blueprint. Sample blueprints are found on the [blueprints](https://github.com/redhat-cop/rhel-edge-automation-arch/tree/blueprints) branch of this repository.
 
-For the most basic configurations, a sample [hello-world](https://github.com/redhat-cop/rhel-edge-automation-arch/tree/blueprints/hello-world) blueprint is available and provides necessary configuration to run the containerized application.
+For the most basic configurations, a sample [hello-world](https://github.com/redhat-cop/rhel-edge-automation-arch/tree/blueprints/hello-world) blueprint is available and provides the necessary configuration to run the containerized application.
 
 All of the content for managing RHEL for Edge applications are located in the `rfe` namespace within the OpenShift cluster.
 
@@ -36,60 +41,64 @@ Log in to the OpenShift CLI and change into the `rfe` namespace:
 oc project rfe
 ```
 
-The `rfe-tarball-pipeline` Tekton pipeline is responsible for building new RHEL for Edge images, storing the resulting .tar file in Nexus and uploading the contents to the HTTPD server.
+The `rfe-oci-image-pipeline` Tekton pipeline is responsible for building new RHEL for Edge images and storing the resulting OCI container with the OSTree Commit in Quay.
 
-From the root of the project, execute the following command to instantiate the `rfe-tarball-pipeline` to build the `hello-world` blueprint:
+From the root of the project, execute the following command to instantiate the `rfe-oci-image-pipeline` to build the `hello-world` blueprint:
 
 ```shell
-tkn pipeline start rfe-tarball-pipeline --workspace name=shared-workspace,volumeClaimTemplateFile=openshift/resources/pipelines/volumeclaimtemplate.yaml --use-param-defaults -p blueprint-dir=hello-world -s rfe-automation
+tkn pipeline start rfe-oci-image-pipeline \
+--workspace name=shared-workspace,volumeClaimTemplateFile=openshift/resources/pipelines/volumeclaimtemplate.yaml \
+-s rfe-automation \
+--use-param-defaults \
+-p blueprint-dir=hello-world 
 ```
 
 To break down the preceding command:
 
-1. `tkn` - Tekton CLI
-2. `pipeline` - Resource to manage
-3. `start` - Action to perform. Starts a pipeline
-4. `--workspace name=shared-workspace,volumeClaimTemplateFile=openshift/resources/pipelines/volumeclaimtemplate.yaml` - Specifies that a PersistentVolumeClaim should be used to back the Tekton workspace using a template found in the file [https://github.com/redhat-cop/rhel-edge-automation-arch/blob/main/openshift/resources/pipelines/volumeclaimtemplate.yaml](openshift/resources/pipelines/volumeclaimtemplate.yaml).
-5. `--use-param-default` - The default Pipeline parameters will be applied unless explicitly specified
-6. `-p blueprint-dir=hello-world` - The directory containing the blueprint file in the cloned repository. By default, the _blueprints_ branch of this repository will be used
-7. `-s rfe-automation` - THe name of the Service Account to run the pipeline as
+* `tkn` - Tekton CLI
+* `pipeline` - Resource to manage.
+* `start` - Action to perform. Starts a pipeline run.
+* `--workspace name=shared-workspace,volumeClaimTemplateFile=openshift/resources/pipelines/volumeclaimtemplate.yaml` - Specifies that a PersistentVolumeClaim should be used to back the Tekton workspace using a template found in the file [https://github.com/redhat-cop/rhel-edge-automation-arch/blob/main/openshift/resources/pipelines/volumeclaimtemplate.yaml](openshift/resources/pipelines/volumeclaimtemplate.yaml).
+* `-s rfe-automation` - The name of the Service Account used to run the pipeline.
+* `--use-param-default` - The default Pipeline parameters will be applied unless explicitly specified.
+* `-p blueprint-dir=hello-world` - The directory containing the blueprint file in the cloned repository. By default, the _blueprints_ branch of this repository will be used.
 
 The output of the command will provide a command to view the progress of the build.
 
-_Note: The process of building a RHEL for Edge image takes time_
+_Note: The process of building a RHEL for Edge image takes time!_
 
 ### Verification
 
-Once the pipeline completes, the assets can then be verified in both Nexus and HTTPD.
-
-First, obtain the URL of the Nexus Route and login with your OpenShift credentials
+Once the pipeline completes, the OCI container generated by Image Builder should be stored in Quay. To verify, obtain the route to Quay by running the following command:
 
 ```shell
-oc get routes -n rfe nexus -o jsonpath=http://'{ .spec.host }'
+oc get quayregistry quay -n quay -o go-template='{{ .status.registryEndpoint }}'
 ```
 
-Once logged in, select the *Browse* button on the left hand navigation bar and then select the *rfe-tarballs* repository.
-
-The list of uploaded tarballs will be displayed.
-
-To verify the extracted contents of the RHEL for Edge tarball in the HTTPD server, first execute the following command to obtain a remote shell session on the server:
+Quay is not setup to use OpenShift's SSO, so the username can be found by running:
 
 ```shell
-oc rsh -n rfe $(oc get pods -l=deployment=httpd -o jsonpath='{.items[0].metadata.name }')
+oc get secret quay-rfe-setup -n rfe -o go-template='{{ .data.username | base64decode }}'
 ```
 
-List all of the tarballs in the HTTPD server and then exit the remote session
+And the password by running:
 
 ```shell
-ls -l /opt/rh/httpd24/root/var/www/html/tarballs
-exit
+oc get secret quay-rfe-setup -n rfe -o go-template='{{ .data.password | base64decode }}'
 ```
 
-The PipelineRun resource also provides the externally facing location for these assets in both Nexus and HTTPD as execution results. The most important resource, which will be needed in the subsequent section is the location of the extracted RHEL for Edge image in HTTPD. This can be extracted by executing the following command:
+Once logged in, click on the RFE organization to the right of the page under _Users and Organizations_ and then select the repository name associated with your blueprint.
 
-```shell
-oc get pipelinerun $(oc get pipelinerun -l=tekton.dev/pipeline=rfe-tarball-pipeline --sort-by=".status.completionTime" -o jsonpath='{ .items[-1].metadata.name }') -o jsonpath='{ .status.pipelineResults[?(@.name=="serving-storage-url")].value }'
-```
+To the left of the screen, click the _Tags_ icon to view associated tags. Each pipeline run will create two tags:
+
+* A _latest_ tag that points to the most recent image.
+* A tag with the version specified in the blueprint.
+
+At this point, you could manually pull/deploy the container for use in the deployment of RFE content.
+
+## Staging OCI Container with OSTree Commit
+
+Now that we have our OCI container from Image Builder with our OSTree Commit, we can run a pipeline to deploy it in OpenShift.
 
 ## Creating the Kickstart File
 
