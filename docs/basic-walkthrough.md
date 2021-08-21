@@ -165,7 +165,7 @@ Each pipeline run returns one result:
 To view the results, find the latest pipeline run. Use the following command as an example:
 
 ```shell
-$ kn pipelinerun list --label tekton.dev/pipeline=rfe-oci-stage-pipeline --limit 1
+$ tkn pipelinerun list --label tekton.dev/pipeline=rfe-oci-stage-pipeline --limit 1
 NAME                               STARTED     DURATION     STATUS
 rfe-oci-stage-pipeline-run-cxkxq   1 day ago   13 minutes   Succeeded
 ```
@@ -178,6 +178,61 @@ $ oc get pipelinerun -n rfe rfe-oci-stage-pipeline-run-cxkxq -ojsonpath='{.statu
   {
     "name": "content-path",
     "value": "http://hello-world-latest-rfe.apps.cluster.com/repo"
+  }
+]
+```
+
+## Moving from Stage to Production
+
+The next stage involves synchronizing our OSTree Commit from our staging environment to production.
+
+From the root of the project, execute the following command to instantiate the `rfe-oci-publish-content-pipeline` pipeline:
+
+```shell
+tkn pipeline start rfe-oci-publish-content-pipeline \
+--workspace name=shared-workspace,volumeClaimTemplateFile=openshift/resources/pipelines/volumeclaimtemplate.yaml \
+-s rfe-automation \
+--use-param-defaults \
+-p image-path=(oc get route -n quay quay-quay -ojson | jq -r .status.ingress[].host)/rfe/hello-world \
+-p image-tag=latest 
+```
+
+This command is similar to the previous pipeline run, but the following parameters are used:
+
+* `-p image-path=...` - The path to the OCI container stored in the Quay registry.
+* `-p image-tag=latest` - Use the image with the tag _latest_.
+
+### Verification
+
+Once the pipeline runs, the OSTree Commit is synchronized to the production webserver. Verify the hash by running the following command:
+
+```shell
+$ curl https://(oc get route httpd -ojsonpath='{.spec.host}')/iso-test/latest/refs/heads/rhel/8/x86_64/edge
+ed9e194df0c2f70c49942c00696edbdcd86f7c06e1b930c2ed3cb0a0a99a87c5
+```
+
+### Pipeline Results
+
+Each pipeline run returns one result:
+
+* `content-path` - The path to the OSTree repository.
+
+To view the results, find the latest pipeline run. Use the following command as an example:
+
+```shell
+$ tkn pipelinerun list --label tekton.dev/pipeline=rfe-oci-publish-content-pipeline --limit 1
+NAME                                         STARTED     DURATION   STATUS
+rfe-oci-publish-content-pipeline-run-ptrpx   1 day ago   1 minute   Succeeded
+```
+
+Then run the following to view the pipeline results:
+
+```shell
+$ oc get pipelinerun -n rfe rfe-oci-publish-content-pipeline-run-ptrpx -ojsonpath='{.status.pipelineResults}' | jq .
+[
+  {
+    "name": "content-path",
+    "value": "http://httpd-rfe.apps.cluster.com/iso-test/latest"
   }
 ]
 ```
