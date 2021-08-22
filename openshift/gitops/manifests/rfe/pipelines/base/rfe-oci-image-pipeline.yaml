@@ -4,7 +4,7 @@ metadata:
   annotations:
     argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
     argocd.argoproj.io/sync-wave: "5"
-  name: rfe-oci-pipeline
+  name: rfe-oci-image-pipeline
 spec:
   params:
     - name: blueprints-git-url

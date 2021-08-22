@@ -8,7 +8,7 @@ metadata:
     app.kubernetes.io/component: httpd
     app.kubernetes.io/instance: httpd
   name: httpd
-  namespace: httpd
+  namespace: rfe
 spec:
   replicas: 1
   selector:
@@ -36,7 +36,7 @@ spec:
               memory: "512Mi"
               cpu: "500m"
           volumeMounts:
-            - mountPath: /opt/rh/httpd24/root/var/www/html
+            - mountPath: /var/www/html
               name: data
       volumes:
         - name: data

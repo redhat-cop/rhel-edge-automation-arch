@@ -14,7 +14,25 @@
   ansible.builtin.set_fact:
     quay_image_path_basename: "{{ quay_image_path | basename }}"
 
-- name: "Create ImageStream for {{ quay_image_path_basename }}-{{ quay_image_tag }}:{{ quay_image_tag }}"
+- name: "Check for ImageStream {{ quay_image_path_basename }}-{{ quay_image_tag }}"
+  community.kubernetes.k8s_info:
+    api_key: "{{ lookup('file', '/var/run/secrets/kubernetes.io/serviceaccount/token') }}"
+    api_version: image.openshift.io/v1
+    ca_cert: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+    host: https://kubernetes.default.svc
+    kind: ImageStream
+    name: "{{ quay_image_path_basename }}-{{ quay_image_tag }}"
+    namespace: rfe
+    validate_certs: yes
+  register: imagestream_check_results
+
+- name: Update Image Stream
+  ansible.builtin.command: >
+    oc import-image -n rfe {{ quay_image_path_basename }}-{{ quay_image_tag }}
+  when:
+    - imagestream_check_results.resources | count > 0
+
+- name: "Create/Update ImageStream for {{ quay_image_path_basename }}-{{ quay_image_tag }}:{{ quay_image_tag }}"
   community.kubernetes.k8s:
     api_key: "{{ lookup('file', '/var/run/secrets/kubernetes.io/serviceaccount/token') }}"
     api_version: v1
@@ -56,7 +74,7 @@
         }
       ]
 
-- name: "Create Deployment for {{ quay_image_path_basename }}:{{ quay_image_tag }}"
+- name: "Create/Update Deployment for {{ quay_image_path_basename }}:{{ quay_image_tag }}"
   community.kubernetes.k8s:
     api_key: "{{ lookup('file', '/var/run/secrets/kubernetes.io/serviceaccount/token') }}"
     api_version: v1
@@ -102,7 +120,7 @@
     state: present
     validate_certs: yes
 
-- name: "Create Service for {{ quay_image_path_basename }}:{{ quay_image_tag }}"
+- name: "Create/Update Service for {{ quay_image_path_basename }}:{{ quay_image_tag }}"
   community.kubernetes.k8s:
     api_key: "{{ lookup('file', '/var/run/secrets/kubernetes.io/serviceaccount/token') }}"
     api_version: v1
@@ -131,7 +149,7 @@
     state: present
     validate_certs: yes
 
-- name: "Create Route for {{ quay_image_path_basename }}:{{ quay_image_tag }}"
+- name: "Create/Update Route for {{ quay_image_path_basename }}:{{ quay_image_tag }}"
   community.kubernetes.k8s:
     api_key: "{{ lookup('file', '/var/run/secrets/kubernetes.io/serviceaccount/token') }}"
     api_version: v1

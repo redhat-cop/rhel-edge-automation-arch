@@ -1,0 +1,10 @@
+- name: Generate In-Memory Inventory of Image Builder VM
+  hosts: localhost
+  roles:
+    - role: openshift-image-builder-imi
+
+- name: Generate RFE Boot ISO Image
+  become: yes
+  hosts: image-builder
+  roles:
+    - role: oci-build-installer-image

@@ -4,6 +4,7 @@ kind: Kustomization
 namespace: rfe
 
 resources:
-  - redhat-image-downloader-ansible-job.yaml
   - image-builder-vm-ansible-job.yaml
+  - image-builder-vm-service.yaml
   - image-builder-vm.yaml
+  - redhat-image-downloader-ansible-job.yaml

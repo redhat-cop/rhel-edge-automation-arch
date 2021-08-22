@@ -1,0 +1,82 @@
+- name: Assert Extra Variables are Defined
+  ansible.builtin.assert:
+    fail_msg: >
+      Make sure the following extra variables are defined before running this role:
+      - blueprint_source_dir
+      - build_commit_id_output_file
+      - ostree_repo_url
+    that:
+      - blueprint_source_dir is defined
+      - build_commit_id_output_file is defined
+      - ostree_repo_url is defined
+
+- name: Validate Blueprint Directory and Blueprint File Exists
+  ansible.builtin.stat:
+    path: "{{ item }}"
+  become: no
+  delegate_to: localhost
+  failed_when: not blueprint_exists.stat.exists
+  loop:
+    - "{{ blueprint_source_dir }}"
+    - "{{ blueprint_source_dir }}/blueprint.toml"
+  register: blueprint_exists
+
+- name: Create Blueprints Directory
+  ansible.builtin.file:
+    path: "{{ blueprint_remote_dir }}"
+    state: directory
+
+- name: Set Blueprint Facts
+  ansible.builtin.set_fact:
+    blueprint_name: "{{ blueprint_source_dir | basename }}"
+    build_blueprint_dir: "{{ blueprint_remote_dir }}/{{ blueprint_source_dir | basename }}"
+
+- name: Copy Blueprints Directory to Image Builder
+  ansible.builtin.copy:
+    dest: "{{ build_blueprint_dir }}/"
+    src: "{{ blueprint_source_dir }}/"
+
+- name: Push Blueprint to Server
+  ansible.builtin.command: >
+    composer-cli blueprints push "{{ build_blueprint_dir }}/blueprint.toml"
+
+- name: Resolve Dependencies
+  ansible.builtin.command: >
+    composer-cli blueprints depsolve {{ blueprint_name }}
+
+- name: Freeze Blueprint
+  ansible.builtin.command: >
+    composer-cli -j blueprints freeze {{ blueprint_name }}
+  register: frozen_blueprint
+
+- name: Generate ISO
+  block:
+    - name: Compose Image
+      ansible.builtin.command: >
+        composer-cli -j compose start-ostree --ref rhel/8/x86_64/edge --url {{ ostree_repo_url }} {{ blueprint_name }} rhel-edge-installer
+      register: composed_image
+
+    - name: Set Build Commit ID
+      ansible.builtin.set_fact:
+        build_commit_id: "{{ (composed_image.stdout | from_json).build_id }}"
+
+    - name: Wait for Image Build to Complete
+      ansible.builtin.command: >
+        composer-cli -j compose status
+      changed_when: false
+      delay: 30
+      failed_when: >
+        not (image_build_status.stdout | from_json | selectattr('id', 'equalto', build_commit_id) | list | first).finished and
+        (image_build_status.stdout | from_json | selectattr('id', 'equalto', build_commit_id) | list | first).status != "FINISHED"
+      register: image_build_status
+      retries: 200
+      until: >
+        (image_build_status.stdout | from_json | selectattr('id', 'equalto', build_commit_id) | list | first).finished and
+        (image_build_status.stdout | from_json | selectattr('id', 'equalto', build_commit_id) | list | first).status == "FINISHED"
+
+- name: Save Build Commit ID to File
+  ansible.builtin.copy:
+    content: "{{ build_commit_id }}"
+    dest: "{{ build_commit_id_output_file }}"
+  become: no
+  delegate_to: localhost
