@@ -63,7 +63,7 @@ spec:
                   -u "${NEXUS_ADMIN_USERNAME}:${NEXUS_ADMIN_PASSWORD}" \
                   -H "accept: application/json" \
                   -H "Content-Type: application/json" \
-                  -d "{ \"id\": \"rfe\",\"name\": \"rfe\",\"description\": \"Management of rfe assets\",\"privileges\": [\"nx-repository-admin-raw-rfe-kickstarts-*\",\"nx-repository-admin-raw-rfe-tarballs-*\",\"nx-repository-admin-raw-rfe-rhel-media-*\",\"nx-repository-view-raw-rfe-tarballs-*\",\"nx-repository-view-raw-rfe-kickstarts-*\",\"nx-repository-view-raw-rfe-rhel-media-*\"]}"
+                  -d "{ \"id\": \"rfe\",\"name\": \"rfe\",\"description\": \"Management of rfe assets\",\"privileges\": [\"nx-repository-admin-raw-rfe-kickstarts-*\",\"nx-repository-admin-raw-rfe-tarballs-*\",\"nx-repository-admin-raw-rfe-rhel-media-*\",\"nx-repository-admin-raw-rfe-auto-iso-*\",\"nx-repository-view-raw-rfe-tarballs-*\",\"nx-repository-view-raw-rfe-kickstarts-*\",\"nx-repository-view-raw-rfe-rhel-media-*\",\"nx-repository-view-raw-rfe-auto-iso-*\"]}"
 
               fi
 
