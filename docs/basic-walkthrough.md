@@ -44,7 +44,7 @@ oc project rfe
 
 The `rfe-oci-image-pipeline` Tekton pipeline is responsible for building new RHEL for Edge images and storing the resulting OCI container with the OSTree Commit in Quay.
 
-From the root of the project, execute the following command to instantiate the `rfe-oci-image-pipeline` to build the `hello-world` blueprint:
+From the root of the project, execute the following command to execute the `rfe-oci-image-pipeline` pipeline to build the `hello-world` blueprint:
 
 ```shell
 tkn pipeline start rfe-oci-image-pipeline \
@@ -87,7 +87,7 @@ rfe-oci-image-pipeline-run-2lpwc   1 day ago   13 minutes   Succeeded
 Then run the following to view the pipeline results:
 
 ```shell
-$ oc get pipelinerun rfe-oci-image-pipeline-run-2lpwc -ojsonpath='{.status.pipelineResults}'
+$ oc get pipelinerun -n rfe rfe-oci-image-pipeline-run-2lpwc -ojsonpath='{.status.pipelineResults}'
 [
   {
     "name": "build-commit",
@@ -137,7 +137,7 @@ At this point, you could manually pull/deploy the container for use in the deplo
 
 Now that we have our OCI container from Image Builder with our OSTree Commit in Quay, we can run a pipeline to deploy it as a staging environment in OpenShift.
 
-From the root of the project, execute the following command to instantiate the `rfe-oci-stage-pipeline` to deploy the OCI container built in the previous pipeline (`rfe-oci-image-pipeline`) run.
+From the root of the project, execute the following command to execute the `rfe-oci-stage-pipeline` pipeline to deploy the OCI container built in the previous pipeline (`rfe-oci-image-pipeline`) run.
 
 ```shell
 tkn pipeline start rfe-oci-stage-pipeline \
@@ -162,7 +162,7 @@ Each pipeline run returns one result:
 To view the results, find the latest pipeline run. Use the following command as an example:
 
 ```shell
-$ tkn pipelinerun list --label tekton.dev/pipeline=rfe-oci-stage-pipeline --limit 1
+$ tkn pipelinerun list -n rfe --label tekton.dev/pipeline=rfe-oci-stage-pipeline --limit 1
 NAME                               STARTED     DURATION     STATUS
 rfe-oci-stage-pipeline-run-cxkxq   1 day ago   13 minutes   Succeeded
 ```
@@ -192,7 +192,7 @@ ed9e194df0c2f70c49942c00696edbdcd86f7c06e1b930c2ed3cb0a0a99a87c5
 
 The next stage involves synchronizing our OSTree Commit from our staging environment to production.
 
-From the root of the project, execute the following command to instantiate the `rfe-oci-publish-content-pipeline` pipeline:
+From the root of the project, execute the following command to execute the `rfe-oci-publish-content-pipeline` pipeline:
 
 ```shell
 tkn pipeline start rfe-oci-publish-content-pipeline \
@@ -217,7 +217,7 @@ Each pipeline run returns one result:
 To view the results, find the latest pipeline run. Use the following command as an example:
 
 ```shell
-$ tkn pipelinerun list --label tekton.dev/pipeline=rfe-oci-publish-content-pipeline --limit 1
+$ tkn pipelinerun list -n rfe --label tekton.dev/pipeline=rfe-oci-publish-content-pipeline --limit 1
 NAME                                         STARTED     DURATION   STATUS
 rfe-oci-publish-content-pipeline-run-ptrpx   1 day ago   1 minute   Succeeded
 ```
@@ -246,6 +246,76 @@ ed9e194df0c2f70c49942c00696edbdcd86f7c06e1b930c2ed3cb0a0a99a87c5
 ```
 
 The hash for this repository should now match the hash from the repository generated during the `rfe-oci-stage-pipeline` pipeline run.
+
+## Creating Auto Booting RFE Installer
+
+One of the new features in Image Builder 8.4 is the ability to compose (using `image-type` `rhel-edge-installer`) installation media that has an OSTree commit embedded in the installer. The pipeline in this project goes a step further and embeds a kickstart file in the generated ISO and reconfigures `EFI/BOOT/grub.cfg`/`isolinux/isolinux.cfg` to automatically install RFE using the embedded kickstart.
+
+From the root of the project, execute the following command to execute the `rfe-oci-iso-pipeline` pipeline:
+
+```shell
+tkn pipeline start rfe-oci-iso-pipeline \
+--workspace name=shared-workspace,volumeClaimTemplateFile=openshift/resources/pipelines/volumeclaimtemplate.yaml \
+-s rfe-automation \
+--use-param-defaults \
+-p kickstart-url=https://raw.githubusercontent.com/redhat-cop/rhel-edge-automation-arch/kickstarts/hello-world/kickstart.ks \
+-p ostree-repo-url=http://iso-test-latest-rfe.apps.cluster.com/repo
+```
+This command is similar to the previous pipeline run, but the following parameters are used:
+
+* `-p kickstart-url=https://raw.githubusercontent.com/redhat-cop/rhel-edge-automation-arch/kickstarts/hello-world/kickstart.ks` - The path to the kickstart to be embedded in the ISO.
+* `-p ostree-repo-url=http://iso-test-latest-rfe.apps.cluster.com/repo` - The path to the OSTree repository that will be embedded in the ISO.
+
+### Important Information Regarding Kickstarts
+
+If you are providing your own kickstart file, the following line for the `ostreesetup` command should be used (notice `--url` is pointing to the OSTree repo embedded in the installer):
+
+```shell
+ostreesetup --nogpg --url=file:///ostree/repo/ --osname=rhel --remote=edge --ref=rhel/8/x86_64/edge
+```
+
+Like traditional RHEL installations, Anaconda is used to install RHEL for Edge. However, not all Anaconda modules are enabled. The following modules are available:
+
+* org.fedoraproject.Anaconda.Modules.Network
+* org.fedoraproject.Anaconda.Modules.Payloads
+* org.fedoraproject.Anaconda.Modules.Storage
+
+Common tasks like creating a user via the kickstart will not work. These actions should be included in the blueprint file used to build the OSTree commit. However, other tasks like `%post` should still work.
+
+### Pipeline Results
+
+Each pipeline run returns two results:
+
+* `build-commit-id` - The Build Commit ID from Image Builder
+* `iso-url` - The location of the autobooting ISO
+
+To view the results, find the latest pipeline run. Use the following command as an example:
+
+```shell
+$ tkn pipelinerun list -n rfe --label tekton.dev/pipeline=rfe-oci-iso-pipeline --limit 1
+NAME                             STARTED      DURATION     STATUS
+rfe-oci-iso-pipeline-run-2lpwc   3 days ago   13 minutes   Succeeded
+```
+
+Then run the following to view the pipeline results:
+
+```shell
+$ oc get pipelinerun -n rfe rfe-oci-iso-pipeline-run-2lpwc -ojsonpath='{.status.pipelineResults}'
+[
+  {
+    "name": "build-commit-id",
+    "value": "2cbce183-4a18-4e47-97bd-47e983b5652c"
+  },
+  {
+    "name": "iso-url",
+    "value": "https://httpd-rfe.apps.cluster.com/2cbce183-4a18-4e47-97bd-47e983b5652c-auto.iso"
+  }
+]
+```
+
+### Verification
+
+To verify, simply pull the ISO using the URL defined in the `iso-url` pipeline result.
 
 ## Creating the Kickstart File
 
