@@ -154,7 +154,6 @@
 - name: Upload ISO to Nexus
   vars:
     file_to_upload: "{{ edge_iso_path }}"
-    nexus_repository: "{{ nexus_repository }}"
   ansible.builtin.include_role:
     name: nexus-upload
 
