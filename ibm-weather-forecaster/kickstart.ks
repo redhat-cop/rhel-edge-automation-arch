@@ -21,19 +21,16 @@ text
 # activate network devices and configure with DHCP
 network --bootproto=dhcp
 
-# create default user with sudo privileges
-user --name={{ rfe_user | default('core') }} --groups=wheel --password={{ rfe_password | default('edge') }}
-
 # set up the OSTree-based install with disabled GPG key verification, the base
 # URL to pull the installation content, 'rhel' as the management root in the
 # repo, and 'rhel/8/x86_64/edge' as the branch for the installation
-ostreesetup --nogpg --url={{ rfe_tarball_url }}/repo/ --osname=rhel --remote=edge --ref=rhel/8/x86_64/edge
+ostreesetup --nogpg --url={{ ostree_repo_url }} --osname=rhel --remote=edge --ref=rhel/8/x86_64/edge
 
 %post
 
 # Set the update policy to automatically download and stage updates to be
 # applied at the next reboot
-#stage updates as they become available. This is highly recommended
+# stage updates as they become available. This is highly recommended
 echo AutomaticUpdatePolicy=stage >> /etc/rpm-ostreed.conf
 
 cat > /etc/systemd/system/ibm-weather-forecaster.service << 'EOF'
