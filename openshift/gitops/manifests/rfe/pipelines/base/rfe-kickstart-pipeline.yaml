@@ -23,8 +23,8 @@ spec:
       description: Tooling Repository URL Reference
       default: main
       type: string
-    - name: rfe-tarball-url
-      description: HTTP Location of RFE Tarball
+    - name: ostree-repo-url
+      description: HTTP Location of OSTree Repository
       type: string
     - name: kickstart-path
       description: Path containing the kickstart
@@ -65,8 +65,8 @@ spec:
         name: upload-kickstart
         kind: Task
       params:
-        - name: rfe-tarball-url
-          value: $(params.rfe-tarball-url)
+        - name: ostree-repo-url
+          value: $(params.ostree-repo-url)
         - name: kickstart-path
           value: /workspace/workspace/kickstarts/$(params.kickstart-path)
         - name: kickstart-destination-dir
