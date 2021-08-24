@@ -24,4 +24,4 @@ network --bootproto=dhcp
 # set up the OSTree-based install with disabled GPG key verification, the base
 # URL to pull the installation content, 'rhel' as the management root in the
 # repo, and 'rhel/8/x86_64/edge' as the branch for the installation
-ostreesetup --nogpg --url=file:///ostree/repo/ --osname=rhel --remote=edge --ref=rhel/8/x86_64/edge
+ostreesetup --nogpg --url={{ ostree_repo_url }} --osname=rhel --remote=edge --ref=rhel/8/x86_64/edge
