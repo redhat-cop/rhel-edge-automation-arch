@@ -247,6 +247,65 @@ ed9e194df0c2f70c49942c00696edbdcd86f7c06e1b930c2ed3cb0a0a99a87c5
 
 The hash for this repository should now match the hash from the repository generated during the `rfe-oci-stage-pipeline` pipeline run.
 
+## Creating the Kickstart File
+
+A Tekton pipeline called `rfe-kickstart-pipeline` is responsible for publishing a Kickstart file to both Nexus and the HTTPD server. As the pipeline uses Ansible, Jinja based templating is available to inject key values (in particular, the location of the OSTree repository).
+
+Using the location of the OSTree repository from the results of either the `rfe-oci-stage-pipeline` or `rfe-oci-publish-content-pipeline` pipelines, execute the following command:
+
+```shell
+tkn pipeline start rfe-kickstart-pipeline \
+-s rfe-automation \
+--workspace name=shared-workspace,volumeClaimTemplateFile=openshift/resources/pipelines/volumeclaimtemplate.yaml \
+--use-param-defaults \
+-p kickstart-path=ibm-weather-forecaster/kickstart.ks \
+-p ostree-repo-url=http://httpd-rfe.apps.cluster.com/hello-world/latest
+```
+
+This command is similar to the previous pipeline run, but the following parameters are used:
+
+To break down the preceding command:
+
+* `-p kickstart-path=ibm-weather-forecaster/kickstart.ks` - The location of the kickstart to use in the referenced repository. By default, the _kickstarts_ branch of this repository will be used.
+* `-p ostree-repo-url=http://httpd-rfe.apps.cluster.com/hello-world/latest` - The location of the OSTree repository.
+
+The output of the `tkn pipeline` command will provide another command to view the progress of the build.
+
+### Pipeline Results
+
+Each pipeline run returns two results:
+
+* `artifact-repository-storage-url` - The location of the kickstart on the Nexus server.
+* `serving-storage-url` - The location of the kickstart on the HTTPD server.
+
+To view the results, find the latest pipeline run. Use the following command as an example:
+
+```shell
+$ tkn pipelinerun list -n rfe --label tekton.dev/pipeline=rfe-kickstart-pipeline --limit 1
+NAME                               STARTED          DURATION   STATUS
+rfe-kickstart-pipeline-run-kqp5n   18 minutes ago   1 minute   Succeeded
+```
+
+Then run the following to view the pipeline results:
+
+```shell
+$ oc get pipelinerun rfe-kickstart-pipeline-run-kqp5n -ojsonpath='{.status.pipelineResults}'
+[
+  {
+    "name": "artifact-repository-storage-url",
+    "value": "https://nexus-rfe.apps.cluster.com/repository/rfe-kickstarts/ibm-weather-forecaster/kickstart.ks"
+  },
+  {
+    "name": "serving-storage-url",
+    "value": "https://httpd-rfe.apps.cluster.com/kickstarts/ibm-weather-forecaster/kickstart.ks"
+  }
+]
+```
+
+### Verification
+
+To verify, simply pull the kickstart files using the URLs defined in the `artifact-repository-storage-url` and `serving-storage-url` pipeline results.
+
 ## Creating Auto Booting RFE Installer
 
 One of the new features in Image Builder 8.4 is the ability to compose (using `image-type` `rhel-edge-installer`) installation media that has an OSTree commit embedded in the installer. The pipeline in this project goes a step further and embeds a kickstart file in the generated ISO and reconfigures `EFI/BOOT/grub.cfg`/`isolinux/isolinux.cfg` to automatically install RFE using the embedded kickstart.
@@ -258,17 +317,18 @@ tkn pipeline start rfe-oci-iso-pipeline \
 --workspace name=shared-workspace,volumeClaimTemplateFile=openshift/resources/pipelines/volumeclaimtemplate.yaml \
 -s rfe-automation \
 --use-param-defaults \
--p kickstart-url=https://raw.githubusercontent.com/redhat-cop/rhel-edge-automation-arch/kickstarts/hello-world/kickstart.ks \
--p ostree-repo-url=http://iso-test-latest-rfe.apps.cluster.com/repo
+-p kickstart-url=https://httpd-rfe.apps.cluster.com/kickstarts/ibm-weather-forecaster/kickstart.ks \
+-p ostree-repo-url=http://hello-world-latest-rfe.apps.cluster.com/repo
 ```
+
 This command is similar to the previous pipeline run, but the following parameters are used:
 
-* `-p kickstart-url=https://raw.githubusercontent.com/redhat-cop/rhel-edge-automation-arch/kickstarts/hello-world/kickstart.ks` - The path to the kickstart to be embedded in the ISO.
-* `-p ostree-repo-url=http://iso-test-latest-rfe.apps.cluster.com/repo` - The path to the OSTree repository that will be embedded in the ISO.
+* `-p kickstart-url=https://httpd-rfe.apps.cluster.com/kickstarts/ibm-weather-forecaster/kickstart.ks` - The path to the kickstart to be embedded in the ISO.
+* `-p ostree-repo-url=http://hello-world-latest-rfe.apps.cluster.com/repo` - The path to the OSTree repository that will be embedded in the ISO.
 
 ### Important Information Regarding Kickstarts
 
-If you are providing your own kickstart file, the following line for the `ostreesetup` command should be used (notice `--url` is pointing to the OSTree repo embedded in the installer):
+If you are providing your own kickstart file, the following line for the `ostreesetup` command should be used (notice `--url` is pointing to the OSTree repo embedded in the installer, but it can point to any OSTree repository):
 
 ```shell
 ostreesetup --nogpg --url=file:///ostree/repo/ --osname=rhel --remote=edge --ref=rhel/8/x86_64/edge
@@ -317,65 +377,15 @@ $ oc get pipelinerun -n rfe rfe-oci-iso-pipeline-run-2lpwc -ojsonpath='{.status.
 
 To verify, simply pull the ISO using the URL defined in the `iso-url` pipeline result.
 
-## Creating the Kickstart File
-
-A Tekton pipeline similar to the `rfe-tarball-pipeline` pipeline called `rfe-kickstart-pipeline` is responsible for publishing a Kickstart file to both Nexus and the HTTPD server. As the pipeline uses Ansible, Jinja based templating is available to inject key values (in particular, the location of the extracted rpm-ostree tarball in the HTTPD server).
-
-Using the location of the extracted RHEL for Edge image produced by the pipeline in the previous section, execute the following command from the root of the repository to start the `rfe-kickstart-pipeline` pipeline.
-
-```shell
-tkn pipeline start rfe-kickstart-pipeline --workspace name=shared-workspace,volumeClaimTemplateFile=openshift/resources/pipelines/volumeclaimtemplate.yaml --use-param-defaults -p kickstart-path=ibm-weather-forecaster/kickstart.ks -s rfe-automation -p rfe-tarball-url=$(oc get pipelinerun $(oc get pipelinerun -l=tekton.dev/pipeline=rfe-tarball-pipeline --sort-by=".status.completionTime" -o jsonpath='{ .items[-1].metadata.name }') -o jsonpath='{ .status.pipelineResults[?(@.name=="serving-storage-url")].value }')
-```
-
-To break down the preceding command:
-
-1. `tkn` - Tekton CLI
-2. `pipeline` - Resource to manage
-3. `start` - Action to perform. Starts a pipeline
-4. `--workspace name=shared-workspace,volumeClaimTemplateFile=openshift/resources/pipelines/volumeclaimtemplate.yaml` - Specifies that a PersistentVolumeClaim should be used to back the Tekton workspace using a template found in the file [openshift/resources/pipelines/volumeclaimtemplate.yaml](openshift/resources/pipelines/volumeclaimtemplate.yaml).
-5. `--use-param-default` - The default Pipeline parameters will be applied unless explicitly specified
-6. `-p ibm-weather-forecaster/kickstart.ks` - The location of the kickstart to use in the referenced repository. By default, the _kickstarts_ branch of this repository will be used
-7. `-s rfe-automation` - THe name of the Service Account to run the pipeline as
-8. `rfe-tarball-url=<URL_FROM_PRIOR_PIPELINE>` - The location of the kickstart to use in the referenced repository. By default, the _kickstarts_ branch of this repository will be used
-
-The output of the `tkn pipeline` command will provide another command to view the progress of the build.
-
-### Verification
-
-Once the pipeline completes, the assets can then be verified in both Nexus and HTTPD.
-
-First, obtain the URL of the Nexus Route and login with your OpenShift credentials
-
-```shell
-oc get routes -n rfe nexus -o jsonpath=http://'{ .spec.host }'
-```
-
-Once logged in, select the *Browse* button on the left hand navigation bar and then select the *rfe-kickstarts* repository.
-
-The list of uploaded kickstarts separated by directory will be displayed.
-
-To verify the kickstart in the HTTPD server, first execute the following command to obtain a remote shell session on the server:
-
-```shell
-oc rsh -n rfe $(oc get pods -l=deployment=httpd -o jsonpath='{.items[0].metadata.name }')
-```
-
-Display the content of the kickstart file
-
-```shell
-cat /opt/rh/httpd24/root/var/www/html/kickstarts/ibm-weather-forecaster/kickstart.ks
-exit
-```
-
-The PipelineRun resource also provides the externally facing location for these assets in both Nexus and HTTPD as execution results. The most important resource in this section is the location of the uploaded kickstart file which can be found by executing the following command:
-
-```shell
-oc get pipelinerun $(oc get pipelinerun -l=tekton.dev/pipeline=rfe-kickstart-pipeline --sort-by=".status.completionTime" -o jsonpath='{ .items[-1].metadata.name }') -o jsonpath='{ .status.pipelineResults[?(@.name=="serving-storage-url")].value }'
-```
-
 ## Creating a RHEL for Edge Node
 
-Now that the the Kickstart and the contents of the rpm-ostree tarball are available in the HTTPD server, create a new RHEL for Edge Node by booting a new machine using the RHEL 8 boot image.
+### Using Auto Booting ISO
+
+The auto booting ISO is self contained and configured to automatically install the RHEL for Edge not w/o user input. Simply boot off the ISO to install.
+
+### Manually Using Kickstart File
+
+Now that the the Kickstart and OSTree repository are setup, create a new RHEL for Edge Node by booting a new machine using the RHEL 8 boot image.
 
 At the boot menu, hit the tab key and add the following to the list of boot arguments:
 
@@ -383,13 +393,13 @@ At the boot menu, hit the tab key and add the following to the list of boot argu
 inst.ks=<URL_OF_KICKSTART_FILE>
 ```
 
-Hit enter to boot the machine using the Kickstart. The machine will retrieve the rpm-ostree content and prepare the machine to run the sample application. Once complete, the machine will reboot
+Hit enter to boot the machine using the Kickstart. The machine will retrieve the OSTree content and prepare the machine to run the sample application. Once complete, the machine will reboot
 
-### Verify the application
+### Verify the Application
 
 Once the machine has been rebooted, login as the user created as part of the node installation.
 
-_Note: By default, this example specifies the following `core` as the user and `edge` as the password.
+_Note: By default, this example specifies the following `core` as the user and `edge` as the password._
 
 Once logged in, confirm the application container is running:
 
@@ -406,3 +416,4 @@ curl localhost:5000
 Additional details on interacting with the application can be found in the [project repository](https://github.com/IBM/MAX-Weather-Forecaster)
 
 You have now successfully completed the walkthrough!
+
