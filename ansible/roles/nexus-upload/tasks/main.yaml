@@ -28,6 +28,7 @@
     namespace: rfe
     name: "{{ nexus_credentials_secret_name }}"
     validate_certs: yes
+  become: no
   delegate_to: localhost
   #failed_when: nexus_secret.resources | length != 1
   register: nexus_secret
