@@ -34,7 +34,7 @@
   loop:
     - osbuild-composer.socket
     - cockpit.socket
-    - httpd
+    - httpd.service
     - firewalld
     
 - name: Enable Firewall Ports for Cockpit/Composer/Apache
