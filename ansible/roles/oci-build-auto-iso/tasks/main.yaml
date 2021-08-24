@@ -151,12 +151,23 @@
       loop:
         - "{{ iso_directory }}"
 
+- name: Upload ISO to Nexus
+  vars:
+    file_to_upload: "{{ edge_iso_path }}"
+  ansible.builtin.include_role:
+    name: nexus-upload
+
 - name: Pull ISO From Image Builder to httpd Pod
   ansible.builtin.get_url:
     dest: "{{ edge_iso_path }}"
     url: "http://{{ image_builder_service_name }}/{{ edge_iso_path | basename }}"
   become: no
   delegate_to: "{{ groups.httpd_pod_group[0] }}"
+
+- name: Remove ISO From Image Builder
+  ansible.builtin.file:
+    path: "{{ edge_iso_path }}"
+    state: absent
 
 - name: Get httpd Route
   community.kubernetes.k8s_info:

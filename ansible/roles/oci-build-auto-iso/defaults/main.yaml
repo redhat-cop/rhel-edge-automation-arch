@@ -1,1 +1,2 @@
 image_builder_service_name: image-builder.rfe.svc.cluster.local
+nexus_repository: rfe-auto-iso

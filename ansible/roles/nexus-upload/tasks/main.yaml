@@ -1,0 +1,59 @@
+- name: Check if File to Upload Exists
+  ansible.builtin.stat:
+    path: "{{ file_to_upload }}"
+  register: file_exists
+  when: file_to_upload is defined
+
+- name: Assert File Exists
+  ansible.builtin.assert:
+    fail_msg: "file_to_upload is not defined or the file does not exist!"
+    that:
+      - file_to_upload is defined
+      - file_exists.stat.exists
+
+- name: Verify Nexus Variables are Defined
+  ansible.builtin.assert:
+    fail_msg: >
+      Make sure the following extra variables are defined before running this role:
+        - nexus_repository
+    that:
+      - nexus_repository is defined
+
+- name: Get Nexus Credentials
+  community.kubernetes.k8s_info:
+    api_key: "{{ lookup('file', '/var/run/secrets/kubernetes.io/serviceaccount/token') }}"
+    ca_cert: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+    host: https://kubernetes.default.svc
+    kind: Secret
+    namespace: rfe
+    name: "{{ nexus_credentials_secret_name }}"
+    validate_certs: yes
+  become: no
+  delegate_to: localhost
+  failed_when: nexus_secret.resources | length != 1
+  register: nexus_secret
+
+- name: Set Nexus Credentials
+  ansible.builtin.set_fact:
+    nexus_password: "{{ nexus_secret.resources[0].data.password | b64decode }}"
+    nexus_username: "{{ nexus_secret.resources[0].data.username | b64decode }}"
+  no_log: true
+
+- name: Set Nexus Destination Path
+  ansible.builtin.set_fact:
+    nexus_destination_path: >-
+      repository/{{ nexus_repository }}/{{ nexus_repository_folder + '/' if nexus_repository_folder is defined }}{{ uploaded_filename_override | default(file_to_upload | basename) }}
+
+- name: Upload File to Nexus
+  ansible.builtin.uri:
+    force_basic_auth: yes
+    headers:
+      Content-Type: application/octet-stream
+    method: PUT
+    password: "{{ nexus_password }}"
+    remote_src: "{{ file_to_upload }}"
+    status_code:
+      - 201
+    url: "{{ nexus_http_scheme }}://{{ nexus_service_name }}:{{ nexus_service_port }}/{{ nexus_destination_path }}"
+    user: "{{ nexus_username }}"
+    validate_certs: no
