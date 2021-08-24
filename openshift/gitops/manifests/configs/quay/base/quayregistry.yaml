@@ -8,8 +8,6 @@ metadata:
     argocd.argoproj.io/sync-wave: "5"
 spec:
   components:
-    - kind: postgres
-      managed: true
     - kind: objectstorage
       managed: true
     - kind: redis
@@ -23,4 +21,6 @@ spec:
     - kind: monitoring
       managed: true
     - kind: clair
+      managed: true
+    - kind: postgres
       managed: true
