@@ -30,18 +30,8 @@
     validate_certs: yes
   become: no
   delegate_to: localhost
-  #failed_when: nexus_secret.resources | length != 1
+  failed_when: nexus_secret.resources | length != 1
   register: nexus_secret
-
-- name: Debug nexus_secret
-  ansible.builtin.debug:
-    var: nexus_secret
-
-- name: Check nexus_secret
-  ansible.builtin.assert:
-    fail_msg: "nexus_secret.resources | length != 1"
-    that:
-      - nexus_secret.resources | length != 1
 
 - name: Set Nexus Credentials
   ansible.builtin.set_fact:
