@@ -8,3 +8,4 @@ resources:
   - operatorgroup.yaml
   - subscription.yaml
   - noobaa.yaml
+  - noobaa-pv-backing-store.yaml
