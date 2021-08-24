@@ -5,7 +5,11 @@ namespace: openshift-storage
 
 resources:
   - namespace.yaml
-  - operatorgroup.yaml
-  - subscription.yaml
-  - noobaa.yaml
   - noobaa-pv-backing-store.yaml
+  - noobaa.yaml
+  - operatorgroup.yaml
+  - resource-locker-noobaa-patch.yaml
+  - resource-locker-noobaa-rolebinding.yaml
+  - resource-locker-noobaa-role.yaml
+  - resource-locker-noobaa-sa.yaml
+  - subscription.yaml

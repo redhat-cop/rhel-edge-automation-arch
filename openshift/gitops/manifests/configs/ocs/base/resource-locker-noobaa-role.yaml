@@ -1,8 +1,8 @@
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
-  name: resource-locker-quay-role
-  namespace: quay
+  name: resource-locker-noobaa-role
+  namespace: openshift-storage
 rules:
   - apiGroups:
       - noobaa.io

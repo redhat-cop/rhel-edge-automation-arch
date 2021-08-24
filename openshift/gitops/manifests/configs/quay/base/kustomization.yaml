@@ -6,9 +6,5 @@ resources:
   - quayappsubscription.yaml
   - quayregistry.yaml
   - quay-setup-job.yaml
-  - resource-locker-quay-patch.yaml
-  - resource-locker-quay-rolebinding.yaml
-  - resource-locker-quay-role.yaml
-  - resource-locker-quay-sa.yaml
   - rfe-automation-rolebinding-quay.yaml
   - rfe-automation-role-quay.yaml

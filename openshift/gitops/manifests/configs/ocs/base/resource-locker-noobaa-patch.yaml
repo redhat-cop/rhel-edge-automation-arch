@@ -1,11 +1,11 @@
 apiVersion: redhatcop.redhat.io/v1alpha1
 kind: ResourceLocker
 metadata:
-  name: quay-patch
-  namespace: quay
+  name: noobaa-patch
+  namespace: openshift-storage
 spec:
   serviceAccountRef:
-    name: resource-locker-quay-sa
+    name: resource-locker-noobaa-sa
   patches:
   - targetObjectRef:
       apiVersion: noobaa.io/v1alpha1
@@ -18,4 +18,4 @@ spec:
             - backingStores:
                 - noobaa-pv-backing-store
     patchType: application/merge-patch+json
-    id: quay-patch
+    id: noobaa-patch
