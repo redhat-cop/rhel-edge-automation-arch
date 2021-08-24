@@ -1,7 +1,17 @@
 name = "hello-world"
 description = "Hello World"
 version = "0.0.1"
+modules = []
+groups = []
 
-[[modules]]
+[[packages]]
 name = "git"
 version = "*"
+
+[customizations]
+
+[[customizations.user]]
+name = "core"
+description = "Initial User"
+password = "$6$mHddJG3ysy5ia.7n$MfBkW7/n84pSQ13Y04Cpgzr86afvztTiG5yHSdt.XgbamLcmx18JHc1EvKHcWRVSXsPEB9Dqj2BZGt7J7EGbt."
+groups = ["wheel"]
