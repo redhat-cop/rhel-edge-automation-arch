@@ -1,6 +1,9 @@
 apiVersion: noobaa.io/v1alpha1
 kind: BackingStore
 metadata:
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+    argocd.argoproj.io/sync-wave: '5'
   finalizers:
     - noobaa.io/finalizer
   labels:
