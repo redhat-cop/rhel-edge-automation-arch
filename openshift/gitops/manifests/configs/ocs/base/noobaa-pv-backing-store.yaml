@@ -16,5 +16,4 @@ spec:
     resources:
       requests:
         storage: 50Gi
-    storageClass: thin
   type: pv-pool
