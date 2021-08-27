@@ -1,1 +1,2 @@
 image_tags_output_file: /opt/image-tags-output
+skopeo_retries: 20
