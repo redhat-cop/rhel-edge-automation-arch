@@ -100,13 +100,14 @@
       - "--command-timeout=10m"
       - "--dest-authfile=/var/secrets/publisher/.dockerconfigjson"
       - "--dest-tls-verify=false"
-      - "--retry-times=10"
-      - "--format=v2s2"
       - "copy"
       - "oci-archive:{{ find_results.files[0].path | quote }}"
       - "docker://{{ quay_image_path | quote }}:latest"
   become: no
   delegate_to: localhost
+  register: skopeo_results
+  retries: "{{ skopeo_retries }}"
+  until: skopeo_results.rc == 0
 
 - name: Add Version Tag
   ansible.builtin.command:
@@ -117,13 +118,14 @@
       - "--src-tls-verify=false"
       - "--dest-authfile=/var/secrets/publisher/.dockerconfigjson"
       - "--dest-tls-verify=false"
-      - "--retry-times=10"
-      - "--format=v2s2"
       - "copy"
       - "docker://{{ quay_image_path | quote }}:latest"
       - "docker://{{ quay_image_path | quote }}:{{ blueprint_version | quote }}"
   become: no
   delegate_to: localhost
+  register: skopeo_results
+  retries: "{{ skopeo_retries }}"
+  until: skopeo_results.rc == 0
 
 - name: Set Tag List
   ansible.builtin.set_fact:
