@@ -2,6 +2,9 @@ apiVersion: kubevirt.io/v1alpha3
 kind: VirtualMachine
 metadata:
   annotations:
+    argocd.argoproj.io/sync-wave: "10"
+    argocd.argoproj.io/compare-options: IgnoreExtraneous
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
     description: RHEL 8 With Image Builder
     name.os.template.kubevirt.io/rhel8.3: Red Hat Enterprise Linux 8.0 or higher
   name: image-builder
