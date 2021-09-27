@@ -11,6 +11,7 @@
       ansible.builtin.wait_for_connection:
         timeout: 600
         sleep: 10
+
     - name: Call image-builder Role
       ansible.builtin.include_role:
         name: image-builder
