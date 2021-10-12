@@ -82,8 +82,6 @@
         - quay_setup_secret.resources | count == 1
 
     - name: Query Quay Registry
-      vars:
-        json_query_filter: "resources[0].status.conditions[?reason=='HealthChecksPassing'].status"
       community.kubernetes.k8s_info:
         api_key: "{{ lookup('file', '/var/run/secrets/kubernetes.io/serviceaccount/token') }}"
         api_version: quay.redhat.com/v1
@@ -97,11 +95,22 @@
       register: quay_registry_response
       retries: 120
       until:
-        - quay_registry_response | json_query(json_query_filter) | first == "True"
+        - quay_registry_response.resources[0].status.registryEndpoint is defined
 
     - name: Set Quay Route Fact
       ansible.builtin.set_fact:
         quay_route: "{{ quay_registry_response.resources[0].status.registryEndpoint }}"
+
+    - name: Wait for Quay API
+      ansible.builtin.uri:
+        method: GET
+        url: "{{ quay_route }}/health/instance"
+        validate_certs: no
+      register: quay_status
+      until:
+        - quay_status.status == 200
+        - quay_status.json.data.services is defined
+        - quay_status.json.data.services | dict2items | rejectattr('value', 'equalto', True) | list | count == 0
 
     - name: Create RFE User
       vars:
