@@ -1,0 +1,12 @@
+apiVersion: operators.coreos.com/v1alpha1
+kind: CatalogSource
+metadata:
+  name: {{ .Values.catalogsources.redhatgov.name }}
+  namespace: {{ .Values.marketplace.namespace }}
+  labels:
+    {{- include "common.labels.labels" . | nindent 4 }}
+spec:
+  sourceType: grpc
+  image: "{{ template "common.images.image" .Values.catalogsources.redhatgov.image }}"
+  displayName: {{ .Values.catalogsources.redhatgov.displayName }}
+  publisher: {{ .Values.catalogsources.redhatgov.publisher }}

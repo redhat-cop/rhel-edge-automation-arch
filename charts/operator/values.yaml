@@ -1,0 +1,10 @@
+---
+operator:
+  channel: ""
+  installPlanApproval: Automatic
+  name: ""
+  source: ""
+  sourceNamespace: ""
+
+operatorgroup:
+  create: true

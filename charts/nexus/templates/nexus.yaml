@@ -1,0 +1,29 @@
+apiVersion: redhatgov.io/v1alpha1
+kind: Nexus
+metadata:
+  name: {{ template "common.names.fullname" . }}
+  namespace: {{ template "common.names.namespace" $ }}
+  labels:
+    {{- include "common.labels.labels" . | nindent 4 }}
+spec:
+  persistent: {{ .Values.nexus.persistent.enabled }}
+  nexus:
+    allowAnonymousAccess: {{ .Values.nexus.allowAnonymousAccess }}
+    oauth:
+      enabled: {{ .Values.nexus.oauth.enabled }}
+      bypassAuthFor: {{- toYaml .Values.nexus.oauth.bypassAuthFor | nindent 8 }}
+    resources:
+      cpu:
+        request: {{ .Values.nexus.resources.requests.cpu }}
+        limit: {{ .Values.nexus.resources.limits.cpu }}
+      memory:
+        request: {{ .Values.nexus.resources.requests.memory }}
+        limit: {{ .Values.nexus.resources.limits.memory }}
+    expose:
+      ssl: {{ .Values.nexus.expose.ssl }}
+      kind: {{ .Values.nexus.expose.kind }}
+    image:
+      src: {{ template "common.images.registryRepository" .Values.nexus.image }}
+      tag: {{ .Values.nexus.image.version }}
+      pullPolicy: {{ .Values.nexus.persistent.imagePullPolicy }}
+    volumeSize: {{ .Values.nexus.persistent.volumeSize }}
