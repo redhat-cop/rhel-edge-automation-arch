@@ -47,3 +47,18 @@ Create the name of the service account to use
 {{- default "default" .Values.serviceAccount.name }}
 {{- end }}
 {{- end }}
+
+
+{{/*
+Append a value to the name of the chart
+*/}}
+{{- define "common.names.appendSuffix" -}}
+{{- printf "%s-%s" (include "common.names.fullname" .context) .suffix }}
+{{- end }}
+
+{{/*
+Prepend a value to the name of the chart
+*/}}
+{{- define "common.names.appendprefix" -}}
+{{- printf "%s-%s" .prefix (include "common.names.fullname" .context) }}
+{{- end }}

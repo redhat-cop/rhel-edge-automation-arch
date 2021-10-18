@@ -1,7 +1,8 @@
+{{- $setupJobName := include "common.names.appendSuffix" (dict "suffix" "setup" "context" $) -}}
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: {{ template "nexus.setupJobName" . }}
+  name: {{ $setupJobName }}
   namespace: {{ template "common.names.namespace" $ }}
   labels:
     {{- include "common.labels.labels" . | nindent 4 }}
@@ -97,9 +98,9 @@ spec:
               fi
 
           imagePullPolicy: {{  .Values.setup.image.imagePullPolicy }}
-          name: {{ template "nexus.setupJobName" . }}
+          name: {{ $setupJobName }}
       dnsPolicy: ClusterFirst
       restartPolicy: OnFailure
-      serviceAccount: {{ template "nexus.setupJobName" . }}
-      serviceAccountName: {{ template "nexus.setupJobName" . }}
+      serviceAccount: {{ $setupJobName }}
+      serviceAccountName: {{ $setupJobName }}
       terminationGracePeriodSeconds: 30
