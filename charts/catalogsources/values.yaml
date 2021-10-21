@@ -9,4 +9,4 @@ catalogsources:
       repository: redhatgov
       version: latest
 marketplace:
-  namespace: openshift-marketplaces
+  namespace: openshift-marketplace
