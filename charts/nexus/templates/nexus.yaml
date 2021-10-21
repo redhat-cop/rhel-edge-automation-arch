@@ -14,11 +14,11 @@ spec:
       bypassAuthFor: {{- toYaml .Values.nexus.oauth.bypassAuthFor | nindent 8 }}
     resources:
       cpu:
-        request: {{ .Values.nexus.resources.requests.cpu }}
-        limit: {{ .Values.nexus.resources.limits.cpu }}
+        request: {{ .Values.nexus.resources.requests.cpu | quote }}
+        limit: {{ .Values.nexus.resources.limits.cpu | quote }}
       memory:
-        request: {{ .Values.nexus.resources.requests.memory }}
-        limit: {{ .Values.nexus.resources.limits.memory }}
+        request: {{ .Values.nexus.resources.requests.memory | quote }}
+        limit: {{ .Values.nexus.resources.limits.memory | quote }}
     expose:
       ssl: {{ .Values.nexus.expose.ssl }}
       kind: {{ .Values.nexus.expose.kind }}
