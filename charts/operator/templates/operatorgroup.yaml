@@ -9,5 +9,5 @@ metadata:
     {{- include "common.labels.labels" . | nindent 4 }}
 spec:
   targetNamespaces:
-    - {{ template "common.names.fullname" . }}
+    - {{ template "common.names.namespace" . }}
 {{- end }}
