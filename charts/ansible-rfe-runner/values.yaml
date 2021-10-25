@@ -1,0 +1,7 @@
+---
+ansible_rfe_runner:
+  image:
+    registry: registry.access.redhat.com
+    repository: ubi8/python-38
+    version: latest
+    imagePullPolicy: IfNotPresent
