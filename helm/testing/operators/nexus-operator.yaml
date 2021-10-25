@@ -1,0 +1,10 @@
+# install to nexus namespace
+---
+operator:
+  channel: "alpha"
+  installPlanApproval: Automatic
+  name: "nexus-operator"
+  source: "redhatgov-operators"
+  sourceNamespace: "openshift-marketplace"
+operatorgroup:
+  create: true

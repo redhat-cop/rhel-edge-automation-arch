@@ -1,0 +1,10 @@
+# install to openshift-cnv namespace
+---
+operator:
+  channel: stable
+  installPlanApproval: Automatic
+  name: kubevirt-hyperconverged
+  source: redhat-operators
+  sourceNamespace: openshift-marketplace
+operatorgroup:
+  create: true

@@ -1,0 +1,10 @@
+# install to openshift-storage namespace
+---
+operator:
+  channel: stable-4.8
+  installPlanApproval: Automatic
+  name: ocs-operator
+  source: redhat-operators
+  sourceNamespace: openshift-marketplace
+operatorgroup:
+  create: true
