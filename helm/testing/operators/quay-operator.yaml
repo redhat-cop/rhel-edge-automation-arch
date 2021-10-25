@@ -1,0 +1,10 @@
+# install to openshift-operators namespace
+---
+operator:
+  channel: quay-v3.5
+  installPlanApproval: Automatic
+  name: quay-operator
+  source: redhat-operators
+  sourceNamespace: openshift-marketplace
+operatorgroup:
+  create: false
