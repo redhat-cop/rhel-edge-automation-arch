@@ -1,7 +1,7 @@
 apiVersion: v2
 name: namespaces
 description: Configure Namespaces for RHEL Edge Automation
-type: namespaces
+type: application
 version: 0.1.0
 dependencies:
   - name: common

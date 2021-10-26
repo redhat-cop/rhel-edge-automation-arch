@@ -1,1 +1,14 @@
 ---
+namespaces:
+  - name: group-sync-operator
+    monitoring: false
+  - name: nexus
+    monitoring: false
+  - name: openshift-cnv
+    monitoring: true
+  - name: openshift-storage
+    monitoring: true
+  - name: rfe
+    monitoring: false
+    description: RHEL for Edge
+    displayname: RHEL for Edge
