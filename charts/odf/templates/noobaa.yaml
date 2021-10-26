@@ -1,0 +1,17 @@
+apiVersion: noobaa.io/v1alpha1
+kind: NooBaa
+metadata:
+  labels:
+    {{- include "common.labels.labels" . | nindent 4 }}
+  name: noobaa
+  namespace: {{ template "common.names.namespace" $ }}
+spec:
+  dbResources:
+    requests:
+      cpu: 100m
+      memory: 1Gi
+  dbType: postgres
+  coreResources:
+    requests:
+      cpu: 100m
+      memory: 1Gi

@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  labels:
+    {{- include "common.labels.labels" . | nindent 4 }}
+  name: resource-locker-noobaa-sa
+  namespace: {{ template "common.names.namespace" $ }}
