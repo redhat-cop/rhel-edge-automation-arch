@@ -1,0 +1,15 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  labels:
+    {{- include "common.labels.labels" . | nindent 4 }}
+  name: rfe-automation-quay
+  namespace: {{ template "common.names.namespace" $ }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: rfe-automation-quay
+subjects:
+  - kind: ServiceAccount
+    name: rfe-automation
+    namespace: rfe

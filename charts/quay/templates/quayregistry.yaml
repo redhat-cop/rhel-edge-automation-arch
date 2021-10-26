@@ -1,0 +1,13 @@
+apiVersion: quay.redhat.com/v1
+kind: QuayRegistry
+metadata:
+  name: quay
+  namespace: {{ template "common.names.namespace" $ }}
+  labels:
+    {{- include "common.labels.labels" . | nindent 4 }}
+spec:
+  components:
+{{- range .Values.quay.components }}
+    - kind: {{ .kind }}
+      managed: {{ .managed }}
+{{- end }}
