@@ -1,6 +1,6 @@
 apiVersion: v2
 name: odf
-description: Ansible Runner Helm Chart
+description: Deploy Noobaa from ODF
 type: application
 version: 0.1.0
 dependencies:
