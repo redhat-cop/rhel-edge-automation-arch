@@ -1,0 +1,9 @@
+apiVersion: v2
+name: odf
+description: Deploy Noobaa from ODF
+type: application
+version: 0.1.0
+dependencies:
+  - name: common
+    version: 0.1.0
+    repository: file://../common
