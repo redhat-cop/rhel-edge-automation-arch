@@ -1,0 +1,14 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: oci-rfe-httpd-rolebinding
+  namespace: {{ template "common.names.namespace" $ }}
+  labels:
+    {{- include "common.labels.labels" . | nindent 4 }}
+subjects:
+- kind: ServiceAccount
+  name: oci-rfe-httpd
+roleRef:
+  kind: Role
+  apiGroup: rbac.authorization.k8s.io
+  name: oci-rfe-httpd-role
