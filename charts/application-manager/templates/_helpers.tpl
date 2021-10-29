@@ -12,6 +12,19 @@ Determines the location of the Helm chart path
 {{- end }}
 
 {{/*
+Determines the location of the Helm chart repository path
+*/}}
+{{- define "application-manager.chartRepoPath" -}}
+{{- if .chart.chart }}
+{{- printf "%s" .chart.chart }}
+{{- else if .Values.common.chart }}
+{{- printf "%s" .Values.common.chart }}
+{{- else }}
+{{- print "" }}
+{{- end }}
+{{- end }}
+
+{{/*
 Determines the location of the Helm chart path
 */}}
 {{- define "application-manager.destinationNamespace" -}}
