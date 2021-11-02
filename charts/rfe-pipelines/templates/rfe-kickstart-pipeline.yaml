@@ -1,0 +1,86 @@
+apiVersion: tekton.dev/v1beta1
+kind: Pipeline
+metadata:
+  namespace: {{ template "common.names.namespace" $ }}
+  labels:
+    {{- include "common.labels.labels" . | nindent 4 }}  
+  name: rfe-kickstart-pipeline
+spec:
+  params:
+    - name: kickstarts-git-url
+      description: Kickstarts Repository URL
+      default: https://github.com/redhat-cop/rhel-edge-automation-arch.git
+      type: string
+    - name: kickstarts-git-revision
+      description: Kickstarts Repository URL Reference
+      default: kickstarts
+      type: string
+    - name: tooling-git-url
+      description: Tooling Repository URL
+      default: https://github.com/redhat-cop/rhel-edge-automation-arch.git
+      type: string
+    - name: tooling-git-revision
+      description: Tooling Repository URL Reference
+      default: main
+      type: string
+    - name: ostree-repo-url
+      description: HTTP Location of OSTree Repository
+      type: string
+    - name: kickstart-path
+      description: Path containing the kickstart
+      type: string
+  workspaces:
+    - name: shared-workspace
+  tasks:
+    - name: git-clone-tooling
+      taskRef:
+        name: git-clone
+        kind: ClusterTask
+      params:
+        - name: url
+          value: $(params.tooling-git-url)
+        - name: revision
+          value: $(params.tooling-git-revision)
+        - name: subdirectory
+          value: "tooling"
+      workspaces:
+        - name: output
+          workspace: shared-workspace
+    - name: git-clone-kickstarts
+      taskRef:
+        name: git-clone
+        kind: ClusterTask
+      params:
+        - name: url
+          value: $(params.kickstarts-git-url)
+        - name: revision
+          value: $(params.kickstarts-git-revision)
+        - name: subdirectory
+          value: "kickstarts"
+      workspaces:
+        - name: output
+          workspace: shared-workspace
+    - name: upload-rfe-kickstart
+      taskRef:
+        name: upload-kickstart
+        kind: Task
+      params:
+        - name: ostree-repo-url
+          value: $(params.ostree-repo-url)
+        - name: kickstart-path
+          value: /workspace/workspace/kickstarts/$(params.kickstart-path)
+        - name: kickstart-destination-dir
+          value: /workspace/workspace/kickstarts
+      runAfter:
+        - "git-clone-kickstarts"
+        - "git-clone-tooling"
+      workspaces:
+        - name: workspace
+          workspace: shared-workspace
+  results:
+    - name: artifact-repository-storage-url
+      description: Location where the asset is stored in the artifact repository
+      value: $(tasks.upload-rfe-kickstart.results.artifact-repository-storage-url)
+    - name: serving-storage-url
+      description: Location where the asset is served
+      value: $(tasks.upload-rfe-kickstart.results.serving-storage-url)

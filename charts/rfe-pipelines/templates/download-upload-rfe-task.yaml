@@ -1,0 +1,47 @@
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  namespace: {{ template "common.names.namespace" $ }}
+  labels:
+    {{- include "common.labels.labels" . | nindent 4 }}  
+  name: download-upload-rfe
+spec:
+  workspaces:
+    - name: workspace
+  params:
+    - name: build-commit
+      description: Commit of the build
+    - name: build-dir
+      description: Directory containing build assets
+    - name: image-builder-secret
+      description: Name of the secret containing the SSH key for the image builder
+      default: "image-builder-ssh-key"
+      type: string
+    - name: extra-ansible-variables
+      description: Extra Ansible variables
+      default: ""
+      type: string
+  results:
+    - name: artifact-repository-storage-url
+      description: Location where the asset is stored in the artifact repository
+    - name: serving-storage-url
+      description: Location where the asset is served
+  steps:
+    - name: build-rfe-tarball
+      image: image-registry.openshift-image-registry.svc:5000/rfe/ansible-rfe-runner:latest
+      workingDir: /workspace/workspace
+      args:
+        - |-
+          cd tooling/ansible
+          ansible-galaxy collection install -r collections/requirements.yaml
+          ansible-playbook -u cloud-user --private-key=/var/secrets/ssh-privatekey playbooks/download-upload-rfe-artifact.yaml -e build_commit=$(params.build-commit) -e local_rpm_ostree_build_dir=$(params.build-dir) -e artifact_repository_url_output_file=$(results.artifact-repository-storage-url.path) -e storage_url_output_file=$(results.serving-storage-url.path) $(params.extra-ansible-variables)
+      command:
+        - /bin/bash
+        - -c
+      volumeMounts:
+        - name: image-builder-ssh
+          mountPath: /var/secrets
+  volumes:
+    - name: image-builder-ssh
+      secret:
+        secretName: "$(params.image-builder-secret)"
