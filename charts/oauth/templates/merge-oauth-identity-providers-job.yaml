@@ -1,0 +1,53 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: merge-oauth-identity-providers
+  namespace: {{ template "common.names.namespace" $ }}
+  labels:
+    {{- include "common.labels.labels" . | nindent 4 }}
+    {{- toYaml .Values.mergeOauthIdentityProviderJob.labels | nindent 4 }}
+spec:
+  template:
+    spec:
+      activeDeadlineSeconds: 600
+      containers:
+        - image: registry.redhat.io/openshift4/ose-tools-rhel8:v4.7
+          env:
+            - name: MERGE_IDENTITY_PROVIDERS_SCRIPT
+              value: /mnt/scripts/merge_oauth_identity_providers.py
+            - name: CLUSTER_OAUTH_LOCATION
+              value: /tmp/cluster-oauth.json
+            - name: GITOPS_OAUTH_LOCATION_YAML
+              value: /mnt/gitops/oauth.yaml
+            - name: GITOPS_OAUTH_LOCATION
+              value: /tmp/gitops-oauth.json
+          command:
+            - /bin/bash
+            - -c
+            - |
+              set -e
+              export HOME=/tmp/merge-oauth-identity-providers
+              oc get oauth cluster -o json > $CLUSTER_OAUTH_LOCATION
+              oc create -f $GITOPS_OAUTH_LOCATION_YAML --dry-run=client -o json > $GITOPS_OAUTH_LOCATION
+              python $MERGE_IDENTITY_PROVIDERS_SCRIPT
+              oc apply -f $CLUSTER_OAUTH_LOCATION
+
+          imagePullPolicy: IfNotPresent
+          name: merge-oauth-identity-providers
+          volumeMounts:
+            - name: scripts
+              mountPath: /mnt/scripts
+            - name: gitops
+              mountPath: /mnt/gitops
+      volumes:
+        - name: scripts
+          configMap:
+            name: merge-oauth-identity-providers
+        - name: gitops
+          secret:
+            secretName: rfe-oauth
+      dnsPolicy: ClusterFirst
+      restartPolicy: OnFailure
+      serviceAccount: rfe-oauth
+      serviceAccountName: rfe-oauth
+      terminationGracePeriodSeconds: 30
