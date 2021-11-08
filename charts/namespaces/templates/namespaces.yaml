@@ -3,19 +3,14 @@
 apiVersion: v1
 kind: Namespace
 metadata:
-{{- if or (.description) (.displayname) }}
+{{- if .annotations }}
   annotations:
-{{- end }}
-{{- if .description }}
-    openshift.io/description: {{ .description | quote }}
-{{- end }}
-{{- if .displayname }}
-    openshift.io/display-name: {{ .displayname | quote }}
+    {{- tpl (toYaml .annotations) $ | nindent 4 }}
 {{- end }}
   name: {{ .name }}
   labels:
     {{- include "common.labels.labels" $ | nindent 4 }}
-{{- if .monitoring }}
-    openshift.io/cluster-monitoring: "true"
+{{- if .labels }}
+    {{- tpl (toYaml .labels) $ | nindent 4 }}
 {{- end }}
 {{- end }}
