@@ -1,13 +1,13 @@
 iso_fetch_path: http://httpd:8080/images
 
-iso_source_name: rhel-8.4-x86_64-boot.iso
+iso_source_name: rhel-8.5-x86_64-boot.iso
 iso_source_path: /tmp
 
 iso_mount_base_path: /tmp/boot-iso
 
 # Default name. Can override by passing
 # -e "edge_iso_name=<name>" to ansible-playbook command.
-edge_iso_name: rfe-8.4-x86_64-auto-kickstart.iso
+edge_iso_name: rfe-8.5-x86_64-auto-kickstart.iso
 edge_iso_path: /tmp
 edge_iso_remote_path: /var/www/html/images
 
