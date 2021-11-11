@@ -1,0 +1,15 @@
+---
+common:
+  repoURL: https://github.com/redhat-cop/rhel-edge-automation-arch.git
+  targetRevision: helm-migration
+  project: default
+  destinationNamespace: openshift-cnv
+  server: https://kubernetes.default.svc
+  prune: true
+  chartPath: charts/cnv
+  selfHeal: true
+
+charts:
+  cnv:
+    syncOptions:
+      - CreateNamespace=true
