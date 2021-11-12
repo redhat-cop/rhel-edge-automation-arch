@@ -1,3 +1,10 @@
 ---
-cnv:
-  deploy_ovs: "false"
+kubevirtCR:
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+    deployOVS: "false"
+  labels:
+    app: kubevirt-hyperconverged
+
+subscription:
+  channel: stable

@@ -37,3 +37,17 @@ spec:
       ignoreDifferences: |
         jsonPointers:
         - /spec/template/spec/containers/0/image
+    operators.coreos.com/Subscription:
+      health.lua: |
+        hs = {}
+        if obj.status ~= nil then
+          if obj.status.currentCSV ~= nil and (obj.status.state == "AtLatestKnown" or obj.status.state == "UpgradeAvailable" or obj.status.state == "UpgradePending") then
+            hs.status = "Healthy"
+            hs.message = "Subscription installed"
+            return hs
+          end
+        end
+        hs.status = "Progressing"
+        hs.message = "Waiting for Subscription to complete."
+        return hs
+

@@ -1,12 +1,13 @@
 apiVersion: hco.kubevirt.io/v1beta1
 kind: HyperConverged
 metadata:
-  annotations:
-    deployOVS: {{ .Values.cnv.deploy_ovs | quote }}
   name: kubevirt-hyperconverged
   namespace: {{ template "common.names.namespace" $ }}
+  annotations:
+    {{- toYaml .Values.kubevirtCR.annotations | nindent 4 }}
   labels:
     {{- include "common.labels.labels" . | nindent 4 }}
+    {{- toYaml .Values.kubevirtCR.labels | nindent 4 }}
 spec:
   infra: {}
   workloads: {}
