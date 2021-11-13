@@ -17,3 +17,12 @@ quay:
       managed: true
     - kind: route
       managed: true
+
+subscription:
+  annotations:
+    "helm.sh/hook": pre-install
+    "helm.sh/hook-delete-policy": hook-failed
+
+quayRegistryCR:
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
