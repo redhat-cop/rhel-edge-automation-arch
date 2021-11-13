@@ -1,0 +1,15 @@
+---
+common:
+  repoURL: https://github.com/redhat-cop/rhel-edge-automation-arch.git
+  targetRevision: helm-migration
+  project: default
+  destinationNamespace: openshift-operators
+  server: https://kubernetes.default.svc
+  prune: true
+  chartPath: charts/quay
+  selfHeal: true
+
+charts:
+  quay:
+    syncOptions:
+      - CreateNamespace=true
