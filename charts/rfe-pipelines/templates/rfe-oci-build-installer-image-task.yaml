@@ -3,7 +3,9 @@ kind: Task
 metadata:
   namespace: {{ template "common.names.namespace" $ }}
   labels:
-    {{- include "common.labels.labels" . | nindent 4 }}  
+    {{- include "common.labels.labels" . | nindent 4 }}
+  annotations:
+    {{- toYaml .Values.commonCR.annotations | nindent 4 }}    
   name: rfe-oci-build-installer-image
 spec:
   workspaces:

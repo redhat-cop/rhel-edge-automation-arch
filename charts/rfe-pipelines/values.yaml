@@ -1,1 +1,9 @@
 ---
+defaultsConfigmap:
+  annotations:
+    app.kubernetes.io/instance: default
+    app.kubernetes.io/part-of: tekton-pipelines
+
+commonCR:
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
