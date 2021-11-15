@@ -21,7 +21,6 @@ quay:
 subscription:
   annotations:
     "helm.sh/hook": pre-install
-    "helm.sh/hook-delete-policy": hook-failed
 
 quayRegistryCR:
   annotations:
