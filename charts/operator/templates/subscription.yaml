@@ -11,3 +11,7 @@ spec:
   name: {{ required "Operator name is required!" .Values.operator.name }}
   source: {{ required "Operator source is required!" .Values.operator.source }}
   sourceNamespace: {{ required "Operator source namespace is required!" .Values.operator.sourceNamespace }}
+{{- if .Values.config }}
+  config:
+  {{- tpl (toYaml .Values.config) $ | nindent 4 }}
+{{- end }}
