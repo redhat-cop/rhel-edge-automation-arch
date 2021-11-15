@@ -5,4 +5,4 @@ metadata:
   namespace: {{ template "common.names.namespace" $ }}
 spec:
   targetNamespaces:
-    - {{ .Values.namespace }}
+    - {{ template "common.names.namespace" . }}
