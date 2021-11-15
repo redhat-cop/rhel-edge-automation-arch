@@ -50,4 +50,10 @@ spec:
         hs.status = "Progressing"
         hs.message = "Waiting for Subscription to complete."
         return hs
+    ServiceAccount:
+      ignoreDifferences: |
+        jsonPointers:
+        - /imagePullSecrets
+        - /secrets
+      
 
