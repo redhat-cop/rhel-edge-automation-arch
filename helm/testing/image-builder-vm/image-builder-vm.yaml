@@ -1,0 +1,14 @@
+---
+common:
+  repoURL: https://github.com/redhat-cop/rhel-edge-automation-arch.git
+  targetRevision: helm-migration
+  project: default
+  destinationNamespace: rfe
+  server: https://kubernetes.default.svc
+  prune: true
+  chartPath: charts/image-builder-vm
+  selfHeal: true
+charts:
+  image-builder-vm:
+    syncOptions:
+      - CreateNamespace=true

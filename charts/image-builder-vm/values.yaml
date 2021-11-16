@@ -1,0 +1,33 @@
+rhel:
+  version: "8.5"
+
+imageDownloaderJob:
+  annotations:
+    "helm.sh/hook": pre-install
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+
+ansibleVM:
+  annotations:
+    "helm.sh/hook": post-install
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+
+imageBuilderVM:
+  labels:
+    app: image-builder
+    workload.template.kubevirt.io/server: 'true'
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+    argocd.argoproj.io/compare-options: IgnoreExtraneous
+    description: RHEL 8 With Image Builder
+  template:
+    labels:
+        kubevirt.io/domain: image-builder
+        vm.kubevirt.io/name: image-builder
+        workload.template.kubevirt.io/server: 'true'
+  machine:
+    type: pc-q35-rhel8.4.0
+  cores: 8
+  memory: 16Gi
+
+gitRepository: https://github.com/redhat-cop/rhel-edge-automation-arch.git
+gitBranch: main
