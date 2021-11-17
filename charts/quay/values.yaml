@@ -25,3 +25,7 @@ subscription:
 quayRegistryCR:
   annotations:
     argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+
+setupJob:
+  gitRepository: https://github.com/redhat-cop/rhel-edge-automation-arch.git
+  gitBranch: main
