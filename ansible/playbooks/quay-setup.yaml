@@ -111,6 +111,8 @@
         - quay_status.status == 200
         - quay_status.json.data.services is defined
         - quay_status.json.data.services | dict2items | rejectattr('value', 'equalto', True) | list | count == 0
+      delay: 10
+      retries: 60
 
     - name: Create RFE User
       vars:
