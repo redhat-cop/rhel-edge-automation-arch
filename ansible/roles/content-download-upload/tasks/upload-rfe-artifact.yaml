@@ -26,7 +26,23 @@
       set_fact:
         nexus_destination_path: "repository/{{ nexus_repository }}/{{ nexus_repository_folder + '/' if nexus_repository_folder is defined }}{{ uploaded_filename_override | default(file_to_upload | basename) }}"
 
-    - name: Upload file to Nexus
+    - name: Upload ISO file to Nexus
+      uri:
+        url: "{{ nexus_http_scheme }}://{{ nexus_service_name }}:{{ nexus_service_port }}/{{ nexus_destination_path }}"
+        method: PUT
+        src: "{{ file_to_upload }}"
+        user: "{{ nexus_username }}"
+        password: "{{ nexus_password }}"
+        headers:
+          Content-Type: application/x-iso9660-image
+        force_basic_auth: yes
+        validate_certs: no
+        status_code:
+          - 201
+      when:
+        - file_to_upload|lower|splitext|last is match(".iso")
+
+    - name: Upload Non-ISO file to Nexus
       uri:
         url: "{{ nexus_http_scheme }}://{{ nexus_service_name }}:{{ nexus_service_port }}/{{ nexus_destination_path }}"
         method: PUT
@@ -39,6 +55,8 @@
         validate_certs: no
         status_code:
           - 201
+      when:
+        - file_to_upload|lower|splitext|last is not match(".iso")
 
     - name: Get Nexus Route
       community.kubernetes.k8s_info:
