@@ -7,6 +7,10 @@ metadata:
   name: {{ default $chartName $chart.name }}
   namespace: {{ $chart.namespace | default $.Release.Namespace }}
 spec:
+{{- if $chart.ignoreDifferences }}
+  ignoreDifferences:
+    {{- tpl (toYaml $chart.ignoreDifferences) $ | nindent 4 }}
+{{- end }}
   destination:
     namespace: {{ include "application-manager.destinationNamespace" (dict "chart" $chart "Values" $.Values "Release" $.Release) }}
     server: {{ $chart.server | default $.Values.common.server }}
