@@ -21,6 +21,8 @@ quay:
 subscription:
   annotations:
     "helm.sh/hook": pre-install
+    "helm.sh/hook-delete-policy": hook-failed
+
 
 quayRegistryCR:
   annotations:
@@ -29,3 +31,7 @@ quayRegistryCR:
 setupJob:
   gitRepository: https://github.com/redhat-cop/rhel-edge-automation-arch.git
   gitBranch: main
+  annotations:
+    helm.sh/hook: post-install
+    helm.sh/hook-delete-policy: hook-succeeded
+  namespace: rfe

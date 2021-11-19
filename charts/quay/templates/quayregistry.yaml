@@ -2,7 +2,7 @@ apiVersion: quay.redhat.com/v1
 kind: QuayRegistry
 metadata:
   name: {{ template "common.names.fullname" . }}
-  namespace: {{ template "common.names.namespace" $ }}
+  namespace: {{ .Values.quayRegistryCR.targetNamespace }}
   labels:
     {{- include "common.labels.labels" . | nindent 4 }}
   annotations:

@@ -4,7 +4,9 @@ metadata:
   labels:
     {{- include "common.labels.labels" . | nindent 4 }}
   name: rfe-automation-quay
-  namespace: {{ template "common.names.namespace" $ }}
+  namespace: {{ .Values.quayRegistryCR.targetNamespace }}
+  annotations:
+    {{- toYaml .Values.setupJob.annotations | nindent 4 }}  
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
@@ -12,4 +14,4 @@ roleRef:
 subjects:
   - kind: ServiceAccount
     name: rfe-automation
-    namespace: rfe
+    namespace: {{.Values.setupJob.namespace}}
