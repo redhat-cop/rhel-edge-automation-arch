@@ -37,6 +37,6 @@ spec:
           name: ansible-rfe-runner
       dnsPolicy: ClusterFirst
       restartPolicy: OnFailure
-      serviceAccount: rfe-automation
-      serviceAccountName: rfe-automation
+      serviceAccount: {{ .Values.serviceAccount }}
+      serviceAccountName: {{ .Values.serviceAccount }}
       terminationGracePeriodSeconds: 30

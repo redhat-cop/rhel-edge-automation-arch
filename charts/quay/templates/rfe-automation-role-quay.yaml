@@ -3,7 +3,7 @@ kind: Role
 metadata:
   labels:
     {{- include "common.labels.labels" . | nindent 4 }}
-  name: rfe-automation-quay
+  name: {{ .Values.serviceAccount }}-quay
   namespace: {{ .Values.quayRegistryCR.targetNamespace }}
   annotations:
     {{- toYaml .Values.setupJob.annotations | nindent 4 }}  

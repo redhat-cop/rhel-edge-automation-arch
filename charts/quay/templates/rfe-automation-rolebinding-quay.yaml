@@ -3,15 +3,15 @@ kind: RoleBinding
 metadata:
   labels:
     {{- include "common.labels.labels" . | nindent 4 }}
-  name: rfe-automation-quay
+  name: {{ .Values.serviceAccount }}-quay
   namespace: {{ .Values.quayRegistryCR.targetNamespace }}
   annotations:
     {{- toYaml .Values.setupJob.annotations | nindent 4 }}  
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
-  name: rfe-automation-quay
+  name: {{ .Values.serviceAccount }}-quay
 subjects:
   - kind: ServiceAccount
-    name: rfe-automation
-    namespace: {{.Values.setupJob.namespace}}
+    name: {{ .Values.serviceAccount }}
+    namespace: {{.Values.setupJob.namespace }}

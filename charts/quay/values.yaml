@@ -22,7 +22,7 @@ subscription:
   annotations:
     "helm.sh/hook": pre-install
     "helm.sh/hook-delete-policy": hook-failed
-  channel: stable-3.6
+  channel: quay-v3.5
 
 quayRegistryCR:
   annotations:
@@ -36,3 +36,5 @@ setupJob:
     helm.sh/hook: post-install
     helm.sh/hook-delete-policy: hook-succeeded
   namespace: rfe
+
+serviceAccount: rfe-automation
