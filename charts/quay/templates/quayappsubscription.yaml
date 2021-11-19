@@ -8,7 +8,7 @@ metadata:
   annotations:
     {{- toYaml .Values.subscription.annotations | nindent 4 }}  
 spec:
-  channel: quay-v3.5
+  channel: {{ .Values.subscription.channel }}
   installPlanApproval: Automatic
   name: quay-operator
   source: redhat-operators
