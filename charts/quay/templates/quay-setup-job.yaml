@@ -1,14 +1,13 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  annotations:
-    helm.sh/hook: post-install
-    helm.sh/hook-delete-policy: hook-succeeded
   labels:
     {{- include "common.labels.labels" . | nindent 4 }}
     run: quay-setup-ansible-job
+  annotations:
+    {{- toYaml .Values.setupJob.annotations | nindent 4 }}
   name: quay-setup-ansible-job
-  namespace: rfe
+  namespace: {{.Values.setupJob.namespace}}
 spec:
   template:
     spec:
@@ -38,6 +37,6 @@ spec:
           name: ansible-rfe-runner
       dnsPolicy: ClusterFirst
       restartPolicy: OnFailure
-      serviceAccount: rfe-automation
-      serviceAccountName: rfe-automation
+      serviceAccount: {{ .Values.serviceAccount }}
+      serviceAccountName: {{ .Values.serviceAccount }}
       terminationGracePeriodSeconds: 30
