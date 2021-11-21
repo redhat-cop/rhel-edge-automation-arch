@@ -41,3 +41,8 @@ setup:
     repository: openshift4/ose-cli
     version: v4.6
     imagePullPolicy: IfNotPresent
+
+setupJob:
+  annotations:
+    "helm.sh/hook": post-install,post-upgrade
+    "helm.sh/hook-delete-policy": hook-succeeded

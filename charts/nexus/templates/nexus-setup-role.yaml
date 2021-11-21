@@ -6,6 +6,8 @@ metadata:
   namespace: {{ template "common.names.namespace" $ }}
   labels:
     {{- include "common.labels.labels" . | nindent 4 }}
+  annotations:
+    {{- toYaml .Values.setupJob.annotations | nindent 4}}
 rules:
   - apiGroups:
       - ""
