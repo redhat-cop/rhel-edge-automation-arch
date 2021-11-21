@@ -36,3 +36,41 @@ Determines the location of the Helm chart path
 {{- printf "%s" .Release.Namespace }}
 {{- end }}
 {{- end }}
+
+{{/*
+Return Git Repository URL
+*/}}
+{{- define "application-manager.gitURL" -}}
+{{- if .Values.global -}}
+    {{- if .Values.global.git -}}
+        {{- if .Values.global.git.url -}}
+            {{- .Values.global.git.url -}}
+        {{- else -}}
+            {{- .chart.repoURL | default $.Values.common.repoURL -}}
+        {{- end -}}
+    {{- else -}}
+        {{- .chart.repoURL | default $.Values.common.repoURL -}}
+    {{- end -}}
+{{- else -}}
+    {{- .chart.repoURL | default $.Values.common.repoURL -}}
+{{- end -}}
+{{- end }}
+
+{{/*
+Return Git Repository Reference
+*/}}
+{{- define "application-manager.gitRef" -}}
+{{- if .Values.global -}}
+    {{- if .Values.global.git -}}
+        {{- if .Values.global.git.ref -}}
+            {{- .Values.global.git.ref -}}
+        {{- else -}}
+            {{- .chart.targetRevision | default $.Values.common.targetRevision -}}
+        {{- end -}}
+    {{- else -}}
+        {{- .chart.targetRevision | default $.Values.common.targetRevision -}}
+    {{- end -}}
+{{- else -}}
+    {{- .chart.targetRevision | default $.Values.common.targetRevision -}}
+{{- end -}}
+{{- end }}

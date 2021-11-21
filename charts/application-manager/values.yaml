@@ -1,0 +1,3 @@
+argocd:
+  server: https://kubernetes.default.svc
+  project: default
