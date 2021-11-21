@@ -74,3 +74,11 @@ Return Git Repository Reference
     {{- .chart.targetRevision | default $.Values.common.targetRevision -}}
 {{- end -}}
 {{- end }}
+
+{{/*
+Injects Global Values
+*/}}
+{{- define "application-manager.chartValues" -}}
+{{- $chartValues := .chart.values -}}
+{{- tpl (toYaml (merge (default dict $chartValues) (default dict (dict "global" $.Values.global)))) .context -}}
+{{- end }}

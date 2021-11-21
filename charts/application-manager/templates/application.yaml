@@ -16,7 +16,7 @@ spec:
     server: {{ $chart.server | default (default $.Values.argocd.server $.Values.common.server) }}
   project: {{ $chart.project | default (default $.Values.argocd.project $.Values.common.project) }}
   source:
-{{- if or ($chart.parameters) ($chart.valueFiles) ($chart.values) }}
+{{- if or ($chart.parameters) ($chart.valueFiles) ($chart.values) ($.Values.global) }}
     helm:
 {{- if $chart.parameters }}
       parameters:
@@ -31,7 +31,7 @@ spec:
         - {{- . | toYaml | nindent 10 -}}
       {{- end }}
 {{- end }}
-{{- if $chart.values }}
+{{- if or ($chart.values) ($.Values.global) }}
       values: |
         {{- tpl (toYaml $chart.values) $ | nindent 8 }}
 {{- end }}
