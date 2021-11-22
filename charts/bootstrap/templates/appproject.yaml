@@ -1,0 +1,21 @@
+{{- if .Values.argocd.appProjects }}
+{{- range $appProjectName, $appProject := .Values.argocd.appProjects }}
+---
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: {{ $appProject.name }}
+  namespace: {{ template "common.names.namespace" $ }}
+  labels:
+    {{- include "common.labels.labels" $ | nindent 4 }}
+spec:
+  clusterResourceWhitelist:
+  - group: '*'
+    kind: '*'
+  destinations:
+  - namespace: '*'
+    server: '*'
+  sourceRepos:
+  - '*'
+{{- end }}
+{{- end }}

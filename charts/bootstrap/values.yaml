@@ -1,0 +1,145 @@
+---
+argocd:
+  appProjects:
+    - name: rfe
+
+namespace:
+  namespaces:
+    - name: rfe
+      annotations:
+        openshift.io/description: RHEL for Edge
+        openshift.io/display-name: RHEL for Edge
+
+rhsm:
+  namespace: rfe
+  imageBuilder:
+    secretProvided: false
+    secretName: image-builder-ssh-key
+    privateKey: "image-builder-ssh-private-key"
+    publicKey: "image-builder-ssh-public-key"
+  portal:
+    secretProvided: false
+    secretName: redhat-portal-credentials
+    offlineToken: ""
+    password: ""
+    poolId: ""
+    username: ""
+
+# Dynamically Generated Charts
+application-manager:
+  common:
+    repoURL: https://github.com/redhat-cop/rhel-edge-automation-arch.git
+    targetRevision: main
+    namespace: openshift-gitops
+    project: rfe
+    destinationNamespace: rfe
+    prune: true
+    selfHeal: true
+
+  charts:
+    # Top Level RFE App of App Chart
+    rfe-automation:
+      name: rfe-automation
+      path: charts/application-manager
+      values:
+        common:
+          repoURL: https://github.com/redhat-cop/rhel-edge-automation-arch.git
+          targetRevision: main
+          namespace: openshift-gitops
+          project: rfe
+          destinationNamespace: rfe
+          prune: true
+          selfHeal: true
+        charts:
+          # Cluster Configuration App of App Chart
+          cluster-configs:
+            name: cluster-configs
+            path: charts/application-manager
+            destinationNamespace: openshift-gitops
+            values:
+              common:
+                repoURL: https://github.com/redhat-cop/rhel-edge-automation-arch.git
+                targetRevision: main
+                namespace: openshift-gitops
+                project: rfe
+                destinationNamespace: openshift-gitops
+                prune: true
+                selfHeal: true
+              charts:
+                # Create namespaces
+                namespaces:
+                  name: namespaces
+                  path: charts/namespaces
+                  values:
+                    namespaces:
+                      - name: openshift-cnv
+                        annotations:
+                          openshift.io/description: OpenShift Container Native Virtualization
+                          openshift.io/display-name: OpenShift Container Native Virtualization
+                      - name: quay
+                        annotations:
+                          openshift.io/description: Quay
+                          openshift.io/display-name: Quay
+                        labels:
+                          openshift.io/cluster-monitoring: "true"
+                      - name: openshift-storage
+                        annotations:
+                          openshift.io/description: OpenShift Data Foundation
+                          openshift.io/display-name: OpenShift Data Foundation
+                        labels:
+                          openshift.io/cluster-monitoring: "true"
+                      - name: openshift-pipelines
+                        annotations:
+                          openshift.io/description: OpenShift Pipelines
+                          openshift.io/display-name: OpenShift Pipelines
+                      - name: openshift-user-workload-monitoring
+                        annotations:
+                          openshift.io/description: OpenShift User Workload Monitoring
+                          openshift.io/display-name: OpenShift User Workload Monitoring
+
+                # Operators App of App Chart
+                operators:
+                  name: operators
+                  path: charts/application-manager
+                  values:
+                    common:
+                      repoURL: https://github.com/redhat-cop/rhel-edge-automation-arch.git
+                      targetRevision: main
+                      namespace: openshift-gitops
+                      project: rfe
+                      destinationNamespace: openshift-operators
+                      prune: true
+                      selfHeal: true
+                    charts:
+                      # Catalog Sources
+                      catalog-sources:
+                        name: catalog-sources
+                        path: charts/catalogsources
+                        destinationNamespace: openshift-marketplace
+
+          # RFE App of App Chart
+          rfe:
+            name: rfe
+            path: charts/application-manager
+            destinationNamespace: openshift-gitops
+            values:
+              common:
+                repoURL: https://github.com/redhat-cop/rhel-edge-automation-arch.git
+                targetRevision: main
+                namespace: openshift-gitops
+                project: rfe
+                destinationNamespace: rfe
+                prune: true
+                selfHeal: true
+              charts:
+                # RFE RBAC
+                namespaces:
+                  name: rbac
+                  path: charts/rbac
+                  ignoreDifferences:
+                    - kind: ServiceAccount
+                      name: oci-rfe-httpd
+                      namespace: rfe
+                      jsonPointers:
+                        - /imagePullSecrets
+                        - /secrets

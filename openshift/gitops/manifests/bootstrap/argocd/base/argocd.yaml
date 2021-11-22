@@ -12,9 +12,6 @@ spec:
       requests:
         cpu: 250m
         memory: 256Mi
-  dex:
-    openShiftOAuth: true
-    version: sha256:77bfea96e8d8f3e4197b9f6020c8f5dedbb701245c19afd69a15747ae4bf2804
   rbac:
     defaultPolicy: "role:admin"
   server:
@@ -23,8 +20,20 @@ spec:
       enabled: true
     tls:
       insecureEdgeTerminationPolicy: Redirect
-      termination: edge
+      termination: reencrypt
   resourceCustomizations: |
+    argoproj.io/Application:
+      health.lua: |
+        hs = {}
+        hs.status = "Progressing"
+        hs.message = ""
+        if obj.status ~= nil then
+          if obj.status.health ~= nil then
+            hs.status = obj.status.health.status
+            hs.message = obj.status.health.message
+          end
+        end
+        return hs
     route.openshift.io/Route:
       ignoreDifferences: |
         jsonPointers:
@@ -50,4 +59,23 @@ spec:
         hs.status = "Progressing"
         hs.message = "Waiting for Subscription to complete."
         return hs
-
+    PersistentVolumeClaim:
+      health.lua: |
+        hs = {}
+        if obj.status ~= nil then
+          if obj.status.phase ~= nil then
+            if obj.status.phase == "Pending" then
+              hs.status = "Healthy"
+              hs.message = obj.status.phase
+              return hs
+            end
+            if obj.status.phase == "Bound" then
+              hs.status = "Healthy"
+              hs.message = obj.status.phase
+              return hs
+            end
+          end
+        end
+        hs.status = "Progressing"
+        hs.message = "Waiting for PVC"
+        return hs
