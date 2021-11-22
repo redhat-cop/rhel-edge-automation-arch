@@ -33,7 +33,7 @@ spec:
 {{- end }}
 {{- if or ($chart.values) ($.Values.global) }}
       values: |
-        {{- tpl (toYaml $chart.values) $ | nindent 8 }}
+        {{- include "application-manager.chartValues" (dict "chart" $chart "Values" $.Values "context" $) | nindent 8 }}
 {{- end }}
 {{- end }}
 {{- $helmChartTypeCheck := include "application-manager.chartRepoPath" (dict "chart" $chart "Values" $.Values "Release" $.Release) }}
