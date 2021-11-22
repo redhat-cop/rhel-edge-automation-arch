@@ -1,0 +1,114 @@
+apiVersion: tekton.dev/v1beta1
+kind: Pipeline
+metadata:
+  namespace: {{ template "common.names.namespace" $ }}
+  labels:
+    {{- include "common.labels.labels" . | nindent 4 }}
+  annotations:
+    {{- toYaml .Values.commonCR.annotations | nindent 4 }}    
+  name: rfe-oci-image-pipeline
+spec:
+  params:
+    - name: blueprints-git-url
+      description: Blueprint Repository URL
+      default: https://github.com/redhat-cop/rhel-edge-automation-arch.git
+      type: string
+    - name: blueprints-git-revision
+      description: Blueprint Repository URL Reference
+      default: blueprints
+      type: string
+    - name: tooling-git-url
+      description: Tooling Repository URL
+      default: https://github.com/redhat-cop/rhel-edge-automation-arch.git
+      type: string
+    - name: tooling-git-revision
+      description: Tooling Repository URL Reference
+      default: main
+      type: string
+    - name: blueprint-dir
+      description: Directory in Blueprints repository containing blueprint
+      type: string
+  results:
+    - name: build-commit
+      description: Commit ID of the Build
+      value: $(tasks.rfe-oci-build-image.results.build-commit)
+    - name: image-path
+      description: Path to Container Registry
+      value: $(tasks.rfe-oci-quay-repository.results.image-path)
+    - name: image-tags
+      description: Tags Associated with Image
+      value: $(tasks.rfe-oci-push-image.results.image-tags)
+  workspaces:
+    - name: shared-workspace
+  tasks:
+    - name: git-clone-tooling
+      taskRef:
+        name: git-clone
+        kind: ClusterTask
+      params:
+        - name: url
+          value: $(params.tooling-git-url)
+        - name: revision
+          value: $(params.tooling-git-revision)
+        - name: subdirectory
+          value: "tooling"
+      workspaces:
+        - name: output
+          workspace: shared-workspace
+    - name: git-clone-blueprints
+      taskRef:
+        name: git-clone
+        kind: ClusterTask
+      params:
+        - name: url
+          value: $(params.blueprints-git-url)
+        - name: revision
+          value: $(params.blueprints-git-revision)
+        - name: subdirectory
+          value: "blueprints"
+      workspaces:
+        - name: output
+          workspace: shared-workspace
+    - name: rfe-oci-quay-repository
+      taskRef:
+        name: rfe-oci-quay-repository
+        kind: Task
+      params:
+        - name: blueprint-dir
+          value: /workspace/workspace/blueprints/$(params.blueprint-dir)
+        - name: repository-name
+          value: $(params.blueprint-dir)
+      runAfter:
+        - "git-clone-blueprints"
+        - "git-clone-tooling"
+      workspaces:
+        - name: workspace
+          workspace: shared-workspace
+    - name: rfe-oci-build-image
+      taskRef:
+        name: rfe-oci-build-image
+        kind: Task
+      params:
+        - name: blueprint-dir
+          value: /workspace/workspace/blueprints/$(params.blueprint-dir)
+      runAfter:
+        - "rfe-oci-quay-repository"
+      workspaces:
+        - name: workspace
+          workspace: shared-workspace
+    - name: rfe-oci-push-image
+      taskRef:
+        name: rfe-oci-push-image
+        kind: Task
+      params:
+        - name: blueprint-dir
+          value: /workspace/workspace/blueprints/$(params.blueprint-dir)
+        - name: build-commit
+          value: $(tasks.rfe-oci-build-image.results.build-commit)
+        - name: image-path
+          value: $(tasks.rfe-oci-quay-repository.results.image-path)
+      runAfter:
+        - "rfe-oci-build-image"
+      workspaces:
+        - name: workspace
+          workspace: shared-workspace

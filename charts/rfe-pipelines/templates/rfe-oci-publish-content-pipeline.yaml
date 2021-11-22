@@ -1,0 +1,58 @@
+apiVersion: tekton.dev/v1beta1
+kind: Pipeline
+metadata:
+  namespace: {{ template "common.names.namespace" $ }}
+  labels:
+    {{- include "common.labels.labels" . | nindent 4 }}
+  annotations:
+    {{- toYaml .Values.commonCR.annotations | nindent 4 }}    
+  name: rfe-oci-publish-content-pipeline
+spec:
+  params:
+    - name: tooling-git-url
+      description: Tooling Repository URL
+      default: https://github.com/redhat-cop/rhel-edge-automation-arch.git
+      type: string
+    - name: tooling-git-revision
+      description: Tooling Repository URL Reference
+      default: main
+      type: string
+    - name: image-path
+      description: Path to RFE Container Image
+    - name: image-tag
+      description: Tag Associated with the RFE Image to Deploy
+  results:
+    - name: content-path
+      description: URL to OSTree Content
+      value: $(tasks.rfe-oci-publish-content.results.content-path)
+  workspaces:
+    - name: shared-workspace
+  tasks:
+    - name: git-clone-tooling
+      taskRef:
+        name: git-clone
+        kind: ClusterTask
+      params:
+        - name: url
+          value: $(params.tooling-git-url)
+        - name: revision
+          value: $(params.tooling-git-revision)
+        - name: subdirectory
+          value: "tooling"
+      workspaces:
+        - name: output
+          workspace: shared-workspace
+    - name: rfe-oci-publish-content
+      taskRef:
+        name: rfe-oci-publish-content
+        kind: Task
+      params:
+        - name: image-path
+          value: $(params.image-path)
+        - name: image-tag
+          value: $(params.image-tag)
+      runAfter:
+        - "git-clone-tooling"
+      workspaces:
+        - name: workspace
+          workspace: shared-workspace
