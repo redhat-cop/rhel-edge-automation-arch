@@ -133,7 +133,7 @@ application-manager:
                 selfHeal: true
               charts:
                 # RFE RBAC
-                namespaces:
+                rbac:
                   name: rbac
                   path: charts/rbac
                   ignoreDifferences:
