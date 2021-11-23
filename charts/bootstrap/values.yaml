@@ -116,7 +116,76 @@ application-manager:
                         name: catalog-sources
                         path: charts/catalogsources
                         destinationNamespace: openshift-marketplace
-
+                      # Operators
+                      cnv-operator:
+                        name: cnv-operator
+                        path: charts/openshift-operators
+                        destinationNamespace: openshift-cnv
+                        values:
+                          operator:
+                            channel: stable
+                            installPlanApproval: Automatic
+                            name: kubevirt-hyperconverged
+                            source: redhat-operators
+                            sourceNamespace: openshift-marketplace
+                      odf-operator:
+                        name: odf-operator
+                        path: charts/openshift-operators
+                        destinationNamespace: openshift-storage
+                        values:
+                          operator:
+                            channel: stable-4.8
+                            installPlanApproval: Automatic
+                            name: ocs-operator
+                            source: redhat-operators
+                            sourceNamespace: openshift-marketplace
+                      nexus-operator:
+                        name: nexus-operator
+                        path: charts/openshift-operators
+                        destinationNamespace: rfe
+                        values:
+                          operator:
+                            channel: alpha
+                            installPlanApproval: Automatic
+                            name: nexus-operator
+                            source: redhatgov-operators
+                            sourceNamespace: openshift-marketplace
+                      pipelines-operator:
+                        name: pipelines-operator
+                        path: charts/openshift-operators
+                        values:
+                          operator:
+                            channel: stable
+                            installPlanApproval: Automatic
+                            name: openshift-pipelines-operator-rh
+                            source: redhat-operators
+                            sourceNamespace: openshift-marketplace
+                          operatorgroup:
+                            create: false
+                      quay-operator:
+                        name: quay-operator
+                        path: charts/openshift-operators
+                        values:
+                          operator:
+                            channel: quay-v3.5
+                            installPlanApproval: Automatic
+                            name: quay-operator
+                            source: redhat-operators
+                            sourceNamespace: openshift-marketplace
+                          operatorgroup:
+                            create: false
+                      resource-locker-operator:
+                        name: resource-locker-operator
+                        path: charts/openshift-operators
+                        values:
+                          operator:
+                            channel: alpha
+                            installPlanApproval: Automatic
+                            name: resource-locker-operator
+                            source: community-operators
+                            sourceNamespace: openshift-marketplace
+                          operatorgroup:
+                            create: false
           # RFE App of App Chart
           rfe:
             name: rfe
