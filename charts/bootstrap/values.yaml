@@ -119,7 +119,7 @@ application-manager:
                       # Operators
                       cnv-operator:
                         name: cnv-operator
-                        path: charts/openshift-operators
+                        path: charts/operator
                         destinationNamespace: openshift-cnv
                         values:
                           operator:
@@ -130,7 +130,7 @@ application-manager:
                             sourceNamespace: openshift-marketplace
                       odf-operator:
                         name: odf-operator
-                        path: charts/openshift-operators
+                        path: charts/operator
                         destinationNamespace: openshift-storage
                         values:
                           operator:
@@ -141,7 +141,7 @@ application-manager:
                             sourceNamespace: openshift-marketplace
                       nexus-operator:
                         name: nexus-operator
-                        path: charts/openshift-operators
+                        path: charts/operator
                         destinationNamespace: rfe
                         values:
                           operator:
@@ -152,7 +152,7 @@ application-manager:
                             sourceNamespace: openshift-marketplace
                       pipelines-operator:
                         name: pipelines-operator
-                        path: charts/openshift-operators
+                        path: charts/operator
                         values:
                           operator:
                             channel: stable
@@ -164,7 +164,7 @@ application-manager:
                             create: false
                       quay-operator:
                         name: quay-operator
-                        path: charts/openshift-operators
+                        path: charts/operator
                         values:
                           operator:
                             channel: quay-v3.5
@@ -176,7 +176,7 @@ application-manager:
                             create: false
                       resource-locker-operator:
                         name: resource-locker-operator
-                        path: charts/openshift-operators
+                        path: charts/operator
                         values:
                           operator:
                             channel: alpha
