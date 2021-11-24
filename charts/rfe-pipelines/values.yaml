@@ -7,3 +7,4 @@ defaultsConfigmap:
 commonCR:
   annotations:
     argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+    rgocd.argoproj.io/sync-wave: "5"
