@@ -16,4 +16,3 @@ subjects:
   - kind: ServiceAccount
     name: {{ $setupJobName }}
     namespace: {{ template "common.names.namespace" $ }}
-s
