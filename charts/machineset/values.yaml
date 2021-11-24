@@ -1,0 +1,7 @@
+
+
+ansibleJob:
+  labels:
+    run: aws-machineset-ansible-job
+  annotations:
+    argocd.argoproj.io/sync-wave: "10"
