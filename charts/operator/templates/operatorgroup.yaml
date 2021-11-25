@@ -7,6 +7,10 @@ metadata:
   namespace: {{ template "common.names.namespace" $ }}
   labels:
     {{- include "common.labels.labels" . | nindent 4 }}
+  {{- if .Values.operatorgroup.annotations }}
+  annotations:
+    {{- toYaml .Values.operatorgroup.annotations | nindent 4 }}
+  {{- end }}
 spec:
   targetNamespaces:
     - {{ template "common.names.namespace" . }}
