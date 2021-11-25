@@ -62,9 +62,7 @@ spec:
       - {{ . }}
   {{- end }}
 {{- end }}
-{{- if $chart.retry }}
     retry:
-      {{- tpl (toYaml $chart.retry) $ | nindent 6 }}
-{{- end }}
+      {{- tpl (toYaml ($chart.retry | default (default $.Values.argocd.retry $.Values.common.retry))) $ | nindent 6 }}
 {{- end }}
 {{- end }}
