@@ -1,0 +1,7 @@
+namespace: openshift-config
+
+mergeOauthIdentityProviderJob:
+  labels:
+    run: merge-oauth-identity-providers
+
+identityProviders: {}

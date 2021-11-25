@@ -1,0 +1,23 @@
+---
+common:
+  repoURL: https://github.com/redhat-cop/rhel-edge-automation-arch.git
+  targetRevision: helm-migration
+  project: default
+  destinationNamespace: openshift-config
+  server: https://kubernetes.default.svc
+  prune: true
+  chartPath: charts/oauth
+  selfHeal: true
+
+charts:
+  oauth:
+    values:
+      identityProviders:
+        - name: RFE
+          mappingMethod: claim
+          type: HTPasswd
+          htpasswd:
+            fileData:
+              name: rfe-htpasswd-secret
+    syncOptions:
+      - CreateNamespace=true
