@@ -1,0 +1,6 @@
+{{- if .Values.bindings }}
+{{- range $binding := .Values.bindings }}
+---
+{{- tpl (toYaml $binding) $ }}
+{{- end }}
+{{- end }}

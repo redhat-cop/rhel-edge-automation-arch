@@ -1,0 +1,18 @@
+rfe:
+  oauth:
+    name: rfe-oauth
+
+mergeOauthIdentityProviders:
+  name: merge-oauth-identity-providers
+  image:
+    registry: registry.redhat.io
+    repository: openshift4/ose-tools-rhel8
+    pullPolicy: IfNotPresent
+    version: "v4.9"
+  job:
+    labels:
+      run: merge-oauth-identity-providers
+
+identityProviders: []
+
+groups: []

@@ -6,11 +6,11 @@ common:
   destinationNamespace: openshift-config
   server: https://kubernetes.default.svc
   prune: true
-  chartPath: charts/oauth
+  chartPath: charts/user-mgmt
   selfHeal: true
 
 charts:
-  oauth:
+  user-mgmt:
     values:
       identityProviders:
         - name: RFE

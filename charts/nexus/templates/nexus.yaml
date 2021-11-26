@@ -12,6 +12,9 @@ spec:
     oauth:
       enabled: {{ .Values.nexus.oauth.enabled }}
       bypassAuthFor: {{- toYaml .Values.nexus.oauth.bypassAuthFor | nindent 8 }}
+{{- if .Values.nexus.oauth.adminUsers }}
+      adminUsers: {{- toYaml .Values.nexus.oauth.adminUsers | nindent 8 }}
+{{- end }}
     resources:
       cpu:
         request: {{ .Values.nexus.resources.requests.cpu | quote }}

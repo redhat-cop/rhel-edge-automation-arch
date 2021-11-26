@@ -1,8 +1,8 @@
 apiVersion: argoproj.io/v1alpha1
 kind: ArgoCD
 metadata:
-  name: openshift-gitops
-  namespace: openshift-gitops
+  name: {{ template "common.names.fullname" . }}
+  namespace: {{ template "common.names.namespace" $ }}
 spec:
   repo:
     resources:
@@ -13,13 +13,15 @@ spec:
         cpu: 250m
         memory: 256Mi
   rbac:
-    defaultPolicy: "role:admin"
+    defaultPolicy: {{ .Values.argocd.defaultPolicy }}
+  dex:
+    openShiftOAuth: true
   server:
     route:
       enabled: true
-    tls:
-      insecureEdgeTerminationPolicy: Redirect
-      termination: reencrypt
+      tls:
+        insecureEdgeTerminationPolicy: Redirect
+        termination: reencrypt
   resourceCustomizations: |
     argoproj.io/Application:
       health.lua: |

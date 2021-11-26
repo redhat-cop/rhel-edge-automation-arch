@@ -1,17 +1,20 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: merge-oauth-identity-providers
+  name: {{ .Values.mergeOauthIdentityProviders.name }}
   namespace: {{ template "common.names.namespace" $ }}
+  annotations:
+    "helm.sh/hook": post-install,post-upgrade
+    "helm.sh/hook-delete-policy": before-hook-creation
   labels:
     {{- include "common.labels.labels" . | nindent 4 }}
-    {{- toYaml .Values.mergeOauthIdentityProviderJob.labels | nindent 4 }}
+    {{- toYaml .Values.mergeOauthIdentityProviders.job.labels | nindent 4 }}
 spec:
   template:
     spec:
       activeDeadlineSeconds: 600
       containers:
-        - image: registry.redhat.io/openshift4/ose-tools-rhel8:v4.7
+        - image: "{{ template "common.images.image" .Values.mergeOauthIdentityProviders.image }}"
           env:
             - name: MERGE_IDENTITY_PROVIDERS_SCRIPT
               value: /mnt/scripts/merge_oauth_identity_providers.py
@@ -33,7 +36,7 @@ spec:
               oc apply -f $CLUSTER_OAUTH_LOCATION
 
           imagePullPolicy: IfNotPresent
-          name: merge-oauth-identity-providers
+          name: {{ .Values.mergeOauthIdentityProviders.name }}
           volumeMounts:
             - name: scripts
               mountPath: /mnt/scripts
@@ -42,12 +45,12 @@ spec:
       volumes:
         - name: scripts
           configMap:
-            name: merge-oauth-identity-providers
+            name: {{ .Values.mergeOauthIdentityProviders.name }}
         - name: gitops
           secret:
-            secretName: rfe-oauth
+            secretName: {{ .Values.rfe.oauth.name }}
       dnsPolicy: ClusterFirst
       restartPolicy: OnFailure
-      serviceAccount: rfe-oauth
-      serviceAccountName: rfe-oauth
+      serviceAccount: {{ .Values.rfe.oauth.name }}
+      serviceAccountName: {{ .Values.rfe.oauth.name }}
       terminationGracePeriodSeconds: 30

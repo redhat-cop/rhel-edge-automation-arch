@@ -6,7 +6,7 @@ nexus:
     enabled: true
     bypassAuthFor:
       - "/repository"
-    adminusers: []
+    adminUsers: []
   resources:
     requests:
       cpu: 500m

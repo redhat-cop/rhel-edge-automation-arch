@@ -3,6 +3,10 @@ argocd:
   appProjects:
     - name: rfe
 
+bootstrap:
+  # Raw Manifests to Apply
+  raw: []
+
 namespace:
   namespaces:
     - name: rfe
@@ -30,7 +34,7 @@ application-manager:
   common:
     repoURL: https://github.com/redhat-cop/rhel-edge-automation-arch.git
     targetRevision: main
-    namespace: openshift-gitops
+    namespace: rfe-gitops
     project: rfe
     destinationNamespace: rfe
     prune: true
@@ -45,7 +49,7 @@ application-manager:
         common:
           repoURL: https://github.com/redhat-cop/rhel-edge-automation-arch.git
           targetRevision: main
-          namespace: openshift-gitops
+          namespace: rfe-gitops
           project: rfe
           destinationNamespace: rfe
           prune: true
@@ -55,17 +59,23 @@ application-manager:
           cluster-configs:
             name: cluster-configs
             path: charts/application-manager
-            destinationNamespace: openshift-gitops
+            destinationNamespace: rfe-gitops
             values:
               common:
                 repoURL: https://github.com/redhat-cop/rhel-edge-automation-arch.git
                 targetRevision: main
-                namespace: openshift-gitops
+                namespace: rfe-gitops
                 project: rfe
-                destinationNamespace: openshift-gitops
+                destinationNamespace: rfe-gitops
                 prune: true
                 selfHeal: true
               charts:
+                # OpenShift Data Foundations
+                cnv:
+                  name: cnv
+                  path: charts/cnv
+                  destinationNamespace: openshift-cnv
+
                 # Create namespaces
                 namespaces:
                   name: namespaces
@@ -97,6 +107,12 @@ application-manager:
                           openshift.io/description: OpenShift User Workload Monitoring
                           openshift.io/display-name: OpenShift User Workload Monitoring
 
+                # OpenShift Data Foundations
+                odf:
+                  name: odf
+                  path: charts/odf
+                  destinationNamespace: openshift-storage
+
                 # Operators App of App Chart
                 operators:
                   name: operators
@@ -105,7 +121,7 @@ application-manager:
                     common:
                       repoURL: https://github.com/redhat-cop/rhel-edge-automation-arch.git
                       targetRevision: main
-                      namespace: openshift-gitops
+                      namespace: rfe-gitops
                       project: rfe
                       destinationNamespace: openshift-operators
                       prune: true
@@ -186,22 +202,49 @@ application-manager:
                             sourceNamespace: openshift-marketplace
                           operatorgroup:
                             create: false
+                # Quay
+                quay:
+                  name: quay
+                  path: charts/quay
+                  destinationNamespace: quay
+                # User Mgmt
+                user-mgmt:
+                  name: user-mgmt
+                  path: charts/user-mgmt
+                  destinationNamespace: openshift-config
+                # User Workload Monitoring
+                user-workload-monitoring:
+                  name: user-workload-monitoring
+                  path: charts/user-workload-monitoring
+                  destinationNamespace: openshift-user-workload-monitoring
           # RFE App of App Chart
           rfe:
             name: rfe
             path: charts/application-manager
-            destinationNamespace: openshift-gitops
+            destinationNamespace: rfe-gitops
             values:
               common:
                 repoURL: https://github.com/redhat-cop/rhel-edge-automation-arch.git
                 targetRevision: main
-                namespace: openshift-gitops
+                namespace: rfe-gitops
                 project: rfe
                 destinationNamespace: rfe
                 prune: true
                 selfHeal: true
               charts:
-                # RFE RBAC
+                # Ansible Runner Chart
+                ansible-rfe-runner:
+                  name: ansible-rfe-runner
+                  path: charts/ansible-rfe-runner
+                # HTTPD Chart
+                httpd:
+                  name: httpd
+                  path: charts/httpd
+                # Nexus Chart
+                nexus:
+                  name: nexus
+                  path: charts/nexus
+                # RBAC Chart
                 rbac:
                   name: rbac
                   path: charts/rbac
@@ -212,3 +255,7 @@ application-manager:
                       jsonPointers:
                         - /imagePullSecrets
                         - /secrets
+                # RFE Pipelines Chart
+                rfe-pipelines:
+                  name: rfe-pipelines
+                  path: charts/rfe-pipelines
