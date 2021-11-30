@@ -4,6 +4,8 @@
     username: "{{ lookup('file', '/var/secrets/redhat-portal-credentials/username') }}"
     password: "{{ lookup('file', '/var/secrets/redhat-portal-credentials/password') }}"
     pool_ids: "{{ lookup('file', '/var/secrets/redhat-portal-credentials/pool_id') }}"
+    auto_attach: yes
+    force_register: yes
 
 - name: Setup Repositories
   community.general.rhsm_repository:

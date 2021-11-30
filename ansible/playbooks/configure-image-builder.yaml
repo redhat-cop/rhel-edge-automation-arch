@@ -47,28 +47,28 @@
 
     - name: Find Entitlement Key
       ansible.builtin.find:
-        paths: /tmp/rhsm/certs
+        paths: /tmp/rhsm/certs/
         use_regex: yes
         patterns:
           - "^[0-9]+-key.pem$"
       become: no
       delegate_to: localhost
       failed_when:
-        - find_key.matched != 1
-        - find_key.examined != 2
+        - find_key.matched == 0
+        - find_key.examined < 2
       register: find_key
 
     - name: Find Entitlement Cert
       ansible.builtin.find:
-        paths: /tmp/rhsm/certs
+        paths: /tmp/rhsm/certs/
         use_regex: yes
         patterns:
           - "^[0-9]+.pem$"
       become: no
       delegate_to: localhost
       failed_when:
-        - find_cert.matched != 1
-        - find_cert.examined != 2
+        - find_cert.matched == 0
+        - find_cert.examined < 2
       register: find_cert
 
     - name: Create Entitlement Secret
