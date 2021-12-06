@@ -11,7 +11,7 @@ metadata:
     {{- tpl (toYaml $chart.annotations) $ | nindent 4 }}
 {{- end }}
 {{- if $chart.labels }}
-  annotations:
+  labels:
     {{- tpl (toYaml $chart.labels) $ | nindent 4 }}
 {{- end }}
 spec:
