@@ -10,3 +10,8 @@ spec:
   image: "{{ template "common.images.image" .Values.catalogsources.redhatgov.image }}"
   displayName: {{ .Values.catalogsources.redhatgov.displayName }}
   publisher: {{ .Values.catalogsources.redhatgov.publisher }}
+{{- if .Values.catalogsources.redhatgov.update.enabled }}
+  updateStrategy:
+    registryPoll:
+      interval: {{ .Values.catalogsources.redhatgov.update.interval }}
+{{- end }}
