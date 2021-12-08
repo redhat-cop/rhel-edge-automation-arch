@@ -74,12 +74,16 @@ application-manager:
                 cnv:
                   name: cnv
                   path: charts/cnv
+                  annotations:
+                    argocd.argoproj.io/sync-wave: "1" 
                   destinationNamespace: openshift-cnv
 
                 # Create namespaces
                 namespaces:
                   name: namespaces
                   path: charts/namespaces
+                  annotations:
+                    argocd.argoproj.io/sync-wave: "0"                  
                   values:
                     namespaces:
                       - name: openshift-cnv
@@ -111,6 +115,8 @@ application-manager:
                 odf:
                   name: odf
                   path: charts/odf
+                  annotations:
+                    argocd.argoproj.io/sync-wave: "1" 
                   destinationNamespace: openshift-storage
 
                 # Operators App of App Chart
@@ -131,11 +137,15 @@ application-manager:
                       catalog-sources:
                         name: catalog-sources
                         path: charts/catalogsources
+                        annotations:
+                          argocd.argoproj.io/sync-wave: "0"
                         destinationNamespace: openshift-marketplace
                       # Operators
                       cnv-operator:
                         name: cnv-operator
                         path: charts/operator
+                        annotations:
+                          argocd.argoproj.io/sync-wave: "0"
                         destinationNamespace: openshift-cnv
                         values:
                           operator:
@@ -147,6 +157,8 @@ application-manager:
                       odf-operator:
                         name: odf-operator
                         path: charts/operator
+                        annotations:
+                          argocd.argoproj.io/sync-wave: "0"
                         destinationNamespace: openshift-storage
                         values:
                           operator:
@@ -158,6 +170,8 @@ application-manager:
                       nexus-operator:
                         name: nexus-operator
                         path: charts/operator
+                        annotations:
+                          argocd.argoproj.io/sync-wave: "1"
                         destinationNamespace: rfe
                         values:
                           operator:
@@ -169,6 +183,8 @@ application-manager:
                       pipelines-operator:
                         name: pipelines-operator
                         path: charts/operator
+                        annotations:
+                          argocd.argoproj.io/sync-wave: "0"
                         values:
                           operator:
                             channel: stable
@@ -181,6 +197,8 @@ application-manager:
                       quay-operator:
                         name: quay-operator
                         path: charts/operator
+                        annotations:
+                          argocd.argoproj.io/sync-wave: "0"
                         values:
                           operator:
                             channel: quay-v3.5
@@ -193,6 +211,8 @@ application-manager:
                       resource-locker-operator:
                         name: resource-locker-operator
                         path: charts/operator
+                        annotations:
+                          argocd.argoproj.io/sync-wave: "0"
                         values:
                           operator:
                             channel: alpha
@@ -206,16 +226,22 @@ application-manager:
                 quay:
                   name: quay
                   path: charts/quay
+                  annotations:
+                    argocd.argoproj.io/sync-wave: "2" 
                   destinationNamespace: quay
                 # User Mgmt
                 user-mgmt:
                   name: user-mgmt
                   path: charts/user-mgmt
+                  annotations:
+                    argocd.argoproj.io/sync-wave: "0"                  
                   destinationNamespace: openshift-config
                 # User Workload Monitoring
                 user-workload-monitoring:
                   name: user-workload-monitoring
                   path: charts/user-workload-monitoring
+                  annotations:
+                    argocd.argoproj.io/sync-wave: "0"
                   destinationNamespace: openshift-user-workload-monitoring
           # RFE App of App Chart
           rfe:
@@ -236,18 +262,26 @@ application-manager:
                 ansible-rfe-runner:
                   name: ansible-rfe-runner
                   path: charts/ansible-rfe-runner
+                  annotations:
+                    argocd.argoproj.io/sync-wave: "0"
                 # HTTPD Chart
                 httpd:
                   name: httpd
                   path: charts/httpd
+                  annotations:
+                    argocd.argoproj.io/sync-wave: "4"                  
                 # Nexus Chart
                 nexus:
                   name: nexus
                   path: charts/nexus
+                  annotations:
+                    argocd.argoproj.io/sync-wave: "2"                  
                 # RBAC Chart
                 rbac:
                   name: rbac
                   path: charts/rbac
+                  annotations:
+                    argocd.argoproj.io/sync-wave: "0"                  
                   ignoreDifferences:
                     - kind: ServiceAccount
                       name: oci-rfe-httpd
@@ -259,7 +293,11 @@ application-manager:
                 rfe-pipelines:
                   name: rfe-pipelines
                   path: charts/rfe-pipelines
-                # RHEL Image Builder VM
+                  annotations:
+                    argocd.argoproj.io/sync-wave: "1"
+                # Image Builder VM
                 image-builder-vm:
                   name: image-builder-vm
                   path: charts/image-builder-vm
+                  annotations:
+                    argocd.argoproj.io/sync-wave: "3"                    
