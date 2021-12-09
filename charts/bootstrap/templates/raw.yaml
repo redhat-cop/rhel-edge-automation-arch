@@ -1,0 +1,6 @@
+{{- if .Values.bootstrap.raw }}
+{{- range $raw := .Values.bootstrap.raw }}
+---
+{{- tpl (toYaml $raw) $ }}
+{{- end }}
+{{- end }}

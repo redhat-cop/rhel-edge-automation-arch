@@ -1,7 +1,7 @@
 kind: ConfigMap
 apiVersion: v1
 metadata:
-  name: merge-oauth-identity-providers
+  name: {{ .Values.mergeOauthIdentityProviders.name }}
   namespace: {{ template "common.names.namespace" $ }}
   labels:
     {{- include "common.labels.labels" . | nindent 4 }}

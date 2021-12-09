@@ -1,8 +1,0 @@
-apiVersion: operators.coreos.com/v1
-kind: OperatorGroup
-metadata:
-  name: kubevirt-hyperconverged-group
-  namespace: {{ template "common.names.namespace" $ }}
-spec:
-  targetNamespaces:
-    - {{ template "common.names.namespace" . }}

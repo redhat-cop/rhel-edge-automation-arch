@@ -1,8 +1,8 @@
 apiVersion: argoproj.io/v1alpha1
 kind: ArgoCD
 metadata:
-  name: openshift-gitops
-  namespace: openshift-gitops
+  name: {{ template "common.names.fullname" . }}
+  namespace: {{ template "common.names.namespace" $ }}
 spec:
   repo:
     resources:
@@ -13,13 +13,15 @@ spec:
         cpu: 250m
         memory: 256Mi
   rbac:
-    defaultPolicy: "role:admin"
+    defaultPolicy: {{ .Values.argocd.defaultPolicy }}
+  dex:
+    openShiftOAuth: true
   server:
     route:
       enabled: true
-    tls:
-      insecureEdgeTerminationPolicy: Redirect
-      termination: reencrypt
+      tls:
+        insecureEdgeTerminationPolicy: Redirect
+        termination: reencrypt
   resourceCustomizations: |
     argoproj.io/Application:
       health.lua: |
@@ -30,6 +32,34 @@ spec:
           if obj.status.health ~= nil then
             hs.status = obj.status.health.status
             hs.message = obj.status.health.message
+          end
+        end
+        return hs
+    image.openshift.io/ImageStream:
+      health.lua: |
+        hs = {}
+        hs.status = "Progressing"
+        hs.message = ""
+        if obj.status ~= nil then
+          if obj.status.tags ~= nil then
+            numTags = 0
+            for _ , item in pairs(obj.status.tags) do
+              numTags = numTags + 1
+              numItems = 0
+              if item.tags ~= nil then
+                for _ , item in pairs(item.tags) do
+                  numItems = numItems + 1
+                end
+                if numItems == 0 then
+                  return hs
+                end
+              end
+            end
+            if numTags > 0 then
+              hs.status = "Healthy"
+              hs.message = "ImageStream has tags resolved"
+              return hs
+            end
           end
         end
         return hs
