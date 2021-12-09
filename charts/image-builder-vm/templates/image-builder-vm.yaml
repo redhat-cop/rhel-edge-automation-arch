@@ -28,7 +28,7 @@ spec:
         source:
           http:
             url: 'http://nexus:8081/repository/rfe-rhel-media/rhel-{{ .Values.rhel.version }}-x86_64-kvm.qcow2'
-  running: true
+  runStrategy: Always
   template:
     metadata:
       labels:
@@ -72,7 +72,6 @@ spec:
         resources:
           requests:
             memory: {{ .Values.imageBuilderVM.memory }}
-      evictionStrategy: LiveMigrate
       hostname: image-builder
       networks:
         - name: nic-0
