@@ -49,7 +49,7 @@ spec:
                    -u "${NEXUS_ADMIN_USERNAME}:${NEXUS_ADMIN_PASSWORD}" \
                    -H "accept: application/json" \
                    -H "Content-Type: application/json" \
-                   -d "{ \"name\": \"${repository}\", \"online\": true, \"storage\": { \"blobStoreName\": \"default\", \"strictContentTypeValidation\": true, \"writePolicy\": \"ALLOW\" }}"
+                   -d "{ \"name\": \"${repository}\", \"online\": true, \"storage\": { \"blobStoreName\": \"default\", \"strictContentTypeValidation\": false, \"writePolicy\": \"ALLOW\" }}"
 
                 fi
               done
