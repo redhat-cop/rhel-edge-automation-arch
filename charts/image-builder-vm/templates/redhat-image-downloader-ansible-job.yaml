@@ -10,7 +10,7 @@ metadata:
 spec:
   template:
     spec:
-      activeDeadlineSeconds: 600
+      activeDeadlineSeconds: {{ $.Values.imageDownloaderJob.activeDeadlineSeconds }}
       containers:
         - image: image-registry.openshift-image-registry.svc:5000/rfe/ansible-rfe-runner:latest
           env:
