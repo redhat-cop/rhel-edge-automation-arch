@@ -1,5 +1,6 @@
 {{- if .Values.charts }}
 {{- range $chartName, $chart := .Values.charts }}
+{{- if not $chart.disabled }}
 ---
 apiVersion: argoproj.io/v1alpha1
 kind: Application
@@ -64,5 +65,6 @@ spec:
 {{- end }}
     retry:
       {{- tpl (toYaml ($chart.retry | default (default $.Values.argocd.retry $.Values.common.retry))) $ | nindent 6 }}
+{{- end }}
 {{- end }}
 {{- end }}
