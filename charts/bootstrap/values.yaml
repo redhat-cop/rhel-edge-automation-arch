@@ -259,3 +259,7 @@ application-manager:
                 rfe-pipelines:
                   name: rfe-pipelines
                   path: charts/rfe-pipelines
+                # RHEL Image Builder VM
+                image-builder-vm:
+                  name: image-builder-vm
+                  path: charts/image-builder-vm
