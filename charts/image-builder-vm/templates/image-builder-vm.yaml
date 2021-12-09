@@ -1,0 +1,108 @@
+apiVersion: kubevirt.io/v1alpha3
+kind: VirtualMachine
+metadata:
+  annotations:
+    {{- toYaml .Values.imageBuilderVM.annotations | nindent 4 }}
+    {{- include "kubevirtRHELAnnotation" . | nindent 4 }}
+  name: image-builder
+  namespace: rfe
+  labels:
+    {{- toYaml .Values.imageBuilderVM.labels | nindent 4 }}
+    {{- include "common.labels.labels" . | nindent 4 }}
+    {{- include "kubevirtRHELLabel" . | nindent 4 }}
+spec:
+  dataVolumeTemplates:
+    - apiVersion: cdi.kubevirt.io/v1alpha1
+      kind: DataVolume
+      metadata:
+        creationTimestamp: null
+        name: image-builder-rootdisk
+      spec:
+        pvc:
+          accessModes:
+            - ReadWriteOnce
+          resources:
+            requests:
+              storage: 100Gi
+          volumeMode: Filesystem
+        source:
+          http:
+            url: 'http://nexus:8081/repository/rfe-rhel-media/rhel-{{ .Values.rhel.version }}-x86_64-kvm.qcow2'
+  running: true
+  template:
+    metadata:
+      labels:
+        {{- toYaml .Values.imageBuilderVM.template.labels | nindent 8 }}
+        {{- include "kubevirtRHELLabel" . | nindent 8 }}
+    spec:
+      domain:
+        cpu:
+          cores: {{ .Values.imageBuilderVM.cores }}
+          sockets: 1
+          threads: 1
+        devices:
+          disks:
+            - bootOrder: 1
+              disk:
+                bus: virtio
+              name: rootdisk
+            - disk:
+                bus: virtio
+              name: cloudinitdisk
+            - disk:
+                bus: virtio
+              name: redhat-portal-credentials
+              serial: rhpc
+            - disk:
+                bus: virtio
+              name: image-builder-ssh-key
+              serial: ibsk
+            - disk:
+                bus: virtio
+              name: serviceaccount
+              serial: seac
+          interfaces:
+            - masquerade: {}
+              model: virtio
+              name: nic-0
+          networkInterfaceMultiqueue: true
+          rng: {}
+        machine:
+          type: {{ .Values.imageBuilderVM.machine.type }}
+        resources:
+          requests:
+            memory: {{ .Values.imageBuilderVM.memory }}
+      evictionStrategy: LiveMigrate
+      hostname: image-builder
+      networks:
+        - name: nic-0
+          pod: {}
+      terminationGracePeriodSeconds: 180
+      volumes:
+        - dataVolume:
+            name: image-builder-rootdisk
+          name: rootdisk
+        - cloudInitNoCloud:
+            userData: |
+              #cloud-config
+              name: default
+              hostname: image-builder
+              user: cloud-user
+              bootcmd:
+                - "mkdir -p /home/cloud-user/.ssh && chown -R 1000:1000 /home/cloud-user"
+                - "mkdir -p /var/secrets/{redhat-portal-credentials,image-builder-ssh-key,serviceaccount}"
+                - "mount -o overriderockperm,mode=0400,uid=0,gid=0 /dev/disk/by-id/virtio-rhpc /var/secrets/redhat-portal-credentials"
+                - "mount -o overriderockperm,mode=0400,uid=0,gid=0 /dev/disk/by-id/virtio-ibsk /var/secrets/image-builder-ssh-key"
+                - "mount -o overriderockperm,mode=0400,uid=0,gid=0 /dev/disk/by-id/virtio-seac /var/secrets/serviceaccount"
+                - "cp /var/secrets/image-builder-ssh-key/ssh-publickey /home/cloud-user/.ssh/authorized_keys"
+                - "chmod 644 /home/cloud-user/.ssh/authorized_keys"
+          name: cloudinitdisk
+        - name: redhat-portal-credentials
+          secret:
+            secretName: redhat-portal-credentials
+        - name: image-builder-ssh-key
+          secret:
+            secretName: image-builder-ssh-key
+        - name: serviceaccount
+          serviceAccount:
+            serviceAccountName: rfe-automation
