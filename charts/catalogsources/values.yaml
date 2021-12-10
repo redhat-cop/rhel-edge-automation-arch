@@ -7,7 +7,7 @@ catalogsources:
     image:
       registry: quay.io
       repository: redhatgov/operator-catalog
-      version: 2.0.6
+      version: latest
     update:
       enabled: true
       interval: 30m0s
