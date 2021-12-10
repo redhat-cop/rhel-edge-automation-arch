@@ -5,4 +5,7 @@ kubevirtCR:
     deployOVS: "false"
   labels:
     app: kubevirt-hyperconverged
+cnv:
+  debug:
+    useEmulation: "false"
 

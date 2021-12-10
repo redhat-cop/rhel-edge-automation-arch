@@ -5,11 +5,13 @@ imageDownloaderJob:
   annotations:
     "helm.sh/hook": pre-install
     "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+  activeDeadlineSeconds: 600
 
 ansibleVM:
   annotations:
     "helm.sh/hook": post-install
     "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+  activeDeadlineSeconds: 1800
 
 imageBuilderVM:
   labels:
