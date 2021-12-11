@@ -4,8 +4,6 @@ metadata:
   labels:
     {{- include "common.labels.labels" . | nindent 4 }}
     {{- toYaml .Values.ansibleJob.labels | nindent 4 }}
-  annotations:
-    {{- toYaml .Values.ansibleJob.annotations | nindent 4 }}
   name: aws-machineset-ansible-job
   namespace: {{ template "common.names.namespace" $ }}
 spec:

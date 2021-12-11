@@ -12,6 +12,9 @@ mergeOauthIdentityProviders:
   job:
     labels:
       run: merge-oauth-identity-providers
+    annotations:
+      argocd.argoproj.io/hook: PostSync
+      argocd.argoproj.io/hook-delete-policy: BeforeHookCreation,HookSucceeded
 
 identityProviders: []
 

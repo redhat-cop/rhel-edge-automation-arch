@@ -18,12 +18,6 @@ quay:
     - kind: route
       managed: true
 
-subscription:
-  annotations:
-    "helm.sh/hook": pre-install
-    "helm.sh/hook-delete-policy": hook-failed
-  channel: quay-v3.5
-
 quayRegistryCR:
   annotations:
     argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
@@ -33,8 +27,8 @@ setupJob:
   gitRepository: https://github.com/redhat-cop/rhel-edge-automation-arch.git
   gitBranch: main
   annotations:
-    helm.sh/hook: post-install
-    helm.sh/hook-delete-policy: hook-succeeded
+    argocd.argoproj.io/hook: PostSync
+    argocd.argoproj.io/hook-delete-policy: HookSucceeded
   namespace: rfe
 
 serviceAccount: rfe-automation

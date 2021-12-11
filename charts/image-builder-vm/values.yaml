@@ -3,14 +3,14 @@ rhel:
 
 imageDownloaderJob:
   annotations:
-    "helm.sh/hook": pre-install
-    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+    argocd.argoproj.io/hook: PreSync
+    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation,HookSucceeded
   activeDeadlineSeconds: 600
 
 ansibleVM:
   annotations:
-    "helm.sh/hook": post-install
-    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+    argocd.argoproj.io/hook: PostSync
+    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation,HookSucceeded
   activeDeadlineSeconds: 1800
 
 imageBuilderVM:

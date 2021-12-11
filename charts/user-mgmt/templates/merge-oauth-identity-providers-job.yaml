@@ -4,8 +4,7 @@ metadata:
   name: {{ .Values.mergeOauthIdentityProviders.name }}
   namespace: {{ template "common.names.namespace" $ }}
   annotations:
-    "helm.sh/hook": post-install,post-upgrade
-    "helm.sh/hook-delete-policy": before-hook-creation
+    {{- toYaml .Values.mergeOauthIdentityProviders.job.annotations | nindent 4 }}
   labels:
     {{- include "common.labels.labels" . | nindent 4 }}
     {{- toYaml .Values.mergeOauthIdentityProviders.job.labels | nindent 4 }}
