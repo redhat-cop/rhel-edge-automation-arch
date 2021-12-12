@@ -75,7 +75,7 @@ application-manager:
                   name: cnv
                   path: charts/cnv
                   annotations:
-                    argocd.argoproj.io/sync-wave: "1" 
+                    argocd.argoproj.io/sync-wave: "1"
                   destinationNamespace: openshift-cnv
 
                 # Create namespaces
@@ -83,7 +83,7 @@ application-manager:
                   name: namespaces
                   path: charts/namespaces
                   annotations:
-                    argocd.argoproj.io/sync-wave: "0"                  
+                    argocd.argoproj.io/sync-wave: "0"
                   values:
                     namespaces:
                       - name: openshift-cnv
@@ -116,7 +116,7 @@ application-manager:
                   name: odf
                   path: charts/odf
                   annotations:
-                    argocd.argoproj.io/sync-wave: "1" 
+                    argocd.argoproj.io/sync-wave: "1"
                   destinationNamespace: openshift-storage
 
                 # Operators App of App Chart
@@ -227,14 +227,14 @@ application-manager:
                   name: quay
                   path: charts/quay
                   annotations:
-                    argocd.argoproj.io/sync-wave: "2" 
+                    argocd.argoproj.io/sync-wave: "2"
                   destinationNamespace: quay
                 # User Mgmt
                 user-mgmt:
                   name: user-mgmt
                   path: charts/user-mgmt
                   annotations:
-                    argocd.argoproj.io/sync-wave: "0"                  
+                    argocd.argoproj.io/sync-wave: "0"
                   destinationNamespace: openshift-config
                 # User Workload Monitoring
                 user-workload-monitoring:
@@ -269,19 +269,19 @@ application-manager:
                   name: httpd
                   path: charts/httpd
                   annotations:
-                    argocd.argoproj.io/sync-wave: "4"                  
+                    argocd.argoproj.io/sync-wave: "4"
                 # Nexus Chart
                 nexus:
                   name: nexus
                   path: charts/nexus
                   annotations:
-                    argocd.argoproj.io/sync-wave: "2"                  
+                    argocd.argoproj.io/sync-wave: "2"
                 # RBAC Chart
                 rbac:
                   name: rbac
                   path: charts/rbac
                   annotations:
-                    argocd.argoproj.io/sync-wave: "0"                  
+                    argocd.argoproj.io/sync-wave: "0"
                   ignoreDifferences:
                     - kind: ServiceAccount
                       name: oci-rfe-httpd
@@ -300,4 +300,4 @@ application-manager:
                   name: image-builder-vm
                   path: charts/image-builder-vm
                   annotations:
-                    argocd.argoproj.io/sync-wave: "3"                    
+                    argocd.argoproj.io/sync-wave: "3"

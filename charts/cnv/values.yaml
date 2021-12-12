@@ -8,4 +8,3 @@ kubevirtCR:
 cnv:
   debug:
     useEmulation: "false"
-
