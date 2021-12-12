@@ -1,5 +1,3 @@
-
-
 ansibleJob:
   labels:
     run: aws-machineset-ansible-job

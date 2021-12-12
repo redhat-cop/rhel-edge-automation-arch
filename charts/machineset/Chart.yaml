@@ -1,6 +1,6 @@
 apiVersion: v2
-name: cnv
-description: OpenShift Virtualization
+name: machineset
+description: MachineSet Chart
 type: application
 version: 0.1.0
 dependencies:

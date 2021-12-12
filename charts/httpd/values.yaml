@@ -10,8 +10,7 @@ buildConfig:
     dockerStrategyFrom:
       name: httpd:2.4-el8
   output:
-    imageStreamTagName:
-       httpd-ostree:latest
+    imageStreamTagName: httpd-ostree:latest
   enableRepositories:
-  - rhel-8-for-x86_64-baseos-rpms
-  - rhel-8-for-x86_64-appstream-rpms
+    - rhel-8-for-x86_64-baseos-rpms
+    - rhel-8-for-x86_64-appstream-rpms

@@ -16,16 +16,16 @@ ansibleVM:
 imageBuilderVM:
   labels:
     app: image-builder
-    workload.template.kubevirt.io/server: 'true'
+    workload.template.kubevirt.io/server: "true"
   annotations:
     argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
     argocd.argoproj.io/compare-options: IgnoreExtraneous
     description: RHEL 8 With Image Builder
   template:
     labels:
-        kubevirt.io/domain: image-builder
-        vm.kubevirt.io/name: image-builder
-        workload.template.kubevirt.io/server: 'true'
+      kubevirt.io/domain: image-builder
+      vm.kubevirt.io/name: image-builder
+      workload.template.kubevirt.io/server: "true"
   machine:
     type: pc-q35-rhel8.4.0
   cores: 8
