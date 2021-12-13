@@ -59,6 +59,8 @@ application-manager:
           cluster-configs:
             name: cluster-configs
             path: charts/application-manager
+            annotations:
+              argocd.argoproj.io/sync-wave: "0"
             destinationNamespace: rfe-gitops
             values:
               common:
@@ -70,14 +72,6 @@ application-manager:
                 prune: true
                 selfHeal: true
               charts:
-                # OpenShift Data Foundations
-                cnv:
-                  name: cnv
-                  path: charts/cnv
-                  annotations:
-                    argocd.argoproj.io/sync-wave: "1"
-                  destinationNamespace: openshift-cnv
-
                 # Create namespaces
                 namespaces:
                   name: namespaces
@@ -110,15 +104,6 @@ application-manager:
                         annotations:
                           openshift.io/description: OpenShift User Workload Monitoring
                           openshift.io/display-name: OpenShift User Workload Monitoring
-
-                # OpenShift Data Foundations
-                odf:
-                  name: odf
-                  path: charts/odf
-                  annotations:
-                    argocd.argoproj.io/sync-wave: "1"
-                  destinationNamespace: openshift-storage
-
                 # Operators App of App Chart
                 operators:
                   name: operators
@@ -171,7 +156,7 @@ application-manager:
                         name: nexus-operator
                         path: charts/operator
                         annotations:
-                          argocd.argoproj.io/sync-wave: "1"
+                          argocd.argoproj.io/sync-wave: "0"
                         destinationNamespace: rfe
                         values:
                           operator:
@@ -222,13 +207,6 @@ application-manager:
                             sourceNamespace: openshift-marketplace
                           operatorgroup:
                             create: false
-                # Quay
-                quay:
-                  name: quay
-                  path: charts/quay
-                  annotations:
-                    argocd.argoproj.io/sync-wave: "2"
-                  destinationNamespace: quay
                 # User Mgmt
                 user-mgmt:
                   name: user-mgmt
@@ -243,11 +221,41 @@ application-manager:
                   annotations:
                     argocd.argoproj.io/sync-wave: "0"
                   destinationNamespace: openshift-user-workload-monitoring
+                # RBAC Chart
+                rbac:
+                  name: rbac
+                  path: charts/rbac
+                  destinationNamespace: rfe
+                  annotations:
+                    argocd.argoproj.io/sync-wave: "0"
+                  ignoreDifferences:
+                    - kind: ServiceAccount
+                      name: oci-rfe-httpd
+                      namespace: rfe
+                      jsonPointers:
+                        - /imagePullSecrets
+                        - /secrets
+                # OpenShift Data Foundations
+                odf:
+                  name: odf
+                  path: charts/odf
+                  annotations:
+                    argocd.argoproj.io/sync-wave: "1"
+                  destinationNamespace: openshift-storage
+                # OpenShift Data Foundations
+                cnv:
+                  name: cnv
+                  path: charts/cnv
+                  annotations:
+                    argocd.argoproj.io/sync-wave: "1"
+                  destinationNamespace: openshift-cnv
           # RFE App of App Chart
           rfe:
             name: rfe
             path: charts/application-manager
             destinationNamespace: rfe-gitops
+            annotations:
+              argocd.argoproj.io/sync-wave: "1"
             values:
               common:
                 repoURL: https://github.com/redhat-cop/rhel-edge-automation-arch.git
@@ -258,12 +266,6 @@ application-manager:
                 prune: true
                 selfHeal: true
               charts:
-                # Ansible Runner Chart
-                ansible-rfe-runner:
-                  name: ansible-rfe-runner
-                  path: charts/ansible-rfe-runner
-                  annotations:
-                    argocd.argoproj.io/sync-wave: "0"
                 # HTTPD Chart
                 httpd:
                   name: httpd
@@ -276,19 +278,13 @@ application-manager:
                   path: charts/nexus
                   annotations:
                     argocd.argoproj.io/sync-wave: "2"
-                # RBAC Chart
-                rbac:
-                  name: rbac
-                  path: charts/rbac
+                # Quay
+                quay:
+                  name: quay
+                  path: charts/quay
                   annotations:
-                    argocd.argoproj.io/sync-wave: "0"
-                  ignoreDifferences:
-                    - kind: ServiceAccount
-                      name: oci-rfe-httpd
-                      namespace: rfe
-                      jsonPointers:
-                        - /imagePullSecrets
-                        - /secrets
+                    argocd.argoproj.io/sync-wave: "2"
+                  destinationNamespace: quay
                 # RFE Pipelines Chart
                 rfe-pipelines:
                   name: rfe-pipelines
@@ -301,3 +297,10 @@ application-manager:
                   path: charts/image-builder-vm
                   annotations:
                     argocd.argoproj.io/sync-wave: "3"
+                # Ansible Runner Chart
+                ansible-rfe-runner:
+                  name: ansible-rfe-runner
+                  path: charts/ansible-rfe-runner
+                  destinationNamespace: rfe
+                  annotations:
+                    argocd.argoproj.io/sync-wave: "1"
