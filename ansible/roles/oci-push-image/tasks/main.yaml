@@ -97,10 +97,10 @@
   ansible.builtin.command:
     argv:
       - "skopeo"
+      - "copy"
       - "--command-timeout=10m"
       - "--dest-authfile=/var/secrets/publisher/.dockerconfigjson"
       - "--dest-tls-verify=false"
-      - "copy"
       - "oci-archive:{{ find_results.files[0].path | quote }}"
       - "docker://{{ quay_image_path | quote }}:latest"
   become: no
@@ -113,12 +113,12 @@
   ansible.builtin.command:
     argv:
       - "skopeo"
+      - "copy"
       - "--command-timeout=10m"
       - "--src-authfile=/var/secrets/publisher/.dockerconfigjson"
       - "--src-tls-verify=false"
       - "--dest-authfile=/var/secrets/publisher/.dockerconfigjson"
       - "--dest-tls-verify=false"
-      - "copy"
       - "docker://{{ quay_image_path | quote }}:latest"
       - "docker://{{ quay_image_path | quote }}:{{ blueprint_version | quote }}"
   become: no
