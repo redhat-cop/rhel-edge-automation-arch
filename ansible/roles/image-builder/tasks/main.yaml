@@ -39,8 +39,9 @@
     
 - name: Enable Firewall Ports for Cockpit/Composer/Apache
   ansible.posix.firewalld:
-    service: "{{ item }}"
     permanent: yes
+    immediate: yes
+    service: "{{ item }}"
     state: enabled
   loop:
     - cockpit
