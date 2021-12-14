@@ -13,7 +13,7 @@ application-manager:
                 # RFE Pipelines
                 rfe-pipelines:
                   values:
-                    piplines:
+                    pipelines:
                       # Change default repository URL/branch here
                       repos:
                         tooling:
