@@ -51,7 +51,8 @@
       Content-Type: application/x-iso9660-image
     method: PUT
     password: "{{ nexus_password }}"
-    remote_src: "{{ file_to_upload }}"
+    remote_src: yes
+    src: "{{ file_to_upload }}"
     status_code:
       - 201
     url: "{{ nexus_http_scheme }}://{{ nexus_service_name }}:{{ nexus_service_port }}/{{ nexus_destination_path }}"
