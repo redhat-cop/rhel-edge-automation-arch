@@ -48,7 +48,7 @@
   ansible.builtin.uri:
     force_basic_auth: yes
     headers:
-      Content-Type: application/octet-stream
+      Content-Type: application/x-iso9660-image
     method: PUT
     password: "{{ nexus_password }}"
     remote_src: "{{ file_to_upload }}"
