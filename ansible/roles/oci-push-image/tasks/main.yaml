@@ -67,7 +67,7 @@
     depth: 0
     paths: "{{ tar_directory }}"
     patterns:
-      - "{{ build_commit_id }}-.*-container.tar"
+      - "{{ build_commit_id }}-container.tar"
     use_regex: yes
   register: find_results
   failed_when:
