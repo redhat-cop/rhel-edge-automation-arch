@@ -15,7 +15,7 @@ spec:
       type: string
     - name: tooling-git-revision
       description: Tooling Repository URL Reference
-      default: {{ $.Values.pipelines.repos.tooling.targetRevsion }}
+      default: {{ $.Values.pipelines.repos.tooling.targetRevision }}
       type: string
     - name: image-path
       description: Path to RFE Container Image
