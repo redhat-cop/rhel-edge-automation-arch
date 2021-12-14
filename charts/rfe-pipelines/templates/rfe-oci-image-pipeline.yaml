@@ -11,19 +11,19 @@ spec:
   params:
     - name: blueprints-git-url
       description: Blueprint Repository URL
-      default: https://github.com/redhat-cop/rhel-edge-automation-arch.git
+      default: {{ $.Values.pipelines.repos.blueprints.repoURL }}
       type: string
     - name: blueprints-git-revision
       description: Blueprint Repository URL Reference
-      default: blueprints
+      default: {{ $.Values.pipelines.repos.blueprints.targetRevision }}
       type: string
     - name: tooling-git-url
       description: Tooling Repository URL
-      default: https://github.com/redhat-cop/rhel-edge-automation-arch.git
+      default: {{ $.Values.pipelines.repos.tooling.repoURL }}
       type: string
     - name: tooling-git-revision
       description: Tooling Repository URL Reference
-      default: main
+      default: {{ $.Values.pipelines.repos.tooling.targetRevision }}
       type: string
     - name: blueprint-dir
       description: Directory in Blueprints repository containing blueprint

@@ -11,11 +11,11 @@ spec:
   params:
     - name: tooling-git-url
       description: Tooling Repository URL
-      default: https://github.com/redhat-cop/rhel-edge-automation-arch.git
+      default: {{ $.Values.pipelines.repos.tooling.repoURL }}
       type: string
     - name: tooling-git-revision
       description: Tooling Repository URL Reference
-      default: main
+      default: {{ $.Values.pipelines.repos.tooling.targetRevsion }}
       type: string
     - name: image-path
       description: Path to RFE Container Image

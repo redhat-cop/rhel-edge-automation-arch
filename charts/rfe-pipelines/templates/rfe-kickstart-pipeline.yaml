@@ -11,19 +11,19 @@ spec:
   params:
     - name: kickstarts-git-url
       description: Kickstarts Repository URL
-      default: https://github.com/redhat-cop/rhel-edge-automation-arch.git
+      default: {{ $.Values.pipelines.repos.kickstarts.repoURL }}
       type: string
     - name: kickstarts-git-revision
       description: Kickstarts Repository URL Reference
-      default: kickstarts
+      default: {{ $.Values.pipelines.repos.kickstarts.targetRevision }}
       type: string
     - name: tooling-git-url
       description: Tooling Repository URL
-      default: https://github.com/redhat-cop/rhel-edge-automation-arch.git
+      default: {{ $.Values.pipelines.repos.tooling.repoURL }}
       type: string
     - name: tooling-git-revision
       description: Tooling Repository URL Reference
-      default: main
+      default: {{ $.Values.pipelines.repos.tooling.targetRevision }}
       type: string
     - name: ostree-repo-url
       description: HTTP Location of OSTree Repository
