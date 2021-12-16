@@ -113,7 +113,7 @@ spec:
         hs = {}
         if obj.status ~= nil then
           if obj.status.phase ~= nil then
-            if obj.status.phase == "Completed" then
+            if obj.status.phase == "Complete" then
               hs.status = "Healthy"
               hs.message = obj.status.phase
               return hs
@@ -121,14 +121,14 @@ spec:
           end
         end
         hs.status = "Progressing"
-        hs.message = "Waiting for Build to complete"
+        hs.message = "Waiting for InstallPlan to complete"
         return hs
     build.openshift.io/Build:
       health.lua: |
         hs = {}
         if obj.status ~= nil then
           if obj.status.phase ~= nil then
-            if obj.status.phase == "Completed" then
+            if obj.status.phase == "Complete" then
               hs.status = "Healthy"
               hs.message = obj.status.phase
               return hs
