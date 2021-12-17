@@ -47,7 +47,7 @@
     depth: 0
     paths: "{{ iso_directory }}"
     patterns:
-      - "{{ build_commit_id }}-.*-boot.iso"
+      - "{{ build_commit_id }}-installer.iso"
     use_regex: yes
   register: find_results
   failed_when:

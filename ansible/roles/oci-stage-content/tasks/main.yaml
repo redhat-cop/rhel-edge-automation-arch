@@ -108,7 +108,7 @@
               - image: " "
                 name: httpd
                 ports:
-                  - containerPort: 80
+                  - containerPort: 8080
                     protocol: TCP
                 resources:
                   requests:
@@ -138,10 +138,14 @@
         namespace: rfe
       spec:
         ports:
-        - name: 80-tcp
+        - name: http-80
           port: 80
           protocol: TCP
-          targetPort: 80
+          targetPort: 8080
+        - name: http-8080
+          port: 8080
+          protocol: TCP
+          targetPort: 8080
         selector:
           deployment: "{{ quay_image_path_basename }}-{{ quay_image_tag }}-httpd"
         sessionAffinity: None
@@ -171,7 +175,7 @@
           name: "{{ quay_image_path_basename }}-{{ quay_image_tag }}-httpd"
           weight: 100
         port:
-          targetPort: 80-tcp
+          targetPort: http-80
         host: "{{ route_host }}"
         wildcardPolicy: None
     state: present

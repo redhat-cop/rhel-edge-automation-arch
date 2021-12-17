@@ -1,0 +1,27 @@
+---
+# Dynamically Generated Charts
+application-manager:
+  charts:
+    # Top Level RFE App of App Chart
+    rfe-automation:
+      values:
+        charts:
+          # RFE App of App Chart
+          rfe:
+            values:
+              charts:
+                # RFE Pipelines
+                rfe-pipelines:
+                  values:
+                    pipelines:
+                      # Change default repository URL/branch here
+                      repos:
+                        tooling:
+                          repoURL: https://github.com/redhat-cop/rhel-edge-automation-arch.git
+                          targetRevision: main
+                        blueprints:
+                          repoURL: https://github.com/redhat-cop/rhel-edge-automation-arch.git
+                          targetRevision: blueprints
+                        kickstarts:
+                          repoURL: https://github.com/redhat-cop/rhel-edge-automation-arch.git
+                          targetRevision: kickstarts
