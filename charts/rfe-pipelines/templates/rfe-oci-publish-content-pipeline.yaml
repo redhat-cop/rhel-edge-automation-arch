@@ -19,8 +19,10 @@ spec:
       type: string
     - name: image-path
       description: Path to RFE Container Image
+      type: string
     - name: image-tag
       description: Tag Associated with the RFE Image to Deploy
+      type: string
   results:
     - name: content-path
       description: URL to OSTree Content
