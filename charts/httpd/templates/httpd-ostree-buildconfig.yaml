@@ -26,7 +26,8 @@ spec:
         dnf update -y && \
         dnf install -y ostree && \
         rm -rf /etc/pki/entitlement && \
-        rm -rf /etc/rhsm
+        rm -rf /etc/rhsm && \
+        /usr/libexec/httpd-prepare && rpm-file-permissions
       USER 1001
     secrets:
     - destinationDir: etc-pki-entitlement
