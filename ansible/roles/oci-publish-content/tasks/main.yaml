@@ -20,7 +20,7 @@
 
 - name: Wait for Stage Deployment
   ansible.builtin.uri:
-    url: "http://{{ quay_image_path_basename }}-{{ quay_image_tag }}-httpd.rfe.svc.cluster.local/repo"
+    url: "http://{{ quay_image_path_basename }}-{{ quay_image_tag }}-httpd.rfe.svc.cluster.local/repo/config"
   delay: 10
   retries: 60
 
