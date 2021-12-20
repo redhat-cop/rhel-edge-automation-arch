@@ -1,0 +1,80 @@
+---
+bootstrap:
+  raw:
+    - apiVersion: v1
+      kind: Secret
+      metadata:
+        name: rfe-htpasswd-secret
+        namespace: openshift-config
+      type: Opaque
+      data:
+        htpasswd: |
+          dXNlcjE6JDJ5JDA1JE9QcE1NdWlwUmYyQmNFSmpnUDRHTWVPRzUvQlZkUWFwL3kyZll2c1
+          ZldW5vT3RvL2J4enlHCnVzZXIyOiQyeSQwNSQzVjEvdWtjWnJJTngyT3dEcVg4UTlPa212
+          NkhaTkNDUlpEOE11am5GNUlSVEZoWlE0WTJ5bQp1c2VyMzokMnkkMDUkSHFoS3hhbERwND
+          d6NXJtWGt6NEtjZUhiOUVJakVIdUpUOW1YOGtYM2NPNlNDOEl3bC5taFcKdXNlcjQ6JDJ5
+          JDA1JEloUGlQVERmMDBJNFJReG9nQk12eXVkYVNBME9OdjU4dFNXY3FEejlydm5GOUVlel
+          FtR25xCnVzZXI1OiQyeSQwNSRteWlrY0ZmRTZrMm1mZ0VaVC5SejJPamt3Y3UweUh3dEV2
+          NjFnOW1PVFd1T2ltRkV2TjI1Qwo=
+
+application-manager:
+  charts:
+    # Top Level RFE App of App Chart
+    rfe-automation:
+      values:
+        charts:
+          # Cluster Configuration App of App Chart
+          cluster-configs:
+            values:
+              charts:
+                # User Management
+                user-mgmt:
+                  name: user-mgmt
+                  path: charts/user-mgmt
+                  values:
+                    bindings:
+                      - apiVersion: rbac.authorization.k8s.io/v1
+                        kind: ClusterRoleBinding
+                        metadata:
+                          name: rfe-cluster-admins
+                        roleRef:
+                          apiGroup: rbac.authorization.k8s.io
+                          kind: ClusterRole
+                          name: cluster-admin
+                        subjects:
+                          - apiGroup: rbac.authorization.k8s.io
+                            kind: Group
+                            name: rfe-admins
+                    groups:
+                      - name: rfe-admins
+                        users:
+                          - user1
+                          - user2
+                          - user3
+                          - user4
+                          - user5
+                    identityProviders:
+                      - name: RFE
+                        mappingMethod: claim
+                        type: HTPasswd
+                        htpasswd:
+                          fileData:
+                            name: rfe-htpasswd-secret
+
+          # RFE App of App Chart
+          rfe:
+            values:
+              charts:
+                # Nexus Chart
+                nexus:
+                  name: nexus
+                  path: charts/nexus
+                  values:
+                    nexus:
+                      oauth:
+                        adminUsers:
+                          - user1
+                          - user2
+                          - user3
+                          - user4
+                          - user5
