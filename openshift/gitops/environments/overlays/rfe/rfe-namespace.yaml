@@ -1,7 +1,0 @@
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: rfe
-  annotations:
-    openshift.io/description: RHEL for Edge
-    openshift.io/display-name: RHEL for Edge
