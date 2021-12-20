@@ -1,7 +1,0 @@
-rhsm:
-  portal:
-    secretName: redhat-portal-credentials
-    offlineToken: "offlineToken"
-    password: "password"
-    poolId: "poolId"
-    username: "username"
