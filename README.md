@@ -26,6 +26,17 @@ The overall architecture is still being defined. We have split out "Above Site" 
 
 ![Overall Architecture](/images/overall-architecture.png)
 
+## Above Site Components
+
+OpenShift can be used to host all of the above site components. These components include:
+
+* Helm/Argo CD for deployment
+* OpenShift Virtualization for RHEL Image Builder
+* OpenShift Pipelines driving Ansible playbooks
+* Nexus for artifact storage
+* ODF (Noobaa only) for general object storage
+* Quay to host RFE OSTree content
+
 ## Deploying Above Site Components
 
 [Helm](https://helm.sh) and [Argo CD](https://argoproj.github.io/argo-cd/) are used to deploy and manage project components. Helm is used to dynamically generate an app of apps pattern in Argo CD, which in turn will pull in all the necessary Helm charts to deploy the specific components needed in the target environment.
@@ -95,10 +106,84 @@ Once the SSH keypair and values file are in place, we can begin to deploy. Run t
 
 ### Deploying
 
-Deploy the components using the following command:
+To deploy a reference environment in an empty OpenShift cluster, run the following command:
 
 ```shell
-helm upgrade -i -n rfe-gitops bootstrap charts/bootstrap/ -f local/bootstrap.yaml -f helm/examples/deploy-all.yaml
+helm upgrade -i -n rfe-gitops bootstrap charts/bootstrap/ -f local/bootstrap.yaml -f examples/helm/deployment/default.yaml
+```
+
+The default installation will deploy and configure all of the managed components on the cluster. An HTPasswd identity provider is configured for 5 users (`user{1-5}`) with `openshift` as the password.
+
+You can track the progress of the deployment on the Argo CD dashboard. To get the URL run the following command:
+
+```shell
+oc get route argocd-server -n rfe-gitops -ojsonpath='https://{.spec.host}'
+```
+
+The parent application is `rfe-automation`.
+
+### Customizing the Deployment
+
+Helm and Argo CD are used to deploy and manage all of the project components. From a high level, a Helm chart called `application-manager` is used to dynamically build nested app of apps pattern in Argo CD. Each application in Argo CD is a pointer to a Helm chart that installs and configures a specific project component. When bootstrapping the deployment, a Helm values file is used to tell the application manager which components should be deployed and how they should be configured. Using this pattern gives us a significant amount of flexibility when tailoring deployments to specific environments.
+
+#### Disabling Components
+
+If you want to disable the deployment/management of certain components (for example, if you want to bring your own cluster that has ODF already installed), each set `disabled: true` in the chart's values file. For example, to disable ODF store the following file in `local/disable-odf.yaml`:
+
+```yaml
+# Dynamically Generated Charts
+application-manager:
+  charts:
+    # Top Level RFE App of App Chart
+    rfe-automation:
+      values:
+        charts:
+          # Cluster Configuration App of App Chart
+          cluster-configs:
+            values:
+              charts:
+                # OpenShift Data Foundations
+                odf:
+                  disabled: true
+```
+
+Pass this values file to helm when deploying the project. For example:
+
+```shell
+helm upgrade -i -n rfe-gitops bootstrap charts/bootstrap/ -f local/bootstrap.yaml -f examples/helm/deployment/default.yaml -f local/disable-odf.yaml
+```
+
+#### Customizing Components
+
+Each chart in the `charts/` directory has a default values file. These values can be overwritten using the same pattern shown above in _Disabling Components_.
+
+For example, to enable processor emulation for OpenShift Virtualization set `useEmulation: true` in the chart's values file. Store the following file in `local/cnv-processor-emulation.yaml`:
+
+```yaml
+---
+# Dynamically Generated Charts
+application-manager:
+  charts:
+    # Top Level RFE App of App Chart
+    rfe-automation:
+      values:
+        charts:
+          # Cluster Configuration App of App Chart
+          cluster-configs:
+            values:
+              charts:
+                # OpenShift Virtualization
+                cnv:
+                  values:
+                    cnv:
+                      debug:
+                        useEmulation: "true"
+```
+
+Pass this values file to helm when deploying the project. For example:
+
+```shell
+helm upgrade -i -n rfe-gitops bootstrap charts/bootstrap/ -f local/bootstrap.yaml -f examples/helm/deployment/default.yaml -f local/cnv-processor-emulation.yaml
 ```
 
 ## Basic Walkthrough
