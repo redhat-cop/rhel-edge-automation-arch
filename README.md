@@ -34,7 +34,7 @@ OpenShift can be used to host all of the above site components. These components
 * OpenShift Virtualization for RHEL Image Builder
 * OpenShift Pipelines driving Ansible playbooks
 * Nexus for artifact storage
-* ODF (Noobaa only) for general object storage
+* OpenShift Data Foundation (NooBaa only) for general object storage
 * Red Hat Quay to host RFE OSTree content
 
 ## Deploying Above Site Components
