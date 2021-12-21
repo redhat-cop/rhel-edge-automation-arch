@@ -1,9 +1,6 @@
 local/
-openshift/gitops/clusters/overlays/byo/bootstrap/redhat-portal-credentials
 charts/bootstrap/files/ssh/image-builder-ssh-private-key
 charts/bootstrap/files/ssh/image-builder-ssh-public-key
-openshift/gitops/clusters/overlays/byo/bootstrap/image-builder-ssh-private-key
-openshift/gitops/clusters/overlays/byo/bootstrap/image-builder-ssh-public-key
 .DS_Store
 charts/*/charts
 charts/*/Chart.lock
