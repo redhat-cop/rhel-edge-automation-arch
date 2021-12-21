@@ -30,7 +30,7 @@ The overall architecture is still being defined. We have split out "Above Site" 
 
 OpenShift can be used to host all of the above site components. These components include:
 
-* Helm/Argo CD for deployment
+* Helm/Argo CD for GitOps based deployment and configuration
 * OpenShift Virtualization for RHEL Image Builder
 * OpenShift Pipelines driving Ansible playbooks
 * Nexus for artifact storage
@@ -60,7 +60,7 @@ Several secrets are created during the deployment. We will need to provide value
 | SSH Key                      | Use to support key based authentication to the Image Builder VM         |
 | Red Hat Portal Username      | Username to subscribe Image Builder VM                                  |
 | Red Hat Portal Password      | Password to subscribe Image Builder VM                                  |
-| Pool ID                      | Pool ID use to map the appropriate subscription to the Image Builder VM |
+| Pool ID                      | Red Hat Subscription Manager Pool ID use to map the appropriate subscription to the Image Builder VM |
 | Red Hat Portal Offline Token | Token used to access the Red Hat API and download RHEL images           |
 
 To generate the SSH keypair, run the following command:
@@ -93,7 +93,7 @@ global:
     ref: main
 ```
 
-Be sure to change the values of `offlineToken`, `poolId`, `username`, and `password`. If you are not sure how to generate an offline token for the Red Hat API, it is documented [here](https://access.redhat.com/articles/3626371#bgenerating-a-new-offline-tokenb-3).
+Be sure to change the values of `offlineToken`, `poolId`, `username`, and `password` to match the details for your account. If you are not sure how to generate an offline token for the Red Hat API, it is documented [here](https://access.redhat.com/articles/3626371#bgenerating-a-new-offline-tokenb-3).
 
 #### Deploy OpenShift GitOps Operator and Argo CD
 
@@ -128,7 +128,7 @@ Helm and Argo CD are used to deploy and manage all of the project components. Fr
 
 #### Disabling Components
 
-If you want to disable the deployment/management of certain components (for example, if you want to bring your own cluster that has ODF already installed), each set `disabled: true` in the chart's values file. For example, to disable ODF store the following file in `local/disable-odf.yaml`:
+If you want to disable the deployment/management of certain components (for example, if you want to bring your own cluster that has ODF already installed), set `disabled: true` in the chart's values file. For example, to disable ODF, create the following file in `local/disable-odf.yaml`:
 
 ```yaml
 # Dynamically Generated Charts
@@ -157,7 +157,7 @@ helm upgrade -i -n rfe-gitops bootstrap charts/bootstrap/ -f local/bootstrap.yam
 
 Each chart in the `charts/` directory has a default values file. These values can be overwritten using the same pattern shown above in _Disabling Components_.
 
-For example, to enable processor emulation for OpenShift Virtualization set `useEmulation: true` in the chart's values file. Store the following file in `local/cnv-processor-emulation.yaml`:
+For example, to enable processor emulation for OpenShift Virtualization, set `useEmulation: true` in the chart's values file. Store the following file in `local/cnv-processor-emulation.yaml`:
 
 ```yaml
 ---
