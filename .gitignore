@@ -7,3 +7,4 @@ openshift/gitops/clusters/overlays/byo/bootstrap/image-builder-ssh-public-key
 .DS_Store
 charts/*/charts
 charts/*/Chart.lock
+examples/values/local
