@@ -4,3 +4,4 @@ charts/bootstrap/files/ssh/image-builder-ssh-public-key
 .DS_Store
 charts/*/charts
 charts/*/Chart.lock
+examples/values/local

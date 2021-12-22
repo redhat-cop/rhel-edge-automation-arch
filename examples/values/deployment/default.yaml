@@ -1,3 +1,4 @@
+---
 bootstrap:
   raw:
     - apiVersion: v1
@@ -16,7 +17,6 @@ bootstrap:
           FtR25xCnVzZXI1OiQyeSQwNSRteWlrY0ZmRTZrMm1mZ0VaVC5SejJPamt3Y3UweUh3dEV2
           NjFnOW1PVFd1T2ltRkV2TjI1Qwo=
 
-# Nexus
 application-manager:
   charts:
     # Top Level RFE App of App Chart
@@ -27,7 +27,7 @@ application-manager:
           cluster-configs:
             values:
               charts:
-                # User Mgmt
+                # User Management
                 user-mgmt:
                   name: user-mgmt
                   path: charts/user-mgmt

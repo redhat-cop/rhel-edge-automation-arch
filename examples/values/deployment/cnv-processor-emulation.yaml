@@ -10,10 +10,9 @@ application-manager:
           cluster-configs:
             values:
               charts:
-                # OpenShift Data Foundations
+                # OpenShift Virtualization
                 cnv:
                   values:
                     cnv:
                       debug:
                         useEmulation: "true"
-
