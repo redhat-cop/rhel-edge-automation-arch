@@ -28,7 +28,7 @@ The overall architecture is still being defined. We have split out "Above Site" 
 
 ## Above Site Components
 
-OpenShift can be used to host all of the above site components. These components include:
+OpenShift is used to host all of the above site components. These components include:
 
 * Helm/Argo CD for GitOps based deployment and configuration
 * OpenShift Virtualization for RHEL Image Builder
@@ -41,7 +41,7 @@ OpenShift can be used to host all of the above site components. These components
 
 [Helm](https://helm.sh) and [Argo CD](https://argoproj.github.io/argo-cd/) are used to deploy and manage project components. Helm is used to dynamically generate an app of apps pattern in Argo CD, which in turn will pull in all the necessary Helm charts to deploy the specific components needed in the target environment.
 
-Before beginning, make sure you have the latest versions of `oc`/`kubectl`, `git` and `helm` clients installed.
+Before beginning, make sure you have the latest versions of `oc`/`kubectl`, `git`, `tkn` and `helm` clients installed. You will also need to generate SSH key pairs (example using `ssh-keygen` documented below).
 
 ### Bootstrapping Environment
 
@@ -76,7 +76,7 @@ ln -s ~/.ssh/image-builder charts/bootstrap/files/ssh/image-builder-ssh-private-
 ln -s ~/.ssh/image-builder.pub charts/bootstrap/files/ssh/image-builder-ssh-public-key
 ```
 
-The rest of the values will be defined in a Helm values file. In the root of the repository, create a file called `local/bootstrap.yaml` and add the following:
+The rest of the values will be defined in a Helm values file. In the root of the repository, create a file called `examples/values/local/bootstrap.yaml` and add the following:
 
 ```yaml
 rhsm:
@@ -86,11 +86,6 @@ rhsm:
     password: "changeme"
     poolId: "ssa77eke7ahs0123djsdf92340p9okjd"
     username: "alice"
-
-global:
-  git:
-    url: https://github.com/redhat-cop/rhel-edge-automation-arch.git
-    ref: main
 ```
 
 Be sure to change the values of `offlineToken`, `poolId`, `username`, and `password` to match the details for your account. If you are not sure how to generate an offline token for the Red Hat API, it is documented [here](https://access.redhat.com/articles/3626371#bgenerating-a-new-offline-tokenb-3).
@@ -109,7 +104,7 @@ Once the SSH keypair and values file are in place, we can begin to deploy. Run t
 To deploy a reference environment in an empty OpenShift cluster, run the following command:
 
 ```shell
-helm upgrade -i -n rfe-gitops bootstrap charts/bootstrap/ -f local/bootstrap.yaml -f examples/helm/deployment/default.yaml
+helm upgrade -i -n rfe-gitops bootstrap charts/bootstrap/ -f examples/values/local/bootstrap.yaml -f examples/values/deployment/default.yaml
 ```
 
 The default installation will deploy and configure all of the managed components on the cluster. An HTPasswd identity provider is configured for 5 users (`user{1-5}`) with `openshift` as the password.
@@ -124,11 +119,11 @@ The parent application is `rfe-automation`.
 
 ### Customizing the Deployment
 
-Helm and Argo CD are used to deploy and manage all of the project components. From a high level, a Helm chart called `application-manager` is used to dynamically build nested app of apps pattern in Argo CD. Each application in Argo CD is a pointer to a Helm chart that installs and configures a specific project component. When bootstrapping the deployment, a Helm values file is used to tell the application manager which components should be deployed and how they should be configured. Using this pattern gives us a significant amount of flexibility when tailoring deployments to specific environments.
+Helm and Argo CD are used to deploy and manage all of the project components. From a high level, a Helm chart called [application-manager](https://github.com/redhat-cop/rhel-edge-automation-arch/main/helm-migration/charts/application-manager) is used to dynamically build nested app of apps pattern in Argo CD. Each application in Argo CD is a pointer to a Helm chart that installs and configures a specific project component. When bootstrapping the deployment, a Helm values file is used to tell the application manager which components should be deployed and how they should be configured. Using this pattern gives us a significant amount of flexibility when tailoring deployments to specific environments.
 
 #### Disabling Components
 
-If you want to disable the deployment/management of certain components (for example, if you want to bring your own cluster that has ODF already installed), set `disabled: true` in the chart's values file. For example, to disable ODF, create the following file in `local/disable-odf.yaml`:
+If you want to disable the deployment/management of certain components (for example, if you want to bring your own cluster that has ODF already installed), set `disabled: true` in the chart's values file. For example, to disable ODF, create the following file in `examples/values/local/disable-odf.yaml`:
 
 ```yaml
 # Dynamically Generated Charts
@@ -150,14 +145,14 @@ application-manager:
 Pass this values file to helm when deploying the project. For example:
 
 ```shell
-helm upgrade -i -n rfe-gitops bootstrap charts/bootstrap/ -f local/bootstrap.yaml -f examples/helm/deployment/default.yaml -f local/disable-odf.yaml
+helm upgrade -i -n rfe-gitops bootstrap charts/bootstrap/ -f examples/values/local/bootstrap.yaml -f examples/values/deployment/default.yaml -f examples/values/local/disable-odf.yaml
 ```
 
 #### Customizing Components
 
-Each chart in the `charts/` directory has a default values file. These values can be overwritten using the same pattern shown above in _Disabling Components_.
+Each chart in the `charts/` directory has a default values file. These values can be overwritten using the same pattern shown above in [Disabling Components](#disabling-components).
 
-For example, to enable processor emulation for OpenShift Virtualization, set `useEmulation: true` in the chart's values file. Store the following file in `local/cnv-processor-emulation.yaml`:
+For example, to enable processor emulation for OpenShift Virtualization, set `useEmulation: true` in the chart's values file. Store the following file in `examples/values/local/cnv-processor-emulation.yaml`:
 
 ```yaml
 ---
@@ -183,11 +178,11 @@ application-manager:
 Pass this values file to helm when deploying the project. For example:
 
 ```shell
-helm upgrade -i -n rfe-gitops bootstrap charts/bootstrap/ -f local/bootstrap.yaml -f examples/helm/deployment/default.yaml -f local/cnv-processor-emulation.yaml
+helm upgrade -i -n rfe-gitops bootstrap charts/bootstrap/ -f examples/values/local/bootstrap.yaml -f examples/values/deployment/default.yaml -f examples/values/local/cnv-processor-emulation.yaml
 ```
 
 ## Basic Walkthrough
 
-A basic workthrough to demonstrate the end to end flow of building RHEL for Edge content and using it to create a RHEL for Edge instance can be found below:
+A basic walkthrough to demonstrate the end to end flow of building RHEL for Edge content and using it to create a RHEL for Edge instance can be found below:
 
 * [Basic Walkthrough](docs/basic-walkthrough.md)
