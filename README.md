@@ -115,7 +115,13 @@ You can track the progress of the deployment on the Argo CD dashboard. To get th
 oc get route argocd-server -n rfe-gitops -ojsonpath='https://{.spec.host}'
 ```
 
-The parent application is `rfe-automation`.
+The parent application is `rfe-automation`. To verify everything is deployed, `rfe-automation` should show Sycned/Healthy:
+
+```shell
+$ oc get application rfe-automation -n rfe-gitops
+NAME             SYNC STATUS   HEALTH STATUS
+rfe-automation   Synced        Healthy
+```
 
 ### Customizing the Deployment
 
