@@ -1,0 +1,15 @@
+---
+catalogsources:
+  redhatgov:
+    name: redhatgov-operators
+    displayName: Red Hat NAPS Community Operators
+    publisher: RedHatGov
+    image:
+      registry: quay.io
+      repository: redhatgov/operator-catalog
+      version: latest
+    update:
+      enabled: true
+      interval: 30m0s
+marketplace:
+  namespace: openshift-marketplace

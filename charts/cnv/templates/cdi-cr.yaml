@@ -1,0 +1,20 @@
+apiVersion: cdi.kubevirt.io/v1beta1
+kind: CDI
+metadata:
+  namespace: {{ template "common.names.namespace" $ }}
+  annotations:
+    {{- toYaml .Values.cdiCR.annotations | nindent 4 }}
+  labels:
+    {{- include "common.labels.labels" . | nindent 4 }}
+  name: cdi
+spec:
+  imagePullPolicy: IfNotPresent
+  infra:
+    nodeSelector:
+      kubernetes.io/os: linux
+    tolerations:
+    - key: CriticalAddonsOnly
+      operator: Exists
+  workload:
+    nodeSelector:
+      kubernetes.io/os: linux

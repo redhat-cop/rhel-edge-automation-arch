@@ -1,0 +1,42 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  labels:
+    {{- include "common.labels.labels" . | nindent 4 }}
+    run: quay-setup-ansible-job
+  annotations:
+    {{- toYaml .Values.setupJob.annotations | nindent 4 }}
+  name: quay-setup-ansible-job
+  namespace: {{.Values.setupJob.namespace}}
+spec:
+  template:
+    spec:
+      activeDeadlineSeconds: 1200
+      containers:
+        - image: image-registry.openshift-image-registry.svc:5000/rfe/ansible-rfe-runner:latest
+          env:
+            - name: GIT_DIRECTORY
+              value: "/tmp/git/rhel-edge-automation-arch"
+            - name: GIT_URL
+              value: {{ .Values.setupJob.gitRepository | quote }}
+            - name: ANSIBLE_PLAYBOOK
+              value: "ansible/playbooks/quay-setup.yaml"
+            - name: ANSIBLE_CONFIG
+              value: $GIT_DIRECTORY/ansible/ansible.cfg
+            - name: GIT_BRANCH
+              value: {{ .Values.setupJob.gitBranch | quote }}
+          command:
+            - /bin/bash
+            - -c
+            - |
+              mkdir -p $GIT_DIRECTORY
+              git clone -b $GIT_BRANCH $GIT_URL $GIT_DIRECTORY
+              ansible-galaxy collection install -r $GIT_DIRECTORY/ansible/collections/requirements.yaml
+              ansible-playbook $GIT_DIRECTORY/$ANSIBLE_PLAYBOOK
+          imagePullPolicy: Always
+          name: ansible-rfe-runner
+      dnsPolicy: ClusterFirst
+      restartPolicy: OnFailure
+      serviceAccount: {{ .Values.serviceAccount }}
+      serviceAccountName: {{ .Values.serviceAccount }}
+      terminationGracePeriodSeconds: 30

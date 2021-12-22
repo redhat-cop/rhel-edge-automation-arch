@@ -1,0 +1,13 @@
+argocd:
+  server: https://kubernetes.default.svc
+  project: default
+  retry:
+    # number of failed sync attempt retries; unlimited number of attempts if less than 0
+    limit: -1
+    backoff:
+      #  the amount to back off. Default unit is seconds, but could also be a duration (e.g. "2m", "1h")
+      duration: 5s
+      #  a factor to multiply the base duration after each failed retry
+      factor: 2
+      #  the maximum amount of time allowed for the backoff strategy
+      maxDuration: 3m

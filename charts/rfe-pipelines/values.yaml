@@ -1,0 +1,22 @@
+---
+defaultsConfigmap:
+  annotations:
+    app.kubernetes.io/instance: default
+    app.kubernetes.io/part-of: tekton-pipelines
+
+commonCR:
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+    argocd.argoproj.io/compare-options: IgnoreExtraneous
+
+pipelines:
+  repos:
+    tooling:
+      repoURL: https://github.com/redhat-cop/rhel-edge-automation-arch.git
+      targetRevision: main
+    blueprints:
+      repoURL: https://github.com/redhat-cop/rhel-edge-automation-arch.git
+      targetRevision: blueprints
+    kickstarts:
+      repoURL: https://github.com/redhat-cop/rhel-edge-automation-arch.git
+      targetRevision: kickstarts

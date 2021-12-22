@@ -1,0 +1,70 @@
+{{- if .Values.charts }}
+{{- range $chartName, $chart := .Values.charts }}
+{{- if not $chart.disabled }}
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: {{ default $chartName $chart.name }}
+  namespace: {{ $chart.namespace | default (default $.Release.Namespace $.Values.common.namespace) }}
+{{- if $chart.annotations }}
+  annotations:
+    {{- tpl (toYaml $chart.annotations) $ | nindent 4 }}
+{{- end }}
+{{- if $chart.labels }}
+  labels:
+    {{- tpl (toYaml $chart.labels) $ | nindent 4 }}
+{{- end }}
+spec:
+{{- if $chart.ignoreDifferences }}
+  ignoreDifferences:
+    {{- tpl (toYaml $chart.ignoreDifferences) $ | nindent 4 }}
+{{- end }}
+  destination:
+    namespace: {{ include "application-manager.destinationNamespace" (dict "chart" $chart "Values" $.Values "Release" $.Release) }}
+    server: {{ $chart.server | default (default $.Values.argocd.server $.Values.common.server) }}
+  project: {{ $chart.project | default (default $.Values.argocd.project $.Values.common.project) }}
+  source:
+{{- if or ($chart.parameters) ($chart.valueFiles) ($chart.values) ($.Values.global) }}
+    helm:
+{{- if $chart.parameters }}
+      parameters:
+      {{- range $val := $chart.parameters }}
+        - name: {{ $val.name | quote }}
+          value: {{ $val.value | quote }}
+      {{- end }}
+{{- end }}
+{{- if $chart.valueFiles }}
+      valueFiles:
+      {{- range $chart.valueFiles }}
+        - {{- . | toYaml | nindent 10 -}}
+      {{- end }}
+{{- end }}
+{{- if or ($chart.values) ($.Values.global) }}
+      values: |
+        {{- include "application-manager.chartValues" (dict "chart" $chart "Values" $.Values "context" $) | nindent 8 }}
+{{- end }}
+{{- end }}
+{{- $helmChartTypeCheck := include "application-manager.chartRepoPath" (dict "chart" $chart "Values" $.Values "Release" $.Release) }}
+{{- if $helmChartTypeCheck }}
+    chart: {{ $helmChartTypeCheck }}
+{{- else }}
+    path: {{ include "application-manager.chartPath" (dict "chart" $chart "Values" $.Values "Release" $.Release) }}
+{{- end }}
+    repoURL: {{ include "application-manager.gitURL" (dict "chart" $chart "Values" $.Values) }}
+    targetRevision: {{ include "application-manager.gitRef" (dict "chart" $chart "Values" $.Values) }}
+  syncPolicy:
+    automated:
+      prune: {{ $chart.prune | default $.Values.common.prune }}
+      selfHeal: {{ $chart.selfHeal | default $.Values.common.selfHeal }}
+{{- if $chart.syncOptions }}
+    syncOptions: 
+  {{- range $chart.syncOptions }}
+      - {{ . }}
+  {{- end }}
+{{- end }}
+    retry:
+      {{- tpl (toYaml ($chart.retry | default (default $.Values.argocd.retry $.Values.common.retry))) $ | nindent 6 }}
+{{- end }}
+{{- end }}
+{{- end }}

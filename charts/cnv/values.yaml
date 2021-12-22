@@ -1,0 +1,16 @@
+---
+cdiCR:
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+
+kubevirtCR:
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+    deployOVS: "false"
+  labels:
+    app: kubevirt-cr
+  featureGates:
+    - DataVolumes
+cnv:
+  debug:
+    useEmulation: false

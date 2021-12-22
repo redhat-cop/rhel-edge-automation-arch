@@ -48,7 +48,7 @@ From the root of the project, execute the following command to execute the `rfe-
 
 ```shell
 tkn pipeline start rfe-oci-image-pipeline \
---workspace name=shared-workspace,volumeClaimTemplateFile=openshift/resources/pipelines/volumeclaimtemplate.yaml \
+--workspace name=shared-workspace,volumeClaimTemplateFile=examples/pipelines/volumeclaimtemplate.yaml \
 -s rfe-automation \
 --use-param-defaults \
 -p blueprint-dir=hello-world 
@@ -59,7 +59,7 @@ To break down the preceding command:
 * `tkn` - Tekton CLI
 * `pipeline` - Resource to manage.
 * `start` - Action to perform. Starts a pipeline run.
-* `--workspace name=shared-workspace,volumeClaimTemplateFile=openshift/resources/pipelines/volumeclaimtemplate.yaml` - Specifies that a PersistentVolumeClaim should be used to back the Tekton workspace using a template found in the file [openshift/resources/pipelines/volumeclaimtemplate.yaml](https://github.com/redhat-cop/rhel-edge-automation-arch/blob/main/openshift/resources/pipelines/volumeclaimtemplate.yaml).
+* `--workspace name=shared-workspace,volumeClaimTemplateFile=examples/pipelines/volumeclaimtemplate.yaml` - Specifies that a PersistentVolumeClaim should be used to back the Tekton workspace using a template found in the file [examples/pipelines/volumeclaimtemplate.yaml](https://github.com/redhat-cop/rhel-edge-automation-arch/blob/main/examples/pipelines/volumeclaimtemplate.yaml).
 * `-s rfe-automation` - The name of the Service Account used to run the pipeline.
 * `--use-param-default` - The default Pipeline parameters will be applied unless explicitly specified.
 * `-p blueprint-dir=hello-world` - The directory containing the blueprint file in the cloned repository. By default, the _blueprints_ branch of this repository will be used.
@@ -141,7 +141,7 @@ From the root of the project, execute the following command to execute the `rfe-
 
 ```shell
 tkn pipeline start rfe-oci-stage-pipeline \
---workspace name=shared-workspace,volumeClaimTemplateFile=openshift/resources/pipelines/volumeclaimtemplate.yaml \
+--workspace name=shared-workspace,volumeClaimTemplateFile=examples/pipelines/volumeclaimtemplate.yaml \
 -s rfe-automation \
 --use-param-defaults \
 -p image-path=$(oc get route -n quay quay-quay -ojsonpath='{.spec.host}')/rfe/hello-world \
@@ -196,7 +196,7 @@ From the root of the project, execute the following command to execute the `rfe-
 
 ```shell
 tkn pipeline start rfe-oci-publish-content-pipeline \
---workspace name=shared-workspace,volumeClaimTemplateFile=openshift/resources/pipelines/volumeclaimtemplate.yaml \
+--workspace name=shared-workspace,volumeClaimTemplateFile=examples/pipelines/volumeclaimtemplate.yaml \
 -s rfe-automation \
 --use-param-defaults \
 -p image-path=$(oc get route -n quay quay-quay -ojsonpath='{.spec.host}')/rfe/hello-world \
@@ -256,7 +256,7 @@ Using the location of the OSTree repository from the results of either the `rfe-
 ```shell
 tkn pipeline start rfe-kickstart-pipeline \
 -s rfe-automation \
---workspace name=shared-workspace,volumeClaimTemplateFile=openshift/resources/pipelines/volumeclaimtemplate.yaml \
+--workspace name=shared-workspace,volumeClaimTemplateFile=examples/pipelines/volumeclaimtemplate.yaml \
 --use-param-defaults \
 -p kickstart-path=ibm-weather-forecaster/kickstart.ks \
 -p ostree-repo-url=http://httpd-rfe.apps.cluster.com/hello-world/latest
@@ -314,7 +314,7 @@ From the root of the project, execute the following command to execute the `rfe-
 
 ```shell
 tkn pipeline start rfe-oci-iso-pipeline \
---workspace name=shared-workspace,volumeClaimTemplateFile=openshift/resources/pipelines/volumeclaimtemplate.yaml \
+--workspace name=shared-workspace,volumeClaimTemplateFile=examples/pipelines/volumeclaimtemplate.yaml \
 -s rfe-automation \
 --use-param-defaults \
 -p kickstart-url=https://httpd-rfe.apps.cluster.com/kickstarts/ibm-weather-forecaster/kickstart.ks \

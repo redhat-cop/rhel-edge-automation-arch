@@ -2,7 +2,7 @@
 
 ## Introduction
 
-RHEL for Edge (RFE) introduces a new model for building and deploying RHEL. This repository (very much a work in progress) will contain necessary documentation and automation to support a GitOps approach to building and delivering RFE content at scale.
+RHEL for Edge (RFE) introduces a new model for building and deploying RHEL. This repository contains necessary documentation and automation to support a GitOps approach to building and delivering RFE content at scale.
 
 ## Areas of Focus
 
@@ -13,7 +13,7 @@ Our design will focus on the following topics:
 * Building RFE Images
 * Managing/Hosting RFE Artifacts
   * Kickstarts
-  * RFE Tarballs
+  * RFE OSTree Content
 * CI/CD Tooling/Process
 * End to End Installation/Update of RFE Deployments
 * Managing RFE Deployments at Scale
@@ -26,72 +26,169 @@ The overall architecture is still being defined. We have split out "Above Site" 
 
 ![Overall Architecture](/images/overall-architecture.png)
 
+## Above Site Components
+
+OpenShift is used to host all of the above site components. These components include:
+
+* Helm/Argo CD for GitOps based deployment and configuration
+* OpenShift Virtualization for RHEL Image Builder
+* OpenShift Pipelines driving Ansible playbooks
+* Nexus for artifact storage
+* OpenShift Data Foundation (NooBaa only) for general object storage
+* Red Hat Quay to host RFE OSTree content
+
 ## Deploying Above Site Components
 
-All of the Above Site components (see [architecture](#architecture)) will be deployed on OpenShift. Most of these components will be deployed/configured by tools like [Argo CD](https://argoproj.github.io/argo-cd/).
-We also chose to use [Sealed Secrets](https://github.com/bitnami-labs/sealed-secrets) to support our GitOps workflow. We leverage an "app of apps" methodology to deploy all of the components and two overlays are provided. The `shared` overylay is used to provision a shared development environment, but most users will want to leverage the `byo` overlay.
+[Helm](https://helm.sh) and [Argo CD](https://argoproj.github.io/argo-cd/) are used to deploy and manage project components. Helm is used to dynamically generate an app of apps pattern in Argo CD, which in turn will pull in all the necessary Helm charts to deploy the specific components needed in the target environment.
 
-### Deploying BYO Overlay
+Before beginning, make sure you have the latest versions of `oc`/`kubectl`, `git`, `tkn` and `helm` clients installed. You will also need to generate SSH key pairs (example using `ssh-keygen` documented below).
 
-To deploy the above site components we first need to deploy Argo CD. Argo CD is installed using the GitOps operator in OpenShift. If Argo CD is already installed, you can skip to the next [section](#bootstrapping-environment)
+### Bootstrapping Environment
 
-#### Argo CD
-
-From the root of the repository, run the following command to install the operator:
+First clone the repository by running the following command:
 
 ```shell
-oc apply -k openshift/gitops/manifests/bootstrap/argocd-operator/base
+git clone https://github.com/redhat-cop/rhel-edge-automation-arch.git
 ```
 
-Then run the following to deploy an instance of Argo CD.
+#### Prepare Values File & SSH Keypair
 
-```shell
-until oc apply -k openshift/gitops/manifests/bootstrap/argocd/base; do sleep 2; done
-```
-
-#### Bootstrapping Environment
-
-Some secrets will need to be created to support the deployment. We will use the Kustomize Secrets Generator to source specific values from files. An SSH key will be needed as well as credentials for the Red Hat Portal. A table of the specific components are laid out below:
+Several secrets are created during the deployment. We will need to provide values for those as part of the bootstrap process. A table of the specific components are laid out below:
 
 | Component                    | Description                                                             |
 |:-----------------------------|:------------------------------------------------------------------------|
 | SSH Key                      | Use to support key based authentication to the Image Builder VM         |
 | Red Hat Portal Username      | Username to subscribe Image Builder VM                                  |
 | Red Hat Portal Password      | Password to subscribe Image Builder VM                                  |
-| Pool ID                      | Pool ID use to map the appropriate subscription to the Image Builder VM |
+| Pool ID                      | Red Hat Subscription Manager Pool ID use to map the appropriate subscription to the Image Builder VM |
 | Red Hat Portal Offline Token | Token used to access the Red Hat API and download RHEL images           |
 
-To generate an SSH key, run the following command:
+To generate the SSH keypair, run the following command:
 
 ```shell
 ssh-keygen -t rsa -b 4096 -C cloud-user@image-builder -f ~/.ssh/image-builder
 ```
 
-Create symlinks to key you just created into the project:
+From the root of the repository, create symlinks to the key pair you just created:
 
 ```shell
-ln -s ~/.ssh/image-builder openshift/gitops/clusters/overlays/byo/bootstrap/image-builder-ssh-private-key
-ln -s ~/.ssh/image-builder.pub openshift/gitops/clusters/overlays/byo/bootstrap/image-builder-ssh-public-key
+ln -s ~/.ssh/image-builder charts/bootstrap/files/ssh/image-builder-ssh-private-key
+ln -s ~/.ssh/image-builder.pub charts/bootstrap/files/ssh/image-builder-ssh-public-key
 ```
 
-Next, modify `openshift/gitops/clusters/overlays/byo/bootstrap/redhat-portal-credentials` and add the Red Hat Portal Username, Password, Pool ID and Offline Token to the appropriate variables. More information about generating an Offline Token can be found [here](https://access.redhat.com/articles/3626371).
+The rest of the values will be defined in a Helm values file. In the root of the repository, create a file called `examples/values/local/bootstrap.yaml` and add the following:
 
-We are now ready to bootstrap the environment. To do this, run:
-
-```shell
-kustomize build --load_restrictor=LoadRestrictionsNone openshift/gitops/clusters/overlays/byo/bootstrap/ | oc apply -f -
+```yaml
+rhsm:
+  portal:
+    secretName: redhat-portal-credentials
+    offlineToken: "Opij2qw3eCf890ujjwec8j..."
+    password: "changeme"
+    poolId: "ssa77eke7ahs0123djsdf92340p9okjd"
+    username: "alice"
 ```
 
-#### Deploying
+Be sure to change the values of `offlineToken`, `poolId`, `username`, and `password` to match the details for your account. If you are not sure how to generate an offline token for the Red Hat API, it is documented [here](https://access.redhat.com/articles/3626371#bgenerating-a-new-offline-tokenb-3).
 
-Finally, deploy all of the above site components by running the following:
+#### Deploy OpenShift GitOps Operator and Argo CD
+
+Once the SSH keypair and values file are in place, we can begin to deploy. Run the following script to install the OpenShift GitOps Operator and Argo CD.
 
 ```shell
-kustomize build openshift/gitops/clusters/overlays/byo/argocd/manager | oc apply -f -
+./setup/init.sh
+```
+
+
+### Deploying
+
+To deploy a reference environment in an empty OpenShift cluster, run the following command:
+
+```shell
+helm upgrade -i -n rfe-gitops bootstrap charts/bootstrap/ -f examples/values/local/bootstrap.yaml -f examples/values/deployment/default.yaml
+```
+
+The default installation will deploy and configure all of the managed components on the cluster. An HTPasswd identity provider is configured for 5 users (`user{1-5}`) with `openshift` as the password.
+
+You can track the progress of the deployment on the Argo CD dashboard. To get the URL run the following command:
+
+```shell
+oc get route argocd-server -n rfe-gitops -ojsonpath='https://{.spec.host}'
+```
+
+The parent application is `rfe-automation`. To verify everything is deployed, `rfe-automation` should show Sycned/Healthy:
+
+```shell
+$ oc get application rfe-automation -n rfe-gitops
+NAME             SYNC STATUS   HEALTH STATUS
+rfe-automation   Synced        Healthy
+```
+
+### Customizing the Deployment
+
+Helm and Argo CD are used to deploy and manage all of the project components. From a high level, a Helm chart called [application-manager](https://github.com/redhat-cop/rhel-edge-automation-arch/main/helm-migration/charts/application-manager) is used to dynamically build a nested app of apps pattern in Argo CD. Each application in Argo CD is a pointer to a Helm chart that installs and configures a specific project component. When bootstrapping the deployment, a Helm values file is used to tell the application manager which components should be deployed and how they should be configured. Using this pattern gives us a significant amount of flexibility when tailoring deployments to specific environments.
+
+#### Disabling Components
+
+If you want to disable the deployment/management of certain components (for example, if you want to bring your own cluster that has ODF already installed), set `disabled: true` in the chart's values file. For example, to disable ODF, create the following file in `examples/values/local/disable-odf.yaml`:
+
+```yaml
+# Dynamically Generated Charts
+application-manager:
+  charts:
+    # Top Level RFE App of App Chart
+    rfe-automation:
+      values:
+        charts:
+          # Cluster Configuration App of App Chart
+          cluster-configs:
+            values:
+              charts:
+                # OpenShift Data Foundations
+                odf:
+                  disabled: true
+```
+
+Pass this values file to helm when deploying the project. For example:
+
+```shell
+helm upgrade -i -n rfe-gitops bootstrap charts/bootstrap/ -f examples/values/local/bootstrap.yaml -f examples/values/deployment/default.yaml -f examples/values/local/disable-odf.yaml
+```
+
+#### Customizing Components
+
+Each chart in the `charts/` directory has a default values file. These values can be overwritten using the same pattern shown above in [Disabling Components](#disabling-components).
+
+For example, to enable processor emulation for OpenShift Virtualization, set `useEmulation: true` in the chart's values file. Store the following file in `examples/values/local/cnv-processor-emulation.yaml`:
+
+```yaml
+---
+# Dynamically Generated Charts
+application-manager:
+  charts:
+    # Top Level RFE App of App Chart
+    rfe-automation:
+      values:
+        charts:
+          # Cluster Configuration App of App Chart
+          cluster-configs:
+            values:
+              charts:
+                # OpenShift Virtualization
+                cnv:
+                  values:
+                    cnv:
+                      debug:
+                        useEmulation: "true"
+```
+
+Pass this values file to helm when deploying the project. For example:
+
+```shell
+helm upgrade -i -n rfe-gitops bootstrap charts/bootstrap/ -f examples/values/local/bootstrap.yaml -f examples/values/deployment/default.yaml -f examples/values/local/cnv-processor-emulation.yaml
 ```
 
 ## Basic Walkthrough
 
-A basic workthrough to demonstrate the end to end flow of building RHEL for Edge content and using it to create a RHEL for Edge instance can be found below:
+A basic walkthrough to demonstrate the end to end flow of building RHEL for Edge content and using it to create a RHEL for Edge instance can be found below:
 
 * [Basic Walkthrough](docs/basic-walkthrough.md)

@@ -1,0 +1,16 @@
+service:
+  labels:
+    app: httpd
+    app.kubernetes.io/component: httpd
+    app.kubernetes.io/instance: httpd
+
+buildConfig:
+  name: httpd-ostree
+  strategy:
+    dockerStrategyFrom:
+      name: httpd:2.4-el8
+  output:
+    imageStreamTagName: httpd-ostree:latest
+  enableRepositories:
+    - rhel-8-for-x86_64-baseos-rpms
+    - rhel-8-for-x86_64-appstream-rpms

@@ -138,8 +138,12 @@
         namespace: rfe
       spec:
         ports:
-        - name: http
+        - name: http-80
           port: 80
+          protocol: TCP
+          targetPort: 8080
+        - name: http-8080
+          port: 8080
           protocol: TCP
           targetPort: 8080
         selector:
@@ -171,7 +175,11 @@
           name: "{{ quay_image_path_basename }}-{{ quay_image_tag }}-httpd"
           weight: 100
         port:
+<<<<<<< HEAD
           targetPort: http
+=======
+          targetPort: http-80
+>>>>>>> helm-migration
         host: "{{ route_host }}"
         wildcardPolicy: None
     state: present

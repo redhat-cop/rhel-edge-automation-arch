@@ -1,0 +1,108 @@
+{{- $setupJobName := include "common.names.appendSuffix" (dict "suffix" "setup" "context" $) -}}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ $setupJobName }}
+  namespace: {{ template "common.names.namespace" $ }}
+  labels:
+    {{- include "common.labels.labels" . | nindent 4 }}
+  annotations:
+    {{- toYaml .Values.setupJob.annotations | nindent 4}}
+spec:
+  template:
+    spec:
+      activeDeadlineSeconds: 600
+      containers:
+        - image: "{{ template "common.images.image" .Values.setup.image }}"
+          env:
+            - name: SERVICE_NAME
+              value: {{ .Values.nexus.service }}
+            - name: NEXUS_REPOSITORIES
+              value: "{{ join "," .Values.setup.repositories }}"
+            - name: RFE_NEXUS_SECRET
+              value: {{ .Values.setup.rfe.secretName }}
+            - name: RFE_NEXUS_USERNAME
+              value: {{ .Values.setup.rfe.username }}
+          command:
+            - /bin/bash
+            - -c
+            - |
+              export HOME=/tmp/nexus-setup
+
+              until oc get secrets ${SERVICE_NAME}-admin-credentials > /dev/null 2>&1; do sleep 5; done;
+
+              NEXUS_ADMIN_USERNAME=$(oc get secrets ${SERVICE_NAME}-admin-credentials -o jsonpath='{ .data.username }' | base64 -d)
+              NEXUS_ADMIN_PASSWORD=$(oc get secrets ${SERVICE_NAME}-admin-credentials -o jsonpath='{ .data.password }' | base64 -d)
+
+              while [[ "$(curl -s -u ${NEXUS_ADMIN_USERNAME}:${NEXUS_ADMIN_PASSWORD} -o /dev/null -w ''%{http_code}'' http://${SERVICE_NAME}:8081/service/rest/v1/status/check)" != "200" ]]; do sleep 5; done
+
+              for repository in ${NEXUS_REPOSITORIES//,/ }
+              do
+
+                REPOSITORY_STATUS=$(curl -s -u ${NEXUS_ADMIN_USERNAME}:${NEXUS_ADMIN_PASSWORD} -o /dev/null -w ''%{http_code}''  http://${SERVICE_NAME}:8081/service/rest/v1/repositories/raw/hosted/$repository)
+
+                if [[ ${REPOSITORY_STATUS} != "200" ]]; then
+
+                  echo "Creating Repository: '${repository}'"
+
+                  curl -s -k -X POST "http://${SERVICE_NAME}:8081/service/rest/v1/repositories/raw/hosted" \
+                   -u "${NEXUS_ADMIN_USERNAME}:${NEXUS_ADMIN_PASSWORD}" \
+                   -H "accept: application/json" \
+                   -H "Content-Type: application/json" \
+                   -d "{ \"name\": \"${repository}\", \"online\": true, \"storage\": { \"blobStoreName\": \"default\", \"strictContentTypeValidation\": false, \"writePolicy\": \"ALLOW\" }}"
+
+                fi
+              done
+
+              ROLE_STATUS=$(curl -s -u ${NEXUS_ADMIN_USERNAME}:${NEXUS_ADMIN_PASSWORD} -o /dev/null -w ''%{http_code}''  http://${SERVICE_NAME}:8081/service/rest/v1/security/roles/rfe)
+
+              if [[ ${ROLE_STATUS} == "404" ]]; then
+
+                  echo "Creating Role: rfe'"
+
+                  curl -s -k -X POST "http://${SERVICE_NAME}:8081/service/rest/v1/security/roles" \
+                  -u "${NEXUS_ADMIN_USERNAME}:${NEXUS_ADMIN_PASSWORD}" \
+                  -H "accept: application/json" \
+                  -H "Content-Type: application/json" \
+                  -d "{ \"id\": \"rfe\",\"name\": \"rfe\",\"description\": \"Management of rfe assets\",\"privileges\": [\"nx-repository-admin-raw-rfe-kickstarts-*\",\"nx-repository-admin-raw-rfe-tarballs-*\",\"nx-repository-admin-raw-rfe-rhel-media-*\",\"nx-repository-admin-raw-rfe-auto-iso-*\",\"nx-repository-view-raw-rfe-tarballs-*\",\"nx-repository-view-raw-rfe-kickstarts-*\",\"nx-repository-view-raw-rfe-rhel-media-*\",\"nx-repository-view-raw-rfe-auto-iso-*\"]}"
+
+              fi
+
+              RFE_NEXUS_PASSWORD=$(date | md5sum | cut -d" " -f1)
+
+              if `oc get secret ${RFE_NEXUS_SECRET} > /dev/null 2>&1`; then
+                RFE_NEXUS_PASSWORD=$(oc get secret ${RFE_NEXUS_SECRET} -o jsonpath='{ .data.password }' | base64 -d)
+              else
+                echo "Creating Secret: ${RFE_NEXUS_SECRET}"
+                oc create secret generic ${RFE_NEXUS_SECRET} --from-literal=username=${RFE_NEXUS_USERNAME} --from-literal=password=${RFE_NEXUS_PASSWORD} > /dev/null 2>&1
+              fi
+
+              USER_EXISTS_RESPONSE=$(curl -s -u ${NEXUS_ADMIN_USERNAME}:${NEXUS_ADMIN_PASSWORD} http://${SERVICE_NAME}:8081/service/rest/v1/security/users?userId=${RFE_NEXUS_USERNAME})
+
+              if [[ ${USER_EXISTS_RESPONSE} == "[ ]" ]]; then
+
+                  echo "Creating User: ${RFE_NEXUS_USERNAME}"
+
+                  curl -s -k -X POST "http://${SERVICE_NAME}:8081/service/rest/v1/security/users" \
+                  -u "${NEXUS_ADMIN_USERNAME}:${NEXUS_ADMIN_PASSWORD}" \
+                  -H "accept: application/json" \
+                  -H "Content-Type: application/json" \
+                  -d "{ \"userId\": \"${RFE_NEXUS_USERNAME}\",\"firstName\": \"${RFE_NEXUS_USERNAME}\",\"lastName\": \"${RFE_NEXUS_USERNAME}\",\"emailAddress\": \"${RFE_NEXUS_USERNAME}@redhat.com\",\"password\": \"${RFE_NEXUS_PASSWORD}\",\"status\": \"active\",\"roles\": [\"rfe\"] }"
+
+              else
+
+                  curl -s -k -X PUT "http://${SERVICE_NAME}:8081/service/rest/v1/security/users/${RFE_NEXUS_USERNAME}/change-password" \
+                  -u "${NEXUS_ADMIN_USERNAME}:${NEXUS_ADMIN_PASSWORD}" \
+                  -H "accept: application/json" \
+                  -H "Content-Type: text/plain" \
+                  -d "${RFE_NEXUS_PASSWORD}"
+
+              fi
+
+          imagePullPolicy: {{  .Values.setup.image.imagePullPolicy }}
+          name: {{ $setupJobName }}
+      dnsPolicy: ClusterFirst
+      restartPolicy: OnFailure
+      serviceAccount: {{ $setupJobName }}
+      serviceAccountName: {{ $setupJobName }}
+      terminationGracePeriodSeconds: 30

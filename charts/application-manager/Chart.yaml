@@ -1,0 +1,9 @@
+apiVersion: v2
+name: application-manager
+description: Application Manager Helm Chart
+type: application
+version: 0.1.0
+dependencies:
+  - name: common
+    version: 0.1.0
+    repository: file://../common

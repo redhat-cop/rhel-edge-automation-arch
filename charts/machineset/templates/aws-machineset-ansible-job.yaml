@@ -1,0 +1,38 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  labels:
+    {{- include "common.labels.labels" . | nindent 4 }}
+    {{- toYaml .Values.ansibleJob.labels | nindent 4 }}
+  name: aws-machineset-ansible-job
+  namespace: {{ template "common.names.namespace" $ }}
+spec:
+  template:
+    spec:
+      activeDeadlineSeconds: 1200
+      containers:
+        - image: image-registry.openshift-image-registry.svc:5000/rfe/ansible-rfe-runner:latest
+          env:
+            - name: GIT_DIRECTORY
+              value: "/tmp/git/rhel-edge-automation-arch"
+            - name: GIT_URL
+              value: "https://github.com/redhat-cop/rhel-edge-automation-arch.git"
+            - name: ANSIBLE_PLAYBOOK
+              value: "ansible/playbooks/machineset-aws.yaml"
+            - name: ANSIBLE_CONFIG
+              value: $GIT_DIRECTORY/ansible/ansible.cfg
+          command:
+            - /bin/bash
+            - -c
+            - |
+              mkdir -p $GIT_DIRECTORY
+              git clone $GIT_URL $GIT_DIRECTORY
+              ansible-galaxy collection install -r $GIT_DIRECTORY/ansible/collections/requirements.yaml
+              ansible-playbook $GIT_DIRECTORY/$ANSIBLE_PLAYBOOK
+          imagePullPolicy: Always
+          name: ansible-rfe-runner
+      dnsPolicy: ClusterFirst
+      restartPolicy: OnFailure
+      serviceAccount: aws-machineset
+      serviceAccountName: aws-machineset
+      terminationGracePeriodSeconds: 30

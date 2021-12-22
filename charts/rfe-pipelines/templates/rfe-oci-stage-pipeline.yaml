@@ -1,0 +1,66 @@
+apiVersion: tekton.dev/v1beta1
+kind: Pipeline
+metadata:
+  namespace: {{ template "common.names.namespace" $ }}
+  labels:
+    {{- include "common.labels.labels" . | nindent 4 }}
+  annotations:
+    {{- toYaml .Values.commonCR.annotations | nindent 4 }}     
+  name: rfe-oci-stage-pipeline
+spec:
+  params:
+    - name: tooling-git-url
+      description: Tooling Repository URL
+      default: {{ $.Values.pipelines.repos.tooling.repoURL }}
+      type: string
+    - name: tooling-git-revision
+      description: Tooling Repository URL Reference
+      default: {{ $.Values.pipelines.repos.tooling.targetRevision }}
+      type: string
+    - name: image-path
+      description: Path to RFE Container Image
+      type: string
+    - name: image-tag
+      description: Tag Associated with the RFE Image to Deploy
+      type: string
+    - name: route-host
+      description: Host Field for OpenShift Route Resource
+      default: ""
+      type: string
+  results:
+    - name: content-path
+      description: URL to OSTree Content
+      value: $(tasks.rfe-oci-stage-image.results.content-path)
+  workspaces:
+    - name: shared-workspace
+  tasks:
+    - name: git-clone-tooling
+      taskRef:
+        name: git-clone
+        kind: ClusterTask
+      params:
+        - name: url
+          value: $(params.tooling-git-url)
+        - name: revision
+          value: $(params.tooling-git-revision)
+        - name: subdirectory
+          value: "tooling"
+      workspaces:
+        - name: output
+          workspace: shared-workspace
+    - name: rfe-oci-stage-image
+      taskRef:
+        name: rfe-oci-stage-image
+        kind: Task
+      params:
+        - name: image-path
+          value: $(params.image-path)
+        - name: image-tag
+          value: $(params.image-tag)
+        - name: route-host
+          value: $(params.route-host)
+      runAfter:
+        - "git-clone-tooling"
+      workspaces:
+        - name: workspace
+          workspace: shared-workspace

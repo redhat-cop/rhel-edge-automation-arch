@@ -1,0 +1,55 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ .Values.mergeOauthIdentityProviders.name }}
+  namespace: {{ template "common.names.namespace" $ }}
+  annotations:
+    {{- toYaml .Values.mergeOauthIdentityProviders.job.annotations | nindent 4 }}
+  labels:
+    {{- include "common.labels.labels" . | nindent 4 }}
+    {{- toYaml .Values.mergeOauthIdentityProviders.job.labels | nindent 4 }}
+spec:
+  template:
+    spec:
+      activeDeadlineSeconds: 600
+      containers:
+        - image: "{{ template "common.images.image" .Values.mergeOauthIdentityProviders.image }}"
+          env:
+            - name: MERGE_IDENTITY_PROVIDERS_SCRIPT
+              value: /mnt/scripts/merge_oauth_identity_providers.py
+            - name: CLUSTER_OAUTH_LOCATION
+              value: /tmp/cluster-oauth.json
+            - name: GITOPS_OAUTH_LOCATION_YAML
+              value: /mnt/gitops/oauth.yaml
+            - name: GITOPS_OAUTH_LOCATION
+              value: /tmp/gitops-oauth.json
+          command:
+            - /bin/bash
+            - -c
+            - |
+              set -e
+              export HOME=/tmp/merge-oauth-identity-providers
+              oc get oauth cluster -o json > $CLUSTER_OAUTH_LOCATION
+              oc create -f $GITOPS_OAUTH_LOCATION_YAML --dry-run=client -o json > $GITOPS_OAUTH_LOCATION
+              python $MERGE_IDENTITY_PROVIDERS_SCRIPT
+              oc apply -f $CLUSTER_OAUTH_LOCATION
+
+          imagePullPolicy: IfNotPresent
+          name: {{ .Values.mergeOauthIdentityProviders.name }}
+          volumeMounts:
+            - name: scripts
+              mountPath: /mnt/scripts
+            - name: gitops
+              mountPath: /mnt/gitops
+      volumes:
+        - name: scripts
+          configMap:
+            name: {{ .Values.mergeOauthIdentityProviders.name }}
+        - name: gitops
+          secret:
+            secretName: {{ .Values.rfe.oauth.name }}
+      dnsPolicy: ClusterFirst
+      restartPolicy: OnFailure
+      serviceAccount: {{ .Values.rfe.oauth.name }}
+      serviceAccountName: {{ .Values.rfe.oauth.name }}
+      terminationGracePeriodSeconds: 30

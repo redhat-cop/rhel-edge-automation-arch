@@ -1,0 +1,17 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  labels:
+    {{- include "common.labels.labels" . | nindent 4 }}
+  name: {{ .Values.serviceAccount }}-quay
+  namespace: {{ .Values.quayRegistryCR.targetNamespace }}
+  annotations:
+    {{- toYaml .Values.setupJob.annotations | nindent 4 }}  
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: {{ .Values.serviceAccount }}-quay
+subjects:
+  - kind: ServiceAccount
+    name: {{ .Values.serviceAccount }}
+    namespace: {{.Values.setupJob.namespace }}

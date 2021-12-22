@@ -1,0 +1,12 @@
+apiVersion: v1
+data:
+  default-service-account: pipeline
+  default-timeout-minutes: "120"
+kind: ConfigMap
+metadata:
+  annotations:
+    {{- toYaml .Values.defaultsConfigmap.annotations | nindent 4 }}
+  name: config-defaults
+  namespace: openshift-pipelines
+  labels:
+    {{- include "common.labels.labels" . | nindent 4 }}    

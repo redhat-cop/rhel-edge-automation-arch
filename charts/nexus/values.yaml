@@ -1,0 +1,48 @@
+---
+nexus:
+  allowAnonymousAccess: true
+  service: nexus
+  oauth:
+    enabled: true
+    bypassAuthFor:
+      - "/repository"
+    adminUsers: []
+  resources:
+    requests:
+      cpu: 1
+      memory: 2048Mi
+    limits:
+      cpu: 2
+      memory: 4096Mi
+  expose:
+    ssl: true
+    kind: Route
+  persistent:
+    enabled: true
+    volumeSize: 100Gi
+  image:
+    registry: registry.connect.redhat.com
+    repository: sonatype/nexus-repository-manager
+    version: latest
+    imagePullPolicy: IfNotPresent
+
+setup:
+  repositories:
+    - rfe-kickstarts
+    - rfe-tarballs
+    - rfe-rhel-media
+    - rfe-auto-iso
+  rfe:
+    username: rfe-automation
+    secretName: nexus-rfe-credentials
+
+  image:
+    registry: registry.redhat.io
+    repository: openshift4/ose-cli
+    version: v4.6
+    imagePullPolicy: IfNotPresent
+
+setupJob:
+  annotations:
+    argocd.argoproj.io/hook: PostSync
+    argocd.argoproj.io/hook-delete-policy: HookSucceeded

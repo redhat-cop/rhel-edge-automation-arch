@@ -1,0 +1,7 @@
+---
+userWorkloadMonitoringConfig:
+  name: user-workload-monitoring-config
+  namespace: openshift-user-workload-monitoring
+clusterMonitoringConfig:
+  name: cluster-monitoring-config
+  namespace: openshift-monitoring
