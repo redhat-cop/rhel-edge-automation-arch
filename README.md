@@ -146,6 +146,13 @@ application-manager:
                 # OpenShift Data Foundations
                 odf:
                   disabled: true
+ 
+                 # Operators App of App Chart
+                operators:
+                  values:
+                    charts:
+                      odf-operator:
+                        disabled: true
 ```
 
 Pass this values file to helm when deploying the project. For example:

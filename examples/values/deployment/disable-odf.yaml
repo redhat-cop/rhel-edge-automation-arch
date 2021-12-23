@@ -13,3 +13,10 @@ application-manager:
                 # OpenShift Data Foundations
                 odf:
                   disabled: true
+ 
+                 # Operators App of App Chart
+                operators:
+                  values:
+                    charts:
+                      odf-operator:
+                        disabled: true
