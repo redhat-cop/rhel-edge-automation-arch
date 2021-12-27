@@ -36,7 +36,7 @@
     - cockpit.socket
     - httpd.service
     - firewalld
-    
+
 - name: Enable Firewall Ports for Cockpit/Composer/Apache
   ansible.posix.firewalld:
     permanent: yes
@@ -46,3 +46,6 @@
   loop:
     - cockpit
     - http
+
+- name: Manage Composer Sources
+  ansible.builtin.include_tasks: composer-sources.yaml

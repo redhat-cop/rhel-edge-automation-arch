@@ -1,0 +1,22 @@
+---
+- name: Verify Composer Source File
+  ansible.builtin.assert:
+    fail_msg: "Composer source does not have required id field"
+    that:
+      - composer_source.id is defined
+
+- name: Set Composer Source File Location
+  ansible.builtin.set_fact:
+    composer_sources_file: "{{ composer_sources_tmp_dir + '/' + composer_source.id + '.toml' }}"
+
+- name: Render Composer Source File
+  ansible.builtin.template:
+    dest: "{{ composer_sources_file }}"
+    group: root
+    mode: "0644"
+    owner: root
+    src: composer-source.toml.j2
+
+- name: Add Composer Source
+  command: >
+    composer-cli sources add {{ composer_sources_file }}
