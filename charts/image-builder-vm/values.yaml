@@ -30,6 +30,8 @@ imageBuilderVM:
     type: pc-q35-rhel8.4.0
   cores: 8
   memory: 16Gi
+  composer:
+    sources: []
 
 gitRepository: https://github.com/redhat-cop/rhel-edge-automation-arch.git
 gitBranch: main

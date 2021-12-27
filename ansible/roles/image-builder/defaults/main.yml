@@ -1,0 +1,3 @@
+---
+composer_sources_path: /var/configs/composer/sources.yaml
+composer_sources_tmp_dir: /tmp/composer-sources
