@@ -1,0 +1,71 @@
+name = "microshift"
+
+description = ""
+version = "0.0.1"
+modules = []
+groups = []
+
+# Force correct redhat-release
+
+[[packages]]
+name = "redhat-release"
+version = "*"
+
+# MicroShift dependencies
+
+[[packages]]
+name = "cri-o"
+version = "*"
+
+[[packages]]
+name = "cri-tools"
+version = "*"
+
+[[packages]]
+name = "podman"
+version = "*"
+
+[[packages]]
+name = "firewalld"
+version = "*"
+
+[[packages]]
+name = "conntrack-tools"
+version = "*"
+
+# MicroShift
+
+[[packages]]
+name = "microshift"
+version = "*"
+
+# configuration management
+
+[[packages]]
+name = "git"
+version = "*"
+
+
+
+# troubleshooting tools
+
+[[packages]]
+name = "iputils"
+version = "*"
+
+[[packages]]
+name = "bind-utils"
+version = "*"
+
+[[packages]]
+name = "net-tools"
+version = "*"
+
+[[packages]]
+name = "iotop"
+version = "*"
+
+
+[customizations]
+[customizations.services]
+enabled = ["crio", "microshift"]
