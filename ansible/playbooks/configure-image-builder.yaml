@@ -54,22 +54,26 @@
       become: no
       delegate_to: localhost
       failed_when:
-        - find_key.matched != 1
-        - find_key.examined != 2
+        - find_key.matched == 0
+        - find_key.examined < 2
       register: find_key
 
-    - name: Find Entitlement Cert
-      ansible.builtin.find:
-        paths: /tmp/rhsm/certs
-        use_regex: yes
-        patterns:
-          - "^[0-9]+.pem$"
+    - name: Set Entitlement File Names
+      ansible.builtin.set_fact:
+        rhsm_entitlement_key_path: "{{ find_key.files[0].path }}"
+        rhsm_entitlement_crt_path: "{{ find_key.files[0].path.replace('-key','') }}"
+      delegate_to: localhost
+
+    - name: Validate RHSM Files Exist
+      ansible.builtin.stat:
+        path: "{{ item }}"
       become: no
       delegate_to: localhost
-      failed_when:
-        - find_cert.matched != 1
-        - find_cert.examined != 2
-      register: find_cert
+      failed_when: not rhsm_entitlements.stat.exists
+      loop:
+        - "{{ rhsm_entitlement_key_path }}"
+        - "{{ rhsm_entitlement_crt_path }}"
+      register: rhsm_entitlements
 
     - name: Create Entitlement Secret
       community.kubernetes.k8s:
@@ -80,8 +84,8 @@
         definition: |
           apiVersion: v1
           data:
-            "{{ find_key.files[0].path | regex_search('[0-9]+-key.pem$') }}": "{{ lookup('file', find_key.files[0].path) | b64encode }}"
-            "{{ find_cert.files[0].path | regex_search('[0-9]+.pem$') }}": "{{ lookup('file', find_cert.files[0].path) | b64encode }}"
+            "{{ rhsm_entitlement_key_path | basename }}": "{{ lookup('file', rhsm_entitlement_key_path) | b64encode }}"
+            "{{ rhsm_entitlement_crt_path | basename }}": "{{ lookup('file', rhsm_entitlement_crt_path) | b64encode }}"
           kind: Secret
           metadata:
             name: etc-pki-entitlement
