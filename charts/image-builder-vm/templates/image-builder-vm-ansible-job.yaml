@@ -9,6 +9,7 @@ metadata:
   name: image-builder-vm-ansible-job
   namespace: rfe
 spec:
+  activeDeadlineSeconds: {{ $.Values.ansibleVM.activeDeadlineSeconds }}
   template:
     spec:
       activeDeadlineSeconds: {{ $.Values.ansibleVM.activeDeadlineSeconds }}
