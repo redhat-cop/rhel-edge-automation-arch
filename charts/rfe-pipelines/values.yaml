@@ -3,6 +3,7 @@ defaultsConfigmap:
   annotations:
     app.kubernetes.io/instance: default
     app.kubernetes.io/part-of: tekton-pipelines
+  timeoutMinutes: "180"
 
 commonCR:
   annotations:

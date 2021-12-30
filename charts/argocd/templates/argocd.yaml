@@ -138,3 +138,8 @@ spec:
         hs.status = "Progressing"
         hs.message = "Waiting for Build to complete"
         return hs
+  resourceExclusions: |
+    - apiGroups:
+      - tekton.dev
+      kinds:
+      - PipelineRun
