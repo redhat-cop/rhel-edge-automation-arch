@@ -1,7 +1,7 @@
 apiVersion: v1
 data:
   default-service-account: pipeline
-  default-timeout-minutes: "120"
+  default-timeout-minutes: {{ .Values.defaultsConfigmap.timeoutMinutes | quote }}
 kind: ConfigMap
 metadata:
   annotations:
