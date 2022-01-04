@@ -28,10 +28,11 @@ nexus:
 
 setup:
   repositories:
-    - rfe-kickstarts
-    - rfe-tarballs
-    - rfe-rhel-media
-    - rfe-auto-iso
+    raw:
+      - rfe-kickstarts
+      - rfe-tarballs
+      - rfe-rhel-media
+      - rfe-auto-iso
   rfe:
     username: rfe-automation
     secretName: nexus-rfe-credentials

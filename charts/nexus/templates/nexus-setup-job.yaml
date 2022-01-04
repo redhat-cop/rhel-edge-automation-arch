@@ -17,8 +17,12 @@ spec:
           env:
             - name: SERVICE_NAME
               value: {{ .Values.nexus.service }}
-            - name: NEXUS_REPOSITORIES
-              value: "{{ join "," .Values.setup.repositories }}"
+            - name: NEXUS_RAW_REPOSITORIES
+              value: {{ join "," .Values.setup.repositories.raw |quote}}
+            {{- if .Values.setup.repositories.yum }}
+            - name: NEXUS_YUM_REPOSITORIES
+              value: {{ join "," .Values.setup.repositories.yum |quote }}
+            {{- end }}
             - name: RFE_NEXUS_SECRET
               value: {{ .Values.setup.rfe.secretName }}
             - name: RFE_NEXUS_USERNAME
@@ -36,14 +40,14 @@ spec:
 
               while [[ "$(curl -s -u ${NEXUS_ADMIN_USERNAME}:${NEXUS_ADMIN_PASSWORD} -o /dev/null -w ''%{http_code}'' http://${SERVICE_NAME}:8081/service/rest/v1/status/check)" != "200" ]]; do sleep 5; done
 
-              for repository in ${NEXUS_REPOSITORIES//,/ }
+              for repository in ${NEXUS_RAW_REPOSITORIES//,/ }
               do
 
                 REPOSITORY_STATUS=$(curl -s -u ${NEXUS_ADMIN_USERNAME}:${NEXUS_ADMIN_PASSWORD} -o /dev/null -w ''%{http_code}''  http://${SERVICE_NAME}:8081/service/rest/v1/repositories/raw/hosted/$repository)
 
                 if [[ ${REPOSITORY_STATUS} != "200" ]]; then
 
-                  echo "Creating Repository: '${repository}'"
+                  echo "Creating RAW Repository: '${repository}'"
 
                   curl -s -k -X POST "http://${SERVICE_NAME}:8081/service/rest/v1/repositories/raw/hosted" \
                    -u "${NEXUS_ADMIN_USERNAME}:${NEXUS_ADMIN_PASSWORD}" \
@@ -53,6 +57,23 @@ spec:
 
                 fi
               done
+              {{- if .Values.setup.repositories.yum }}
+              
+              for repository in ${NEXUS_YUM_REPOSITORIES//,/ }
+              do
+                REPOSITORY_STATUS=$(curl -s -u ${NEXUS_ADMIN_USERNAME}:${NEXUS_ADMIN_PASSWORD} -o /dev/null -w ''%{http_code}''  http://${SERVICE_NAME}:8081/service/rest/v1/repositories/yum/hosted/$repository)
+
+                if [[ ${REPOSITORY_STATUS} != "200" ]]; then
+
+                  echo "Creating YUM Repository: '${repository}'"
+                  curl -s -k -X POST "http://${SERVICE_NAME}:8081/service/rest/v1/repositories/yum/hosted" \
+                  -u "${NEXUS_ADMIN_USERNAME}:${NEXUS_ADMIN_PASSWORD}" \
+                  -H "accept: application/json" \
+                  -H "Content-Type: application/json" \
+                  -d "{ \"name\" : \"${repository}\", \"online\": true, \"storage\" : { \"blobStoreName\" : \"default\",\"strictContentTypeValidation\" : true, \"writePolicy\" : \"ALLOW_ONCE\" }, \"yum\" : { \"repodataDepth\" : 1, \"deployPolicy\" : \"STRICT\" }, \"component\" : { \"proprietaryComponents\" : false }, \"format\" : \"yum\", \"type\" : \"hosted\" }"
+                fi
+              done
+              {{- end }}
 
               ROLE_STATUS=$(curl -s -u ${NEXUS_ADMIN_USERNAME}:${NEXUS_ADMIN_PASSWORD} -o /dev/null -w ''%{http_code}''  http://${SERVICE_NAME}:8081/service/rest/v1/security/roles/rfe)
 
