@@ -8,10 +8,6 @@ groups = []
 # Force correct redhat-release
 
 [[packages]]
-name = "redhat-release-eula"
-version = "*"
-
-[[packages]]
 name = "redhat-release"
 version = "*"
 
