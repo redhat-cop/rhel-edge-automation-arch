@@ -22,7 +22,8 @@ spec:
       COPY ./rhsm-ca /etc/rhsm/ca
       RUN rm /etc/rhsm-host && \
         dnf repolist --disablerepo=* && \
-        subscription-manager repos {{- range .Values.buildConfig.enableRepositories }} --enable {{ . }} {{- end}} && \
+        subscription-manager repos --disable=* && \
+        {{ range .Values.buildConfig.enableRepositories }}subscription-manager repos --enable {{ . }} && {{ end }}\
         dnf update -y && \
         dnf install -y ostree && \
         rm -rf /etc/pki/entitlement && \
