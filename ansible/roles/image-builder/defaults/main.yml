@@ -2,4 +2,7 @@
 composer_sources_path: /var/configs/composer/sources.yaml
 composer_sources_tmp_dir: /tmp/composer-sources
 ingress_controller_name: default
-ingress_controller_namespace: openshift-ingress-operator
+ingress_controller_namespace: openshift-ingress
+ingress_operator_namespace: openshift-ingress-operator
+trust_anchor_file: openshift-ingress-ca.crt
+trust_anchor_path: /etc/pki/ca-trust/source/anchors

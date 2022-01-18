@@ -6,7 +6,7 @@
     host: https://kubernetes.default.svc
     kind: IngressController
     name: "{{ ingress_controller_name }}"
-    namespace: "{{ ingress_controller_namespace }}"
+    namespace: "{{ ingress_operator_namespace }}"
     validate_certs: yes
   become: no
   delegate_to: localhost
@@ -14,18 +14,63 @@
 
 - name: Set Certificate Secret Name
   ansible.builtin.set_fact:
-    ingress_controller_secret: "{{ ingress_controller.resources[0].spec.defaultCertificate.name }}"
+    ingress_controller_tls_secret_name: "{{ ingress_controller.resources[0].spec.defaultCertificate.name }}"
 
-- name: Debug
-  ansible.builtin.debug:
-    var: ingress_controller
+- name: Query Ingress TLS Secret
+  community.kubernetes.k8s_info:
+    api_key: "{{ lookup('file', '/var/run/secrets/kubernetes.io/serviceaccount/token') }}"
+    api_version: v1
+    ca_cert: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+    host: https://kubernetes.default.svc
+    kind: Secret
+    name: "{{ ingress_controller_tls_secret_name }}"
+    namespace: "{{ ingress_controller_namespace }}"
+    validate_certs: yes
+  become: no
+  delegate_to: localhost
+  register: ingress_controller_tls_secret
 
-- name: Debug
-  ansible.builtin.debug:
-    var: ingress_controller_secret
+- name: Set Ingress TLS Certificates
+  ansible.builtin.set_fact:
+    ingress_controller_certificates: |
+      {{
+        (ingress_controller_tls_secret.resources[0].data['tls.crt'] | b64decode).split('-----BEGIN CERTIFICATE-----') |
+          reject('equalto', '') | list
+      }}
 
-- fail:
-    msg: stop
+- name: Parse Certificates
+  community.crypto.x509_certificate_info:
+    content: "-----BEGIN CERTIFICATE-----\n{{ item }}"
+  loop: "{{ ingress_controller_certificates }}"
+  register: x509_certificate_info
+
+- name: Build List of CA Certificates
+  ansible.builtin.set_fact:
+    ingress_controller_ca_certificates: |
+      {{
+        x509_certificate_info.results | to_json | from_json |
+          json_query("[?basic_constraints[?contains(@, 'CA:TRUE')]].item")
+      }}
+
+- name: Create CA Certificate Payload
+  ansible.builtin.set_fact:
+    ingress_controller_ca_certificate_payload: |
+      {{
+        (ingress_controller_ca_certificate_payload | default('')) + "-----BEGIN CERTIFICATE-----" + item
+      }}
+  loop: "{{ ingress_controller_ca_certificates }}"
+
+- name: Copy Certificate Payload to Image Builder VM
+  ansible.builtin.copy:
+    content: "{{ ingress_controller_ca_certificate_payload }}"
+    dest: "{{ trust_anchor_path }}/{{ trust_anchor_file }}"
+    group: root
+    mode: "0644"
+    owner: root
+
+- name: Update CA Trust
+  ansible.builtin.command:
+    cmd: update-ca-trust
 
 - name: Register Host
   community.general.redhat_subscription:
