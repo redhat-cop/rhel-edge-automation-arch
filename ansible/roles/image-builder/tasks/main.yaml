@@ -1,3 +1,31 @@
+- name: Query IngressController
+  community.kubernetes.k8s_info:
+    api_key: "{{ lookup('file', '/var/run/secrets/kubernetes.io/serviceaccount/token') }}"
+    api_version: operator.openshift.io/v1
+    ca_cert: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+    host: https://kubernetes.default.svc
+    kind: IngressController
+    name: "{{ ingress_controller_name }}"
+    namespace: "{{ ingress_controller_namespace }}"
+    validate_certs: yes
+  register: ingress_controller
+  delegate_to: localhost
+
+- name: Set Certificate Secret Name
+  ansible.builtin.set_fact:
+    ingress_controller_secret: "{{ ingress_controller.resources[0].spec.defaultCertificate.name }}"
+
+- name: Debug
+  ansible.builtin.debug:
+    var: ingress_controller
+
+- name: Debug
+  ansible.builtin.debug:
+    var: ingress_controller_secret
+
+- fail:
+    msg: stop
+
 - name: Register Host
   community.general.redhat_subscription:
     state: present
