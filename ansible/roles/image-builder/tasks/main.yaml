@@ -8,8 +8,9 @@
     name: "{{ ingress_controller_name }}"
     namespace: "{{ ingress_controller_namespace }}"
     validate_certs: yes
-  register: ingress_controller
+  become: no
   delegate_to: localhost
+  register: ingress_controller
 
 - name: Set Certificate Secret Name
   ansible.builtin.set_fact:
