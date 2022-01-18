@@ -61,3 +61,10 @@ rules:
       - list
       - update
       - get
+  - apiGroups:
+      - operator.openshift.io
+    resources:
+      - ingresscontrollers
+    verbs:
+      - get
+      - list
