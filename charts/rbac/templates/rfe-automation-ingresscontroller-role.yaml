@@ -1,7 +1,7 @@
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
-  name: rfe-automation-ingresscontroller
+  name: rfe-automation-ingress-operator
   namespace: openshift-ingress-operator
   labels:
     {{- include "common.labels.labels" . | nindent 4 }}
@@ -10,6 +10,14 @@ rules:
       - operator.openshift.io
     resources:
       - ingresscontrollers
+    verbs:
+      - get
+      - list
+  - apiGroups:
+      - '*'
+    resources:
+      - configmaps
+      - secrets
     verbs:
       - get
       - list

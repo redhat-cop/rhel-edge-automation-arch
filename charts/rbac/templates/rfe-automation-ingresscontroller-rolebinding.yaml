@@ -1,14 +1,14 @@
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
-  name: rfe-automation-ingresscontroller
+  name: rfe-automation-ingress-operator
   namespace: openshift-ingress-operator
   labels:
     {{- include "common.labels.labels" . | nindent 4 }}
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
-  name: rfe-automation-ingresscontroller
+  name: rfe-automation-ingress-operator
 subjects:
   - kind: ServiceAccount
     name: rfe-automation
