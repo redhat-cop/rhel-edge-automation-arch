@@ -1,0 +1,14 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: rfe-automation-proxy
+  labels:
+    {{- include "common.labels.labels" . | nindent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: rfe-automation-proxy
+subjects:
+- kind: ServiceAccount
+  name: rfe-automation
+  namespace: {{ template "common.names.namespace" $ }}
