@@ -37,6 +37,14 @@
       - "init"
       - "--mode=archive"
 
+- name: Set free space percentage to 0
+  ansible.builtin.lineinfile:
+    path: "{{ repo_remote_path }}/config"
+    insertafter: "[core]"
+    firstmatch: yes
+    line: "min-free-space-percent=0"
+  when: skip_free_space_protection | default(false) | bool
+
 - name: Add Remote OSTree Repository
   ansible.builtin.command:
     argv:

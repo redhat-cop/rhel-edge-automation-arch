@@ -5,7 +5,7 @@ metadata:
   labels:
     {{- include "common.labels.labels" . | nindent 4 }}
   annotations:
-    {{- toYaml .Values.commonCR.annotations | nindent 4 }}    
+    {{- toYaml .Values.commonCR.annotations | nindent 4 }}
   name: rfe-oci-publish-content
 spec:
   workspaces:
@@ -15,6 +15,8 @@ spec:
       description: Path to RFE Container Image
     - name: image-tag
       description: Tag Associated with the RFE Image to Deploy
+    - name: skip-free-space-protection
+      description: Instruct OSTree to skip its free space protection
   results:
     - name: content-path
       description: URL to OSTree Content
@@ -29,6 +31,7 @@ spec:
           ansible-playbook \
             -e quay_image_path=$(params.image-path) \
             -e quay_image_tag=$(params.image-tag) \
+            -e skip_free_space_protection=$(params.skip-free-space-protection) \
             -e content_path_output_file=$(results.content-path.path) \
             playbooks/oci-publish-content.yaml
       command:
