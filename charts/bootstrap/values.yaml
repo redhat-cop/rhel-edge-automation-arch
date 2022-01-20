@@ -147,7 +147,7 @@ application-manager:
                         destinationNamespace: openshift-storage
                         values:
                           operator:
-                            channel: stable-4.8
+                            channel: stable-4.9
                             installPlanApproval: Automatic
                             name: ocs-operator
                             source: redhat-operators
