@@ -1,10 +1,9 @@
 apiVersion: rbac.authorization.k8s.io/v1
-kind: Role
+kind: ClusterRole
 metadata:
   labels:
     {{- include "common.labels.labels" . | nindent 4 }}
-  name: resource-locker-noobaa-role
-  namespace: {{ template "common.names.namespace" $ }}
+  name: patch-operator-noobaa
 rules:
   - apiGroups:
       - noobaa.io
