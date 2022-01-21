@@ -1,0 +1,43 @@
+- name: Download VM Images
+  hosts: localhost
+  vars:
+    - initial_download_path: /tmp
+    - os_distribution: 'rhel'
+  tasks:
+    - name: Set Nexus Credentials
+      ansible.builtin.set_fact:
+        nexus_password: "{{ lookup('file','/var/secrets/nexus-rfe-credentials/password') }}"
+        nexus_username: "{{ lookup('file','/var/secrets/nexus-rfe-credentials/username')}}"
+      no_log: true
+
+    - name: For Fedora
+      block:
+        - name: Download Fedora Image
+          include_role:
+            name: fedora-image-downloader
+        - name: Capture Fedora Filename
+          set_fact: 
+            filenames: "{{ [image_url.location.split('/') | last] }}"
+      when: "os_distribution == 'fedora'"          
+      
+    - name: For RHEL
+      block:
+        - name: Download RHEL Images
+          include_role:
+            name: rhel-image-downloader
+        - name: Capture RHEL Filenames
+          set_fact: 
+            filenames: "{{ filenames | default([]) | union([item.json.body.filename]) }}"
+          no_log: true
+          loop: "{{ image_urls.results }}"
+      when: "os_distribution == 'rhel'"
+
+    - name: Upload Images to Nexus
+      ansible.builtin.include_role:
+        name: content-download-upload
+        tasks_from: upload-rfe-artifact.yaml
+      vars:
+        file_to_upload: "{{ initial_download_path }}/{{ item }}"
+        nexus_repository: rfe-rhel-media
+        skip_httpd_upload: true
+      loop: "{{ filenames }}"

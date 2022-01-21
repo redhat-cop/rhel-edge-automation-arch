@@ -140,6 +140,14 @@
   ansible.builtin.command:
     cmd: update-ca-trust
 
+- name: Install Subscription Manager for Fedora
+  ansible.builtin.dnf:
+    state: latest
+    name:
+      - subscription-manager
+  when: ansible_distribution == 'Fedora'
+
+
 - name: Register Host
   community.general.redhat_subscription:
     state: present
@@ -147,13 +155,20 @@
     password: "{{ lookup('file', '/var/secrets/redhat-portal-credentials/password') }}"
     pool_ids: "{{ lookup('file', '/var/secrets/redhat-portal-credentials/pool_id') }}"
 
-- name: Setup Repositories
+- name: Setup Repositories for RHEL
   community.general.rhsm_repository:
     state: enabled
     purge: yes
     name:
       - rhel-8-for-x86_64-appstream-rpms
       - rhel-8-for-x86_64-baseos-rpms
+  when: ansible_distribution == 'Red Hat Enterprise Linux'
+
+- name: Disabling all RHSM Repositories for Fedora
+  community.general.rhsm_repository:
+    state: disabled
+    name: '*'
+  when: ansible_distribution == 'Fedora'
 
 - name: Install Packages
   ansible.builtin.dnf:

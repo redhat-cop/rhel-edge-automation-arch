@@ -24,4 +24,5 @@
     checksum: "sha256:{{ item.item }}"
     dest: "{{ initial_download_path }}/{{ item.json.body.filename }}"
     url: "{{ item.json.body.href }}"
+  no_log: true
   loop: "{{ image_urls.results }}"

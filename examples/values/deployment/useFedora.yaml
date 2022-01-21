@@ -1,0 +1,14 @@
+application-manager:
+  charts:
+    # Top Level RFE App of App Chart
+    rfe-automation:
+      values:
+        charts:
+          # RFE App of App Chart
+          rfe:
+            values:
+              charts:
+                # Image Builder VM
+                image-builder-vm:
+                  values:
+                    osDistribution: fedora

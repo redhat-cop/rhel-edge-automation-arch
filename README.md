@@ -129,7 +129,7 @@ Helm and Argo CD are used to deploy and manage all of the project components. Fr
 
 #### Disabling Components
 
-If you want to disable the deployment/management of certain components (for example, if you want to bring your own cluster that has ODF already installed), set `disabled: true` in the chart's values file. For example, to disable ODF, create the following file in `examples/values/local/disable-odf.yaml`:
+If you want to disable the deployment/management of certain components (for example, if you want to bring your own cluster that has ODF already installed), set `disabled: true` in the chart's values file. For example, to disable ODF, create the following file in `examples/values/deployment/disable-odf.yaml`:
 
 ```yaml
 # Dynamically Generated Charts
@@ -158,7 +158,7 @@ application-manager:
 Pass this values file to helm when deploying the project. For example:
 
 ```shell
-helm upgrade -i -n rfe-gitops bootstrap charts/bootstrap/ -f examples/values/local/bootstrap.yaml -f examples/values/deployment/default.yaml -f examples/values/local/disable-odf.yaml
+helm upgrade -i -n rfe-gitops bootstrap charts/bootstrap/ -f examples/values/deployment/default.yaml -f examples/values/deployment/disable-odf.yaml
 ```
 
 #### Customizing Components
@@ -191,7 +191,27 @@ application-manager:
 Pass this values file to helm when deploying the project. For example:
 
 ```shell
-helm upgrade -i -n rfe-gitops bootstrap charts/bootstrap/ -f examples/values/local/bootstrap.yaml -f examples/values/deployment/default.yaml -f examples/values/local/cnv-processor-emulation.yaml
+helm upgrade -i -n rfe-gitops bootstrap charts/bootstrap/ -f examples/values/local/bootstrap.yaml -f examples/values/deployment/default.yaml -f examples/values/deployment/cnv-processor-emulation.yaml
+```
+
+#### Using Fedora as image-builder VM
+It is also possible to use Fedora instead of RHEL as the image builder OS create your custom OS images. Simply use the yaml located in `examples/values/deployment/useFedora.yaml`:
+
+```yaml
+application-manager:
+  charts:
+    # Top Level RFE App of App Chart
+    rfe-automation:
+      values:
+        charts:
+          # RFE App of App Chart
+          rfe:
+            values:
+              charts:
+                # Image Builder VM
+                image-builder-vm:
+                  values:
+                    osDistribution: fedora
 ```
 
 ## Basic Walkthrough
