@@ -5,15 +5,12 @@ metadata:
   labels:
     {{- include "common.labels.labels" . | nindent 4 }}
   annotations:
-    {{- toYaml .Values.commonCR.annotations | nindent 4 }}    
+    {{- toYaml .Values.commonCR.annotations | nindent 4 }}
   name: rfe-oci-quay-repository
 spec:
   workspaces:
     - name: workspace
   params:
-    - name: blueprint-dir
-      description: Directory Contaning blueprint.toml File
-      type: string
     - name: repository-name
       description: Name of the Quay Repository
       type: string
