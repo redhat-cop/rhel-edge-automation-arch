@@ -5,7 +5,7 @@ metadata:
   labels:
     {{- include "common.labels.labels" . | nindent 4 }}
   annotations:
-    {{- toYaml .Values.commonCR.annotations | nindent 4 }}    
+    {{- toYaml .Values.commonCR.annotations | nindent 4 }}
   name: rfe-oci-image-pipeline
 spec:
   params:
@@ -74,8 +74,6 @@ spec:
         name: rfe-oci-quay-repository
         kind: Task
       params:
-        - name: blueprint-dir
-          value: /workspace/workspace/blueprints/$(params.blueprint-dir)
         - name: repository-name
           value: $(params.blueprint-dir)
       runAfter:
