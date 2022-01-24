@@ -114,6 +114,11 @@
         json_query("[?basic_constraints[?contains(@, 'CA:TRUE')]].item")
       }}
 
+- name: Assert Parsed CA List Count > 0
+  ansible.builtin.assert:
+    that:
+      - ca_certificate_list_parsed | count > 0
+
 - name: Build CA Certificate Payload
   ansible.builtin.set_fact:
     ca_certificate_payload: |
@@ -122,11 +127,6 @@
         "-----BEGIN CERTIFICATE-----" + (item | regex_replace('(?m)^[\\n]+'))
       }}
   loop: "{{ ca_certificate_list_parsed }}"
-
-- name: Assert CA Certificate Payload is > 0
-  ansible.builtin.assert:
-    that:
-      - ca_certificate_payload | count > 0
 
 - name: Copy Certificate Payload to Image Builder VM
   ansible.builtin.copy:
