@@ -147,9 +147,9 @@ application-manager:
                         destinationNamespace: openshift-storage
                         values:
                           operator:
-                            channel: stable-4.8
+                            channel: stable-4.9
                             installPlanApproval: Automatic
-                            name: ocs-operator
+                            name: odf-operator
                             source: redhat-operators
                             sourceNamespace: openshift-marketplace
                       nexus-operator:
@@ -186,7 +186,7 @@ application-manager:
                           argocd.argoproj.io/sync-wave: "0"
                         values:
                           operator:
-                            channel: quay-v3.5
+                            channel: quay-v3.6
                             installPlanApproval: Automatic
                             name: quay-operator
                             source: redhat-operators
