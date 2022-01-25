@@ -51,7 +51,7 @@
   block:
     - name: Compose Image
       ansible.builtin.command: >
-        composer-cli -j compose start-ostree {{ blueprint_name }} rhel-edge-container
+        composer-cli -j compose start-ostree {{ blueprint_name }} edge-container
       register: composed_image
 
     - name: Set Build Commit ID

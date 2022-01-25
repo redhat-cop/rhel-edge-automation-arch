@@ -21,7 +21,7 @@ The following requirements must be satisfied prior to beginning the walk-through
 This walk-through will illustrate the ease of building, publishing and consuming RHEL for Edge content. For the sample use case, an edge node with the [IBM Developer Model Asset Exchange: Weather Forecaster](https://github.com/IBM/MAX-Weather-Forecaster) application running in a container will be built and deployed. This process consists of the following:
 
 * Execute a series of pipelines that:
-  + Use Image Builder to create a custom RHEL for Edge image (OSTree commit) using compose image type `rhel-edge-container`
+  + Use Image Builder to create a custom RHEL for Edge image (OSTree commit) using compose image type `edge-container`
   + Push generated OCI container to Quay
   + Deploy OCI container on OpenShift for staging
   + Synchronize OStree content from web server running on OpenShift for production promotion
