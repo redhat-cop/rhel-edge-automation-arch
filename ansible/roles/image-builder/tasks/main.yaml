@@ -1,3 +1,145 @@
+- name: Query Default IngressController CA
+  community.kubernetes.k8s_info:
+    api_key: "{{ lookup('file', '/var/run/secrets/kubernetes.io/serviceaccount/token') }}"
+    api_version: v1
+    ca_cert: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+    host: https://kubernetes.default.svc
+    kind: Secret
+    name: router-ca
+    namespace: openshift-ingress-operator
+    validate_certs: yes
+  become: no
+  delegate_to: localhost
+  register: ingress_controller_ca
+
+- name: Set Initial Certificate Payload
+  ansible.builtin.set_fact:
+    ca_certificate_text: |
+      {{
+        (ca_certificate_text | default('')) +
+        (ingress_controller_ca.resources[0].data['tls.crt'] | b64decode)
+      }}
+
+- name: Ensure Initial Certificate Payload has Trailing Empty Line
+  ansible.builtin.set_fact:
+    ca_certificate_text: "{{ ca_certificate_text + \"\n\" }}"
+  when:
+    - ca_certificate_text[-1:] != "\n"
+
+- name: Query Cluster Proxy Resource
+  community.kubernetes.k8s_info:
+    api_key: "{{ lookup('file', '/var/run/secrets/kubernetes.io/serviceaccount/token') }}"
+    api_version: config.openshift.io/v1
+    ca_cert: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+    host: https://kubernetes.default.svc
+    kind: Proxy
+    name: cluster
+    validate_certs: yes
+  become: no
+  delegate_to: localhost
+  register: cluster_proxy_resource
+
+- name: Add CAs from ConfigMap Defined in Cluster Proxy Resource
+  block:
+    - name: Query Trusted CA ConfigMap
+      community.kubernetes.k8s_info:
+        api_key: "{{ lookup('file', '/var/run/secrets/kubernetes.io/serviceaccount/token') }}"
+        api_version: v1
+        ca_cert: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+        host: https://kubernetes.default.svc
+        kind: ConfigMap
+        name: "{{ cluster_proxy_resource.resources[0].spec.trustedCA.name }}"
+        namespace: openshift-config
+        validate_certs: yes
+      become: no
+      delegate_to: localhost
+      register: trusted_ca_configmap
+
+    - name: Append Additional Certificates to Payload
+      ansible.builtin.set_fact:
+        ca_certificate_text: |
+          {{
+            ca_certificate_text +
+            trusted_ca_configmap.resources[0].data['ca-bundle.crt']
+          }}
+
+    - name: Ensure Updated Certificate Payload has Trailing Empty Line
+      ansible.builtin.set_fact:
+        ca_certificate_text: "{{ ca_certificate_text + \"\n\" }}"
+      when:
+        - ca_certificate_text[-1:] != "\n"
+  when:
+    - cluster_proxy_resource.resources[0].spec.trustedCA.name is defined
+    - cluster_proxy_resource.resources[0].spec.trustedCA.name != ""
+
+- name: Query IngressControllers
+  community.kubernetes.k8s_info:
+    api_key: "{{ lookup('file', '/var/run/secrets/kubernetes.io/serviceaccount/token') }}"
+    api_version: operator.openshift.io/v1
+    ca_cert: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+    host: https://kubernetes.default.svc
+    kind: IngressController
+    namespace: "{{ ingress_operator_namespace }}"
+    validate_certs: yes
+  become: no
+  delegate_to: localhost
+  register: ingress_controllers
+
+- name: Add Certificates Defined in each IngressController's defaultCertificate
+  ansible.builtin.include_tasks:
+    file: ingress-default-certificate.yaml
+  loop: "{{ ingress_controllers.resources }}"
+  when:
+    - ingress_controllers.resources | count > 0
+
+- name: Build List of Certificates
+  ansible.builtin.set_fact:
+    ca_certificate_list: |
+      {{
+        ca_certificate_text.split('-----BEGIN CERTIFICATE-----') |
+        reject('equalto', '') | list
+      }}
+
+- name: Parse Certificates
+  community.crypto.x509_certificate_info:
+    content: "-----BEGIN CERTIFICATE-----{{ item }}"
+  loop: "{{ ca_certificate_list }}"
+  register: x509_certificate_info
+
+- name: Include only CA Certificates
+  ansible.builtin.set_fact:
+    ca_certificate_list_parsed: |
+      {{
+        x509_certificate_info.results | to_json | from_json |
+        json_query("[?basic_constraints[?contains(@, 'CA:TRUE')]].item")
+      }}
+
+- name: Assert Parsed CA List Count > 0
+  ansible.builtin.assert:
+    that:
+      - ca_certificate_list_parsed | count > 0
+
+- name: Build CA Certificate Payload
+  ansible.builtin.set_fact:
+    ca_certificate_payload: |
+      {{
+        (ca_certificate_payload | default('')) +
+        "-----BEGIN CERTIFICATE-----" + (item | regex_replace('(?m)^[\\n]+'))
+      }}
+  loop: "{{ ca_certificate_list_parsed }}"
+
+- name: Copy Certificate Payload to Image Builder VM
+  ansible.builtin.copy:
+    content: "{{ ca_certificate_payload }}"
+    dest: "{{ trust_anchor_path }}/{{ trust_anchor_file }}"
+    group: root
+    mode: "0644"
+    owner: root
+
+- name: Update CA Trust
+  ansible.builtin.command:
+    cmd: update-ca-trust
+
 - name: Register Host
   community.general.redhat_subscription:
     state: present
