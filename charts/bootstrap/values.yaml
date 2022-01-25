@@ -149,7 +149,7 @@ application-manager:
                           operator:
                             channel: stable-4.9
                             installPlanApproval: Automatic
-                            name: ocs-operator
+                            name: odf-operator
                             source: redhat-operators
                             sourceNamespace: openshift-marketplace
                       nexus-operator:
