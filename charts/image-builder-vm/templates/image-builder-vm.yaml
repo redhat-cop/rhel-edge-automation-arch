@@ -4,7 +4,7 @@
 {{- end -}}
 {{- range until $i -}}
 {{- $instance_name := printf "image-builder-%03d" $i -}}
-{{- $root_disk := printf "image-builder-%03d-rootdisk" -}}
+{{- $root_disk := printf "image-builder-%03d-rootdisk" $i -}}
 ---
 apiVersion: kubevirt.io/v1alpha3
 kind: VirtualMachine
