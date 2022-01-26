@@ -23,7 +23,7 @@ spec:
       kind: DataVolume
       metadata:
         creationTimestamp: null
-        name: image-builder-rootdisk
+        name: {{ printf "image-builder-%03d-dv-rootdisk" $i }}
       spec:
         pvc:
           accessModes:
@@ -52,7 +52,7 @@ spec:
             - bootOrder: 1
               disk:
                 bus: virtio
-              name: rootdisk
+              name: {{ printf "image-builder-%03d-rootdisk" $i }}
             - disk:
                 bus: virtio
               name: cloudinitdisk
