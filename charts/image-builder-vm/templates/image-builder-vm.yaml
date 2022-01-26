@@ -3,8 +3,8 @@
 {{- fail "imageBuilderVM.replicas must be greater than or equal to zero!" -}}
 {{- end -}}
 {{- range until $i -}}
-{{- $instance_name := printf "image-builder-%03d" $i -}}
-{{- $root_disk := printf "image-builder-%03d-rootdisk" $i -}}
+{{- $instance_name := printf "image-builder-%03d" . -}}
+{{- $root_disk := printf "image-builder-%03d-rootdisk" . -}}
 ---
 apiVersion: kubevirt.io/v1alpha3
 kind: VirtualMachine
