@@ -186,7 +186,7 @@ application-manager:
                           argocd.argoproj.io/sync-wave: "0"
                         values:
                           operator:
-                            channel: quay-v3.6
+                            channel: stable-3.6
                             installPlanApproval: Automatic
                             name: quay-operator
                             source: redhat-operators
