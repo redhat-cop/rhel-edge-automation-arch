@@ -17,10 +17,14 @@ quay:
       managed: true
     - kind: route
       managed: true
+    - kind: tls
+      managed: true
+
 
 quayRegistryCR:
   annotations:
     argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+    argocd.argoproj.io/compare-options: IgnoreExtraneous
   targetNamespace: quay
 
 setupJob:
