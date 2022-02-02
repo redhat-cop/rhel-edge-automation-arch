@@ -17,6 +17,8 @@ quay:
       managed: true
     - kind: route
       managed: true
+    - kind: tls
+      managed: true
 
 quayRegistryCR:
   annotations:
