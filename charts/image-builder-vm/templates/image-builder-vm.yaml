@@ -41,6 +41,8 @@ spec:
     metadata:
       labels:
         {{- toYaml $.Values.imageBuilderVM.template.labels | nindent 8 }}
+        kubevirt.io/domain: {{ $instance_name }}
+        vm.kubevirt.io/name: {{ $instance_name }}
         {{- include "kubevirtRHELLabel" $ | nindent 8 }}
     spec:
       domain:
