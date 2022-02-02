@@ -1,8 +1,6 @@
 ---
 quay:
   components:
-    - kind: clair
-      managed: true
     - kind: horizontalpodautoscaler
       managed: true
     - kind: mirror
@@ -16,6 +14,10 @@ quay:
     - kind: redis
       managed: true
     - kind: route
+      managed: true
+    - kind: tls
+      managed: true
+    - kind: clair
       managed: true
 
 quayRegistryCR:
