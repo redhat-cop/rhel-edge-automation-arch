@@ -63,6 +63,10 @@ spec:
           end
         end
         return hs
+    quay.redhat.com/QuayRegistry:
+      ignoreDifferences: |
+        jsonPointers:
+        - /spec/components
     route.openshift.io/Route:
       ignoreDifferences: |
         jsonPointers:
