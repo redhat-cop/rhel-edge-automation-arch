@@ -24,6 +24,6 @@
     ansible_ssh_host: "{{ item.status.interfaces[0].ipAddress }}"
     ansible_ssh_port: "22"
     groups:
-      - rfe-image-builders
+      - builders
     name: "{{ item.metadata.name }}"
   loop: "{{ vmi_results.resources }}"
