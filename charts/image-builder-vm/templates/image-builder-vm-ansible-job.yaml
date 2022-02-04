@@ -19,7 +19,7 @@ spec:
             - name: GIT_DIRECTORY
               value: "/tmp/git/rhel-edge-automation-arch"
             - name: GIT_URL
-              value: {{ .Values.gitRepository | quote }}
+              value: {{ $.Values.gitRepository | quote }}
             - name: SSH_KEY
               value: "/var/secrets/image-builder-ssh-key/ssh-privatekey"
             - name: ANSIBLE_PLAYBOOK
@@ -27,7 +27,7 @@ spec:
             - name: ANSIBLE_CONFIG
               value: $GIT_DIRECTORY/ansible/ansible.cfg
             - name: GIT_BRANCH
-              value: {{ .Values.gitBranch | quote }}
+              value: {{ $.Values.gitBranch | quote }}
           command:
             - /bin/bash
             - -c
