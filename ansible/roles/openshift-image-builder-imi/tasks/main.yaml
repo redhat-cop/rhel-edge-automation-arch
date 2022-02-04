@@ -5,24 +5,25 @@
     ca_cert: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
     host: https://kubernetes.default.svc
     kind: VirtualMachineInstance
+    label_selectors:
+      - app=image-builder
     namespace: rfe
-    name: image-builder
-    username: rfe-automation
+    wait: yes
+    wait_condition:
+      type: Ready
+      status: "True"
     validate_certs: yes
+  delay: 10
   register: vmi_results
   retries: 60
-  delay: 10
   until:
-    - vmi_results.resources | default([]) | list | count == 1
-    - vmi_results.resources | default([]) | list | first | json_query("status.interfaces[0].ipAddress") | ipaddr
-
-- name: Debug vmi_results
-  ansible.builtin.debug:
-    msg: "image-builder - {{ vmi_results.resources[0].status.interfaces[0].ipAddress }}"
-    verbosity: 1
+    - vmi_results.resources | default([]) | list | count == instance_expected_count
 
 - name: Generate In-Memory Inventory of Image Builder VM
   ansible.builtin.add_host:
-    ansible_ssh_host: "{{ vmi_results.resources[0].status.interfaces[0].ipAddress }}"
+    ansible_ssh_host: "{{ item.status.interfaces[0].ipAddress }}"
     ansible_ssh_port: "22"
-    name: image-builder
+    groups:
+      - rfe-image-builders
+    name: "{{ item.metadata.name }}"
+  loop: "{{ vmi_results.resources }}"
