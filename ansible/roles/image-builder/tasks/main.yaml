@@ -189,5 +189,5 @@
     - cockpit
     - http
 
-- name: Manage Composer Sources
-  ansible.builtin.include_tasks: composer-sources.yaml
+#- name: Manage Composer Sources
+#  ansible.builtin.include_tasks: composer-sources.yaml
