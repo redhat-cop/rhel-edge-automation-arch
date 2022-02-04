@@ -10,7 +10,7 @@ kind: Service
 metadata:
   labels:
     vm.kubevirt.io/name: {{ $instance_name }}
-    {{- include "common.labels.labels" . | nindent 4 }}    
+    {{- include "common.labels.labels" $ | nindent 4 }}
   name: {{ $instance_name }}
   namespace: rfe
 spec:
