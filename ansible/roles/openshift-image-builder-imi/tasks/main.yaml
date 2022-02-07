@@ -17,7 +17,7 @@
   register: vmi_results
   retries: 60
   until:
-    - vmi_results.resources | default([]) | list | count == instance_expected_count
+    - vmi_results.resources | default([]) | list | count == image_builder_replicas
 
 - name: Generate In-Memory Inventory of Image Builder VM
   ansible.builtin.add_host:

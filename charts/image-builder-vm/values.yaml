@@ -32,7 +32,7 @@ imageBuilderVM:
   disk: 150Gi
   composer:
     sources: []
-  replicas: 2
+  replicas: 3
 
 gitRepository: https://github.com/redhat-cop/rhel-edge-automation-arch.git
 gitBranch: main
