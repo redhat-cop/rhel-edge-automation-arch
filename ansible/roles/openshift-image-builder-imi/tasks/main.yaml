@@ -8,18 +8,21 @@
     label_selectors:
       - app=image-builder
     namespace: rfe
-    wait: yes
-    wait_condition:
-      type: Ready
-      status: "True"
     validate_certs: yes
   delay: 10
   register: vmi_results
   retries: 60
   until:
-    - vmi_results.resources | default([]) | list | count == image_builder_replicas
+    - vmi_results.resources | list | length == (image_builder_replicas | int)
+    - >
+      vmi_results.resources |
+        json_query('[*].status.conditions[?type==`Ready`].status') |
+        flatten |
+        select('match', 'True') |
+        list |
+        length == (image_builder_replicas | int)
 
-- name: Generate In-Memory Inventory of Image Builder VM
+- name: Generate In-Memory Inventory of Image Builder VM(s)
   ansible.builtin.add_host:
     ansible_ssh_host: "{{ item.status.interfaces[0].ipAddress }}"
     ansible_ssh_port: "22"
