@@ -1,0 +1,56 @@
+- name: Gather Compose Status from Each VM
+  ansible.builtin.command:
+    argv:
+      - "composer-cli"
+      - "-j"
+      - "compose"
+      - "status"
+  register: compose_status
+
+- name: Aggregate Compose Status for Pool
+  ansible.builtin.set_fact:
+    pool_compose_status: >-
+      {{
+        pool_compose_status | default([]) + 
+        [
+          {
+            'host': item,
+            'id': (hostvars[item].compose_status.stdout | from_json)[0].id,
+            'status': (hostvars[item].compose_status.stdout | from_json)[0].status
+          }
+        ]
+      }}
+  delegate_to: localhost
+  loop: "{{ ansible_play_hosts }}"
+  run_once: yes
+  when:
+    - (hostvars[item].compose_status.stdout | from_json) | count > 0
+
+- name: Find Hosts with Compose Running
+  ansible.builtin.set_fact:
+    pool_has_running_jobs: >-
+      {{
+        pool_compose_status | json_query('[?status==`RUNNING`].host')
+      }}
+  delegate_to: localhost
+  run_once: yes
+
+- name: Build Idle Host Pool
+  ansible.builtin.set_fact:
+    pool_idle_hosts: "{{ ansible_play_hosts | difference(pool_has_running_jobs) }}"
+
+- name: Find Idle Host for Pipeline Run
+  ansible.builtin.set_fact:
+    pipeline_target_host: "{{ pool_idle_hosts | random }}"
+  delegate_to: localhost
+  run_once: yes
+  when:
+    - pool_idle_hosts | count > 0
+
+- name: Pick Random Host if None are Idle
+  ansible.builtin.set_fact:
+    pipeline_target_host: "{{ ansible_play_hosts | random }}"
+  delegate_to: localhost
+  run_once: yes
+  when:
+    - pool_idle_hosts | count == 0
