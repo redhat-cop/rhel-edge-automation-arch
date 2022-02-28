@@ -4,8 +4,8 @@ metadata:
   annotations:
     {{- toYaml .Values.imageDownloaderJob.annotations | nindent 4 }}
   labels:
-    run: redhat-image-downloader-ansible-job
-  name: redhat-image-downloader-ansible-job
+    run: image-downloader-ansible-job
+  name: image-downloader-ansible-job
   namespace: rfe
 spec:
   template:
@@ -19,7 +19,7 @@ spec:
             - name: GIT_URL
               value: {{ .Values.gitRepository | quote }}
             - name: ANSIBLE_PLAYBOOK
-              value: "ansible/playbooks/redhat-image-downloader.yaml"
+              value: "ansible/playbooks/image-downloader.yaml"
             - name: ANSIBLE_CONFIG
               value: $GIT_DIRECTORY/ansible/ansible.cfg
             - name: GIT_BRANCH
@@ -31,18 +31,29 @@ spec:
               mkdir -p $GIT_DIRECTORY
               git clone -b $GIT_BRANCH $GIT_URL $GIT_DIRECTORY
               ansible-galaxy collection install -r $GIT_DIRECTORY/ansible/collections/requirements.yaml
-              ansible-playbook $GIT_DIRECTORY/$ANSIBLE_PLAYBOOK
+              ansible-playbook $GIT_DIRECTORY/$ANSIBLE_PLAYBOOK -e os_distribution={{ .Values.osDistribution | quote }}  
           volumeMounts:
+          {{- if eq .Values.osDistribution "rhel" }}
             - name: redhat-portal-credentials
               mountPath: /var/secrets/redhat-portal-credentials
               readOnly: true
+          {{- end }}
+            - name: nexus-rfe-credentials
+              mountPath: /var/secrets/nexus-rfe-credentials
+              readOnly: true              
           imagePullPolicy: Always
           name: ansible-rfe-runner
       volumes:
+        - name: nexus-rfe-credentials
+          secret:
+            secretName: nexus-rfe-credentials
+            defaultMode: 0400
+      {{- if eq .Values.osDistribution "rhel" }}
         - name: redhat-portal-credentials
           secret:
             secretName: redhat-portal-credentials
             defaultMode: 0400
+      {{- end }} 
       dnsPolicy: ClusterFirst
       restartPolicy: OnFailure
       serviceAccount: rfe-automation

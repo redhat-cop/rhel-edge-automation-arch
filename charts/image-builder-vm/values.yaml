@@ -1,5 +1,12 @@
+osDistribution: rhel
+
 rhel:
   version: "8.5"
+fedora:
+  arch: "x86_64"
+  version:
+    major: "35"
+    minor: "1.2"
 
 imageDownloaderJob:
   annotations:
@@ -20,7 +27,6 @@ imageBuilderVM:
   annotations:
     argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
     argocd.argoproj.io/compare-options: IgnoreExtraneous
-    description: RHEL 8 With Image Builder
   template:
     labels:
       kubevirt.io/domain: image-builder

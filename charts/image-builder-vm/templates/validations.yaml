@@ -1,0 +1,4 @@
+{{- $valid := list "rhel" "fedora"}}
+{{- if not (has .Values.osDistribution $valid) }}
+    {{- fail (printf "Invalid value in `osDistribution` '%s': only %s are supported"  .Values.osDistribution $valid) }}
+{{- end }}

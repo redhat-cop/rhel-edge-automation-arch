@@ -3,13 +3,13 @@ kind: VirtualMachine
 metadata:
   annotations:
     {{- toYaml .Values.imageBuilderVM.annotations | nindent 4 }}
-    {{- include "kubevirtRHELAnnotation" . | nindent 4 }}
+    {{- include "kubevirtAnnotation" . | nindent 4 }}
   name: image-builder
   namespace: rfe
   labels:
     {{- toYaml .Values.imageBuilderVM.labels | nindent 4 }}
     {{- include "common.labels.labels" . | nindent 4 }}
-    {{- include "kubevirtRHELLabel" . | nindent 4 }}
+    {{- include "kubevirtLabel" . | nindent 4 }}
 spec:
   dataVolumeTemplates:
     - apiVersion: cdi.kubevirt.io/v1alpha1
@@ -27,13 +27,13 @@ spec:
           volumeMode: Filesystem
         source:
           http:
-            url: 'http://nexus:8081/repository/rfe-rhel-media/rhel-{{ .Values.rhel.version }}-x86_64-kvm.qcow2'
+            url: 'http://nexus:8081/repository/rfe-rhel-media/{{- include "imageBuilderSource" . }}'
   runStrategy: Always
   template:
     metadata:
       labels:
         {{- toYaml .Values.imageBuilderVM.template.labels | nindent 8 }}
-        {{- include "kubevirtRHELLabel" . | nindent 8 }}
+        {{- include "kubevirtLabel" . | nindent 8 }}
     spec:
       domain:
         cpu:
