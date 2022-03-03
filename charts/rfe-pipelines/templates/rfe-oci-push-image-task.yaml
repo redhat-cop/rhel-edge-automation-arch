@@ -41,6 +41,7 @@ spec:
             -e build_commit_id=$(params.build-commit) \
             -e quay_image_path=$(params.image-path) \
             -e image_tags_output_file=$(results.image-tags.path) \
+            -e image_builder_host=$(tasks.rfe-oci-build-image.results.image-builder-host) \
             playbooks/oci-push-image.yaml 
       command:
         - /bin/bash

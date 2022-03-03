@@ -88,3 +88,12 @@
     ansible_ssh_port: "22"
     name: pipeline_target_host
   delegate_to: localhost
+
+- name: Save image-builder-host Pipeline Result to File
+  ansible.builtin.copy:
+    content: "{{ vmi_results.resources[0].status.interfaces[0].ipAddress }}"
+    dest: "{{ image_builder_host_output_file }}"
+  become: no
+  delegate_to: localhost
+  when:
+    - image_builder_host_output_file is defined

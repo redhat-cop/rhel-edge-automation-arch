@@ -38,6 +38,9 @@ spec:
     - name: image-tags
       description: Tags Associated with Image
       value: $(tasks.rfe-oci-push-image.results.image-tags)
+    - name: image-builder-host
+      description: Image Builder Host used for Pipeline Run
+      value: $(tasks.rfe-oci-build-image.results.image-builder-host)
   workspaces:
     - name: shared-workspace
   tasks:
