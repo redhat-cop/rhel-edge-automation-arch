@@ -3,12 +3,17 @@
   hosts: localhost
   roles:
     - role: openshift-image-builder-imi
-      tags: openshift-image-builder-imi
+
+- name: Find Appropriate Image Builder Host
+  become: yes
+  hosts: builders
+  roles:
+    - role: pipeline-scheduler
 
 - name: Create OCI Image
   become: yes
   gather_facts: no
-  hosts: image-builder
+  hosts: pipeline_target_host
   tasks:
     - name: Build OCI Image
       include_role:
