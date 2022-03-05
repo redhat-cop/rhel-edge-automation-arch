@@ -35,12 +35,12 @@ spec:
     - name: image-path
       description: Path to Container Registry
       value: $(tasks.rfe-oci-quay-repository.results.image-path)
-    - name: image-tags
-      description: Tags Associated with Image
-      value: $(tasks.rfe-oci-push-image.results.image-tags)
     - name: image-builder-host
       description: Image Builder Host used for Pipeline Run
       value: $(tasks.rfe-oci-build-image.results.image-builder-host)
+    - name: image-tags
+      description: Tags Associated with Image
+      value: $(tasks.rfe-oci-push-image.results.image-tags)
   workspaces:
     - name: shared-workspace
   tasks:
@@ -106,6 +106,8 @@ spec:
           value: /workspace/workspace/blueprints/$(params.blueprint-dir)
         - name: build-commit
           value: $(tasks.rfe-oci-build-image.results.build-commit)
+        - name: image-builder-host
+          value: $(tasks.rfe-oci-build-image.results.image-builder-host)
         - name: image-path
           value: $(tasks.rfe-oci-quay-repository.results.image-path)
       runAfter:
