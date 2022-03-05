@@ -72,6 +72,7 @@
   delegate_to: localhost
   register: vmi_results
   retries: 60
+  run_once: yes
   until:
     - vmi_results.resources | list | length == 1
     - >
@@ -88,6 +89,7 @@
     ansible_ssh_port: "22"
     name: pipeline_target_host
   delegate_to: localhost
+  run_once: yes
 
 - name: Save image-builder-host Pipeline Result to File
   ansible.builtin.copy:
@@ -95,5 +97,6 @@
     dest: "{{ image_builder_host_output_file }}"
   become: no
   delegate_to: localhost
+  run_once: yes
   when:
     - image_builder_host_output_file is defined
