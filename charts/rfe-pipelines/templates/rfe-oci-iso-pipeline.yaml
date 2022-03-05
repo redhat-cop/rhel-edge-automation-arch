@@ -47,6 +47,9 @@ spec:
     - name: build-commit-id
       description: Commit ID of the Build
       value: $(tasks.rfe-oci-build-installer-image.results.build-commit-id)
+    - name: image-builder-host
+      description: Image Builder Host used for Pipeline Run
+      value: $(tasks.rfe-oci-build-installer-image.results.image-builder-host)
     - name: iso-url
       description: URL containing Autobooting Image
       value: $(tasks.rfe-oci-build-auto-iso.results.iso-url)
@@ -105,6 +108,8 @@ spec:
       params:
         - name: build-commit-id
           value: $(tasks.rfe-oci-build-installer-image.results.build-commit-id)
+        - name: image-builder-host
+          value: $(tasks.rfe-oci-build-installer-image.results.image-builder-host)
         - name: image-builder-secret
           value: $(params.image-builder-secret)
         - name: kickstart-url

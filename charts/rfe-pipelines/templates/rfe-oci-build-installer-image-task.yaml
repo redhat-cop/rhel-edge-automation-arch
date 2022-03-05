@@ -25,6 +25,8 @@ spec:
   results:
     - name: build-commit-id
       description: Commit ID of the Build
+    - name: image-builder-host
+      description: Image Builder Host used for Pipeline Run
   steps:
     - name: build-installer-image-playbook
       image: image-registry.openshift-image-registry.svc:5000/rfe/ansible-rfe-runner:latest
@@ -39,6 +41,7 @@ spec:
             -e blueprint_source_dir=$(params.iso-blueprint) \
             -e ostree_repo_url=$(params.ostree-repo-url) \
             -e build_commit_id_output_file=$(results.build-commit-id.path) \
+            -e image_builder_host_output_file=$(results.image-builder-host.path) \
             playbooks/oci-build-installer-image.yaml
       command:
         - /bin/bash

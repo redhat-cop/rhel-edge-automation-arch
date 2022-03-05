@@ -1,10 +1,17 @@
-- name: Generate In-Memory Inventory of Image Builder VM
+- name: Generate In-Memory Inventory of OpenShift VMs
+  gather_facts: no
   hosts: localhost
   roles:
     - role: openshift-image-builder-imi
 
+- name: Find Appropriate Image Builder Host
+  become: yes
+  hosts: builders
+  roles:
+    - role: pipeline-scheduler
+
 - name: Generate RFE Boot ISO Image
   become: yes
-  hosts: image-builder
+  hosts: pipeline_target_host
   roles:
     - role: oci-build-installer-image
