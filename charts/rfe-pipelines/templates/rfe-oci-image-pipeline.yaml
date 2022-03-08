@@ -9,24 +9,28 @@ metadata:
   name: rfe-oci-image-pipeline
 spec:
   params:
-    - name: blueprints-git-url
-      description: Blueprint Repository URL
-      default: {{ $.Values.pipelines.repos.blueprints.repoURL }}
+    - name: blueprint-dir
+      description: Directory in Blueprints repository containing blueprint
       type: string
     - name: blueprints-git-revision
       description: Blueprint Repository URL Reference
       default: {{ $.Values.pipelines.repos.blueprints.targetRevision }}
       type: string
-    - name: tooling-git-url
-      description: Tooling Repository URL
-      default: {{ $.Values.pipelines.repos.tooling.repoURL }}
+    - name: blueprints-git-url
+      description: Blueprint Repository URL
+      default: {{ $.Values.pipelines.repos.blueprints.repoURL }}
+      type: string
+    - name: image-builder-sources
+      description: JSON object with list of Image Builder sources
+      default: {{ $.Values.pipelines.sources | toJson | b64enc }}
       type: string
     - name: tooling-git-revision
       description: Tooling Repository URL Reference
       default: {{ $.Values.pipelines.repos.tooling.targetRevision }}
       type: string
-    - name: blueprint-dir
-      description: Directory in Blueprints repository containing blueprint
+    - name: tooling-git-url
+      description: Tooling Repository URL
+      default: {{ $.Values.pipelines.repos.tooling.repoURL }}
       type: string
   results:
     - name: build-commit
@@ -92,6 +96,8 @@ spec:
       params:
         - name: blueprint-dir
           value: /workspace/workspace/blueprints/$(params.blueprint-dir)
+        - name: image-builder-sources
+          value: $(params.image-builder-sources)
       runAfter:
         - "rfe-oci-quay-repository"
       workspaces:

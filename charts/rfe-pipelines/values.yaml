@@ -21,3 +21,28 @@ pipelines:
     kickstarts:
       repoURL: https://github.com/redhat-cop/rhel-edge-automation-arch.git
       targetRevision: kickstarts
+  sources: |
+    {
+      "sources": {
+        "appstream": {
+          "id": "appstream",
+          "name": "appstream",
+          "type": "yum-baseurl",
+          "url": "https://cdn.redhat.com/content/dist/rhel8/8.5/x86_64/appstream/os",
+          "check_gpg": true,
+          "check_ssl": true,
+          "system": true,
+          "rhsm": false
+        },
+        "baseos": {
+          "id": "baseos",
+          "name": "baseos",
+          "type": "yum-baseurl",
+          "url": "https://cdn.redhat.com/content/dist/rhel8/8.5/x86_64/baseos/os",
+          "check_gpg": true,
+          "check_ssl": true,
+          "system": true,
+          "rhsm": false
+        }
+      }
+    }
