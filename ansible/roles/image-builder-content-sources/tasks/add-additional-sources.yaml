@@ -1,0 +1,35 @@
+- name: Set List of Sources
+  ansible.builtin.set_fact:
+    sources_list: "{{ additional_content_sources | b64decode | from_json | json_query('sources.[*]') }}"
+
+- name: Configure Additional Content Sources
+  block:
+    - name: Generate Random String
+      ansible.builtin.shell:
+        cmd: cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 8 | head -n 1
+      register: random_string
+
+    - name: Generate TOML Files
+      ansible.builtin.template:
+        dest: "{{ sources_tmp_directory }}/{{ content_source.id }}-{{ random_string.stdout }}.toml"
+        group: root
+        mode: "0644"
+        owner: root
+        src: template.j2
+      loop: "{{ sources_list[0] }}"
+      loop_control:
+        loop_var: content_source
+    
+    - name: Add Additional Content Source
+      ansible.builtin.command: >
+        composer-cli sources add {{ sources_tmp_directory }}/{{ content_source.id }}-{{ random_string.stdout }}.toml
+  always:
+    - name: Remove Temporary Files
+      ansible.builtin.file:
+        path: "{{ sources_tmp_directory }}/{{ content_source.id }}-{{ random_string.stdout }}.toml"
+        state: absent
+      loop: "{{ sources_list[0] }}"
+      loop_control:
+        loop_var: content_source
+  when:
+    - sources_list | count > 0

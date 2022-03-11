@@ -1,57 +1,17 @@
 - name: Assert Variables are Defined
   ansible.builtin.assert:
     that:
-      - image_builder_sources is defined
+      - additional_content_sources is defined
+      - rhsm_repositories is defined
 
-- name: Set Content Sources Variable
-  ansible.builtin.set_fact:
-    content_sources: "{{ image_builder_sources | b64decode | from_json }}"
+- name: Remove Existing Content Sources
+  ansible.builtin.include_tasks:
+    file: remove-existing-sources.yaml
 
-- name: Set List of Sources
-  ansible.builtin.set_fact:
-    sources_list: "{{ content_sources | json_query('sources.[*]') }}"
+- name: Reconfigure RHSM Repositories
+  ansible.builtin.include_tasks:
+    file: reconfigure-repositories.yaml
 
-- name: Assert Content Sources has Data
-  ansible.builtin.assert:
-    that:
-      - sources_list | count > 0
-
-- name: Generate Random String
-  ansible.builtin.shell:
-    cmd: cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 8 | head -n 1
-  register: random_string
-
-- name: Query Existing Sources
-  ansible.builtin.command: >
-    composer-cli -j sources list
-  register: existing_sources
-
-- name: Delete Existing Sources
-  ansible.builtin.command: >
-    composer-cli sources delete {{ item }}
-  loop: "{{ (existing_sources.stdout | from_json).sources }}"
-
-- name: Configure Content Sources
-  block:
-    - name: Generate TOML Files
-      ansible.builtin.template:
-        dest: "{{ sources_tmp_directory }}/{{ content_source.id }}-{{ random_string.stdout }}.toml"
-        group: root
-        mode: "0644"
-        owner: root
-        src: template.j2
-      loop: "{{ sources_list[0] }}"
-      loop_control:
-        loop_var: content_source
-    
-    - name: Add Content Source
-      ansible.builtin.command: >
-        composer-cli sources add {{ sources_tmp_directory }}/{{ content_source.id }}-{{ random_string.stdout }}.toml
-  always:
-    - name: Remove Temporary Files
-      ansible.builtin.file:
-        path: "{{ sources_tmp_directory }}/{{ content_source.id }}-{{ random_string.stdout }}.toml"
-        state: absent
-      loop: "{{ sources_list[0] }}"
-      loop_control:
-        loop_var: content_source
+- name: Add Additional Content Sources
+  ansible.builtin.include_tasks:
+    file: add-additional-sources.yaml

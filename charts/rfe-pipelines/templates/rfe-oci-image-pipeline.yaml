@@ -20,9 +20,13 @@ spec:
       description: Blueprint Repository URL
       default: {{ $.Values.pipelines.repos.blueprints.repoURL }}
       type: string
-    - name: image-builder-sources
-      description: JSON object with list of Image Builder sources
-      default: {{ $.Values.pipelines.sources | toJson | b64enc }}
+    - name: additional-content-sources
+      description: JSON object with list of Additional Image Builder sources
+      default: {{ $.Values.pipelines.additional_content_sources | toJson | b64enc }}
+      type: string
+    - name: rhsm-repositories
+      description: JSON object with list of RHEL Repos
+      default: {{ $.Values.pipelines.rhsm_repositories | toJson | b64enc }}
       type: string
     - name: tooling-git-revision
       description: Tooling Repository URL Reference
