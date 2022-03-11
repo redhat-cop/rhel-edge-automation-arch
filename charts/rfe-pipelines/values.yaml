@@ -29,4 +29,7 @@ pipelines:
       ]
     }
   additional_content_sources: |
-    {}
+    {
+      "sources": {
+      }
+    }
