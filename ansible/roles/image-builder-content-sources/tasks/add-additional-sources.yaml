@@ -1,6 +1,6 @@
 - name: Set List of Sources
   ansible.builtin.set_fact:
-    sources_list: "{{ additional_content_sources | b64decode | from_json | json_query('sources.[*]') }}"
+    sources_list: "{{ ((additional_content_sources | b64decode | from_json) | from_json).sources }}"
 
 - name: Configure Additional Content Sources
   block:
