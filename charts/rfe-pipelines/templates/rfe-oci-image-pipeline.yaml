@@ -100,8 +100,10 @@ spec:
       params:
         - name: blueprint-dir
           value: /workspace/workspace/blueprints/$(params.blueprint-dir)
-        - name: image-builder-sources
-          value: $(params.image-builder-sources)
+        - name: additional-content-sources
+          value: $(params.additional-content-sources)
+        - name: rhsm-repositories
+          value: $(params.rhsm-repositories)
       runAfter:
         - "rfe-oci-quay-repository"
       workspaces:
