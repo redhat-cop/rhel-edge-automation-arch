@@ -19,5 +19,11 @@
 - name: Generate RFE Boot ISO w/ Embedded kickstart
   become: yes
   hosts: pipeline_target_host
-  roles:
-    - role: oci-build-auto-iso
+  tasks:
+    - name: Configure Content Sources
+      ansible.builtin.include_role:
+        name: image-builder-content-sources
+
+    - name: Build Installer ISO
+      ansible.builtin.include_role:
+        name: oci-build-auto-iso
