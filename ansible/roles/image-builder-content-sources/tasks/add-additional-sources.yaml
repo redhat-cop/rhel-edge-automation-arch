@@ -15,7 +15,7 @@
         group: root
         mode: "0644"
         owner: root
-        src: template.j2
+        src: content-source.j2
       loop: "{{ sources_list[0] }}"
       loop_control:
         loop_var: content_source
