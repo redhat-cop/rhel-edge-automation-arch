@@ -23,6 +23,9 @@
     - name: Add Additional Content Source
       ansible.builtin.command: >
         composer-cli sources add {{ sources_tmp_directory }}/{{ content_source.id }}-{{ random_string.stdout }}.toml
+      loop: "{{ sources_list[0] }}"
+      loop_control:
+        loop_var: content_source
   always:
     - name: Remove Temporary Files
       ansible.builtin.file:
