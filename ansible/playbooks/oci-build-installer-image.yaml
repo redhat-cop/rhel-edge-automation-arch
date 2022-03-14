@@ -13,5 +13,11 @@
 - name: Generate RFE Boot ISO Image
   become: yes
   hosts: pipeline_target_host
-  roles:
-    - role: oci-build-installer-image
+  tasks:
+    - name: Configure Content Sources
+      ansible.builtin.include_role:
+        name: image-builder-content-sources
+
+    - name: Build Installer Image
+      ansible.builtin.include_role:
+        name: oci-build-installer-image

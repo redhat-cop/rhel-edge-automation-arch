@@ -22,6 +22,12 @@ spec:
       description: Name of the Blueprint to use for the ISO Build (Should not be Customized)
       default: "rfe-iso-blueprint"
       type: string
+    - name: additional-content-sources
+      description: JSON object with list of Additional Image Builder sources
+      type: string
+    - name: rhsm-repositories
+      description: JSON object with list of RHEL Repos
+      type: string
   results:
     - name: build-commit-id
       description: Commit ID of the Build
@@ -42,6 +48,8 @@ spec:
             -e ostree_repo_url=$(params.ostree-repo-url) \
             -e build_commit_id_output_file=$(results.build-commit-id.path) \
             -e image_builder_host_output_file=$(results.image-builder-host.path) \
+            -e additional_content_sources=$(params.additional-content-sources) \
+            -e rhsm_repositories=$(params.rhsm-repositories) \
             playbooks/oci-build-installer-image.yaml
       command:
         - /bin/bash
