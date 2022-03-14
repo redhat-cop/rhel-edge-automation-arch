@@ -100,3 +100,7 @@
   run_once: yes
   when:
     - image_builder_host_output_file is defined
+
+- name: Debug pipeline_target_host
+  ansible.builtin.debug:
+    msg: "pipeline_target_host = {{ pipeline_target_host }}"
