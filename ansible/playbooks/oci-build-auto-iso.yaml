@@ -19,6 +19,7 @@
 - name: Generate RFE Boot ISO w/ Embedded kickstart
   become: yes
   hosts: pipeline_target_host
+  tasks:
     - name: Build Installer ISO
       ansible.builtin.include_role:
         name: oci-build-auto-iso
