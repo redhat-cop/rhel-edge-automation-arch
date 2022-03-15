@@ -69,3 +69,9 @@ version = "*"
 [customizations]
 [customizations.services]
 enabled = ["crio", "microshift"]
+
+[[customizations.user]]
+name = "redhat"
+description = "Initial User"
+password = "$6$6ar/G7QAAOC/Z810$cuYU.TowiTQDSoGdv23oDSp54WgsPjxB4HP8oxIrl3dMDWcLL7/JiQgmPnYdQHyHtDoK2K0ejuRWj80YKuZaa/"
+groups = ["wheel"]
