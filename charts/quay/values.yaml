@@ -17,8 +17,7 @@ quay:
       managed: true
     - kind: tls
       managed: true
-    - kind: clair
-      managed: true
+
 
 quayRegistryCR:
   annotations:
