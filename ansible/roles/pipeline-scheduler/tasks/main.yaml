@@ -104,3 +104,5 @@
 - name: Debug pipeline_target_host
   ansible.builtin.debug:
     msg: "pipeline_target_host = {{ pipeline_target_host }}"
+  delegate_to: localhost
+  run_once: yes
