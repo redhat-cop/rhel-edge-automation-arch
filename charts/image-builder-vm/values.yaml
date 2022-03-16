@@ -30,9 +30,7 @@ imageBuilderVM:
   cores: 2
   memory: 6Gi
   disk: 150Gi
-  composer:
-    sources: []
-  replicas: 3
+  replicas: 1
 
 gitRepository: https://github.com/redhat-cop/rhel-edge-automation-arch.git
 gitBranch: main

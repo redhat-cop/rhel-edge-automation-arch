@@ -1,9 +1,0 @@
-{% for key, value in composer_source.items() %}
-{% if value is boolean %}
-{{ key }} = {{ value | lower }}
-{% elif value is string %}
-{{ key }} = "{{ value }}"
-{% else %}
-{{ key }} = {{ value }}
-{% endif %}
-{% endfor %}

@@ -45,9 +45,6 @@ spec:
             - name: redhat-portal-credentials
               mountPath: /var/secrets/redhat-portal-credentials
               readOnly: true
-            - name: composer-config
-              mountPath: /var/configs/composer
-              readOnly: true
           imagePullPolicy: Always
           name: ansible-rfe-runner
       volumes:
@@ -59,11 +56,8 @@ spec:
           secret:
             secretName: redhat-portal-credentials
             defaultMode: 0400
-        - name: composer-config
-          configMap:
-            name: image-builder-vm-composer
       dnsPolicy: ClusterFirst
       restartPolicy: OnFailure
       serviceAccount: rfe-automation
       serviceAccountName: rfe-automation
-      terminationGracePeriodSeconds: 30 
+      terminationGracePeriodSeconds: 30
