@@ -1,0 +1,17 @@
+- name: Assert Variables are Defined
+  ansible.builtin.assert:
+    that:
+      - additional_content_sources is defined
+      - rhsm_repositories is defined
+
+- name: Remove Existing Content Sources
+  ansible.builtin.include_tasks:
+    file: remove-existing-sources.yaml
+
+- name: Reconfigure RHSM Repositories
+  ansible.builtin.include_tasks:
+    file: reconfigure-repositories.yaml
+
+- name: Add Additional Content Sources
+  ansible.builtin.include_tasks:
+    file: add-additional-sources.yaml

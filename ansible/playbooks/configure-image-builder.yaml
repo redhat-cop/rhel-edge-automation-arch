@@ -4,7 +4,7 @@
     - role: openshift-image-builder-imi
 
 - name: Configure Image Builder VM
-  hosts: image-builder
+  hosts: builders
   become: yes
   tasks:
     - name: Wait for Connection
@@ -16,117 +16,131 @@
       ansible.builtin.include_role:
         name: image-builder
 
-    - name: Create Temp Directories
-      ansible.builtin.file:
-        path: "/tmp/rhsm/{{ item }}"
-        state: directory
-      become: no
-      delegate_to: localhost
-      loop:
-        - certs
-        - ca
-        - conf
+    - name: Configure Build Entitlements for S2I
+      block:
+        - name: Create Temp Directories
+          ansible.builtin.file:
+            path: "/tmp/rhsm/{{ item }}"
+            state: directory
+          become: no
+          delegate_to: localhost
+          loop:
+            - certs
+            - ca
+            - conf
 
-    - name: Pull RHSM Config File
-      ansible.posix.synchronize:
-        dest: /tmp/rhsm/conf/
-        mode: pull
-        src: /etc/rhsm/rhsm.conf
+        - name: Pull RHSM Config File
+          ansible.posix.synchronize:
+            dest: /tmp/rhsm/conf/
+            mode: pull
+            src: /etc/rhsm/rhsm.conf
 
-    - name: Pull RHSM Entitlements
-      ansible.posix.synchronize:
-        dest: /tmp/rhsm/certs/
-        mode: pull
-        src: /etc/pki/entitlement/
+        - name: Pull RHSM Entitlements
+          ansible.posix.synchronize:
+            dest: /tmp/rhsm/certs/
+            mode: pull
+            src: /etc/pki/entitlement/
 
-    - name: Pull RHSM Certificate Authority
-      ansible.posix.synchronize:
-        dest: /tmp/rhsm/ca/
-        mode: pull
-        src: /etc/rhsm/ca/
+        - name: Pull RHSM Certificate Authority
+          ansible.posix.synchronize:
+            dest: /tmp/rhsm/ca/
+            mode: pull
+            src: /etc/rhsm/ca/
 
-    - name: Find Entitlement Key
-      ansible.builtin.find:
-        paths: /tmp/rhsm/certs
-        use_regex: yes
-        patterns:
-          - "^[0-9]+-key.pem$"
-      become: no
-      delegate_to: localhost
-      failed_when:
-        - find_key.matched == 0
-        - find_key.examined < 2
-      register: find_key
+        - name: Find Entitlement Key
+          ansible.builtin.find:
+            paths: /tmp/rhsm/certs
+            use_regex: yes
+            patterns:
+              - "^[0-9]+-key.pem$"
+          become: no
+          delegate_to: localhost
+          failed_when:
+            - find_key.matched == 0
+            - find_key.examined < 2
+          register: find_key
 
-    - name: Set Entitlement File Names
-      ansible.builtin.set_fact:
-        rhsm_entitlement_key_path: "{{ find_key.files[0].path }}"
-        rhsm_entitlement_crt_path: "{{ find_key.files[0].path.replace('-key','') }}"
-      delegate_to: localhost
+        - name: Set Entitlement File Names
+          ansible.builtin.set_fact:
+            rhsm_entitlement_key_path: "{{ find_key.files[0].path }}"
+            rhsm_entitlement_crt_path: "{{ find_key.files[0].path.replace('-key','') }}"
+          delegate_to: localhost
 
-    - name: Validate RHSM Files Exist
-      ansible.builtin.stat:
-        path: "{{ item }}"
-      become: no
-      delegate_to: localhost
-      failed_when: not rhsm_entitlements.stat.exists
-      loop:
-        - "{{ rhsm_entitlement_key_path }}"
-        - "{{ rhsm_entitlement_crt_path }}"
-      register: rhsm_entitlements
+        - name: Validate RHSM Files Exist
+          ansible.builtin.stat:
+            path: "{{ item }}"
+          become: no
+          delegate_to: localhost
+          failed_when: not rhsm_entitlements.stat.exists
+          loop:
+            - "{{ rhsm_entitlement_key_path }}"
+            - "{{ rhsm_entitlement_crt_path }}"
+          register: rhsm_entitlements
 
-    - name: Create Entitlement Secret
-      community.kubernetes.k8s:
-        api_key: "{{ lookup('file', '/var/run/secrets/kubernetes.io/serviceaccount/token') }}"
-        ca_cert: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
-        host: https://kubernetes.default.svc
-        state: present
-        definition: |
-          apiVersion: v1
-          data:
-            "{{ rhsm_entitlement_key_path | basename }}": "{{ lookup('file', rhsm_entitlement_key_path) | b64encode }}"
-            "{{ rhsm_entitlement_crt_path | basename }}": "{{ lookup('file', rhsm_entitlement_crt_path) | b64encode }}"
-          kind: Secret
-          metadata:
-            name: etc-pki-entitlement
-            namespace: rfe
-          type: Opaque
-      become: no
-      delegate_to: localhost
+        - name: Create Entitlement Secret
+          community.kubernetes.k8s:
+            api_key: "{{ lookup('file', '/var/run/secrets/kubernetes.io/serviceaccount/token') }}"
+            ca_cert: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+            host: https://kubernetes.default.svc
+            state: present
+            definition: |
+              apiVersion: v1
+              data:
+                "{{ rhsm_entitlement_key_path | basename }}": "{{ lookup('file', rhsm_entitlement_key_path) | b64encode }}"
+                "{{ rhsm_entitlement_crt_path | basename }}": "{{ lookup('file', rhsm_entitlement_crt_path) | b64encode }}"
+              kind: Secret
+              metadata:
+                name: etc-pki-entitlement
+                namespace: rfe
+              type: Opaque
+          become: no
+          delegate_to: localhost
 
-    - name: Create RHSM CA Secret
-      community.kubernetes.k8s:
-        api_key: "{{ lookup('file', '/var/run/secrets/kubernetes.io/serviceaccount/token') }}"
-        ca_cert: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
-        host: https://kubernetes.default.svc
-        state: present
-        definition: |
-          apiVersion: v1
-          data:
-            "redhat-entitlement-authority.pem": "{{ lookup('file', '/tmp/rhsm/ca/redhat-entitlement-authority.pem') | b64encode }}"
-            "redhat-uep.pem": "{{ lookup('file', '/tmp/rhsm/ca/redhat-uep.pem') | b64encode }}"
-          kind: Secret
-          metadata:
-            name: rhsm-ca
-            namespace: rfe
-          type: Opaque
-      become: no
-      delegate_to: localhost
+        - name: Create RHSM CA Secret
+          community.kubernetes.k8s:
+            api_key: "{{ lookup('file', '/var/run/secrets/kubernetes.io/serviceaccount/token') }}"
+            ca_cert: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+            host: https://kubernetes.default.svc
+            state: present
+            definition: |
+              apiVersion: v1
+              data:
+                "redhat-entitlement-authority.pem": "{{ lookup('file', '/tmp/rhsm/ca/redhat-entitlement-authority.pem') | b64encode }}"
+                "redhat-uep.pem": "{{ lookup('file', '/tmp/rhsm/ca/redhat-uep.pem') | b64encode }}"
+              kind: Secret
+              metadata:
+                name: rhsm-ca
+                namespace: rfe
+              type: Opaque
+          become: no
+          delegate_to: localhost
 
-    - name: Create RHSM Config Secret
-      community.kubernetes.k8s:
-        api_key: "{{ lookup('file', '/var/run/secrets/kubernetes.io/serviceaccount/token') }}"
-        ca_cert: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
-        host: https://kubernetes.default.svc
-        state: present
-        definition: |
-          apiVersion: v1
-          data:
-            "rhsm.conf": "{{ lookup('file', '/tmp/rhsm/conf/rhsm.conf') | b64encode }}"
-          kind: Secret
-          metadata:
-            name: rhsm-conf
-            namespace: rfe
-          type: Opaque
-      become: no
-      delegate_to: localhost
+        - name: Create RHSM Config Secret
+          community.kubernetes.k8s:
+            api_key: "{{ lookup('file', '/var/run/secrets/kubernetes.io/serviceaccount/token') }}"
+            ca_cert: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+            host: https://kubernetes.default.svc
+            state: present
+            definition: |
+              apiVersion: v1
+              data:
+                "rhsm.conf": "{{ lookup('file', '/tmp/rhsm/conf/rhsm.conf') | b64encode }}"
+              kind: Secret
+              metadata:
+                name: rhsm-conf
+                namespace: rfe
+              type: Opaque
+          become: no
+          delegate_to: localhost
+
+        - name: Remove Temp Directories
+          ansible.builtin.file:
+            path: "/tmp/rhsm/{{ item }}"
+            state: absent
+          become: no
+          delegate_to: localhost
+          loop:
+            - certs
+            - ca
+            - conf
+      run_once: yes

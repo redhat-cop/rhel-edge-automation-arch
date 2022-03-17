@@ -1,43 +1,53 @@
+{{- $i := (.Values.imageBuilderVM.replicas | int) -}}
+{{- if not (ge $i 1) -}}
+{{- fail "imageBuilderVM.replicas must be greater than or equal to zero!" -}}
+{{- end -}}
+{{- range until $i -}}
+{{- $instance_name := printf "image-builder-%03d" . -}}
+{{- $root_disk := printf "image-builder-%03d-rootdisk" . -}}
+---
 apiVersion: kubevirt.io/v1alpha3
 kind: VirtualMachine
 metadata:
   annotations:
-    {{- toYaml .Values.imageBuilderVM.annotations | nindent 4 }}
-    {{- include "kubevirtRHELAnnotation" . | nindent 4 }}
-  name: image-builder
+    {{- toYaml $.Values.imageBuilderVM.annotations | nindent 4 }}
+    {{- include "kubevirtRHELAnnotation" $ | nindent 4 }}
+  name: {{ $instance_name }}
   namespace: rfe
   labels:
-    {{- toYaml .Values.imageBuilderVM.labels | nindent 4 }}
-    {{- include "common.labels.labels" . | nindent 4 }}
-    {{- include "kubevirtRHELLabel" . | nindent 4 }}
+    {{- toYaml $.Values.imageBuilderVM.labels | nindent 4 }}
+    {{- include "common.labels.labels" $ | nindent 4 }}
+    {{- include "kubevirtRHELLabel" $ | nindent 4 }}
 spec:
   dataVolumeTemplates:
     - apiVersion: cdi.kubevirt.io/v1alpha1
       kind: DataVolume
       metadata:
         creationTimestamp: null
-        name: image-builder-rootdisk
+        name: {{ $root_disk }}
       spec:
         pvc:
           accessModes:
             - ReadWriteOnce
           resources:
             requests:
-              storage: 100Gi
+              storage: {{ $.Values.imageBuilderVM.disk }}
           volumeMode: Filesystem
         source:
           http:
-            url: 'http://nexus:8081/repository/rfe-rhel-media/rhel-{{ .Values.rhel.version }}-x86_64-kvm.qcow2'
+            url: "http://nexus:8081/repository/rfe-rhel-media/rhel-{{- $.Values.rhel.version -}}-x86_64-kvm.qcow2"
   runStrategy: Always
   template:
     metadata:
       labels:
-        {{- toYaml .Values.imageBuilderVM.template.labels | nindent 8 }}
-        {{- include "kubevirtRHELLabel" . | nindent 8 }}
+        {{- toYaml $.Values.imageBuilderVM.template.labels | nindent 8 }}
+        kubevirt.io/domain: {{ $instance_name }}
+        vm.kubevirt.io/name: {{ $instance_name }}
+        {{- include "kubevirtRHELLabel" $ | nindent 8 }}
     spec:
       domain:
         cpu:
-          cores: {{ .Values.imageBuilderVM.cores }}
+          cores: {{ $.Values.imageBuilderVM.cores }}
           sockets: 1
           threads: 1
         devices:
@@ -45,7 +55,7 @@ spec:
             - bootOrder: 1
               disk:
                 bus: virtio
-              name: rootdisk
+              name: {{ $root_disk }}
             - disk:
                 bus: virtio
               name: cloudinitdisk
@@ -68,19 +78,19 @@ spec:
           networkInterfaceMultiqueue: true
           rng: {}
         machine:
-          type: {{ .Values.imageBuilderVM.machine.type }}
+          type: {{ $.Values.imageBuilderVM.machine.type }}
         resources:
           requests:
-            memory: {{ .Values.imageBuilderVM.memory }}
-      hostname: image-builder
+            memory: {{ $.Values.imageBuilderVM.memory }}
+      hostname: {{ $instance_name }}
       networks:
         - name: nic-0
           pod: {}
       terminationGracePeriodSeconds: 180
       volumes:
         - dataVolume:
-            name: image-builder-rootdisk
-          name: rootdisk
+            name: {{ $root_disk }}
+          name: {{ $root_disk }}
         - cloudInitNoCloud:
             userData: |
               #cloud-config
@@ -105,3 +115,4 @@ spec:
         - name: serviceaccount
           serviceAccount:
             serviceAccountName: rfe-automation
+{{ end }}

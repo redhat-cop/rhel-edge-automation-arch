@@ -160,7 +160,7 @@
 - name: Pull ISO From Image Builder to httpd Pod
   ansible.builtin.get_url:
     dest: "{{ edge_iso_path }}"
-    url: "http://{{ image_builder_service_name }}/{{ edge_iso_path | basename }}"
+    url: "http://{{ image_builder_host }}/{{ edge_iso_path | basename }}"
   become: no
   delegate_to: "{{ groups.httpd_pod_group[0] }}"
 

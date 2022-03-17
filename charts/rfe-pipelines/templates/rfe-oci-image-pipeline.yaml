@@ -9,24 +9,32 @@ metadata:
   name: rfe-oci-image-pipeline
 spec:
   params:
-    - name: blueprints-git-url
-      description: Blueprint Repository URL
-      default: {{ $.Values.pipelines.repos.blueprints.repoURL }}
+    - name: blueprint-dir
+      description: Directory in Blueprints repository containing blueprint
       type: string
     - name: blueprints-git-revision
       description: Blueprint Repository URL Reference
       default: {{ $.Values.pipelines.repos.blueprints.targetRevision }}
       type: string
-    - name: tooling-git-url
-      description: Tooling Repository URL
-      default: {{ $.Values.pipelines.repos.tooling.repoURL }}
+    - name: blueprints-git-url
+      description: Blueprint Repository URL
+      default: {{ $.Values.pipelines.repos.blueprints.repoURL }}
+      type: string
+    - name: additional-content-sources
+      description: JSON object with list of Additional Image Builder sources
+      default: {{ $.Values.pipelines.additional_content_sources | toJson | b64enc }}
+      type: string
+    - name: rhsm-repositories
+      description: JSON object with list of RHEL Repos
+      default: {{ $.Values.pipelines.rhsm_repositories | toJson | b64enc }}
       type: string
     - name: tooling-git-revision
       description: Tooling Repository URL Reference
       default: {{ $.Values.pipelines.repos.tooling.targetRevision }}
       type: string
-    - name: blueprint-dir
-      description: Directory in Blueprints repository containing blueprint
+    - name: tooling-git-url
+      description: Tooling Repository URL
+      default: {{ $.Values.pipelines.repos.tooling.repoURL }}
       type: string
   results:
     - name: build-commit
@@ -35,6 +43,9 @@ spec:
     - name: image-path
       description: Path to Container Registry
       value: $(tasks.rfe-oci-quay-repository.results.image-path)
+    - name: image-builder-host
+      description: Image Builder Host used for Pipeline Run
+      value: $(tasks.rfe-oci-build-image.results.image-builder-host)
     - name: image-tags
       description: Tags Associated with Image
       value: $(tasks.rfe-oci-push-image.results.image-tags)
@@ -89,6 +100,10 @@ spec:
       params:
         - name: blueprint-dir
           value: /workspace/workspace/blueprints/$(params.blueprint-dir)
+        - name: additional-content-sources
+          value: $(params.additional-content-sources)
+        - name: rhsm-repositories
+          value: $(params.rhsm-repositories)
       runAfter:
         - "rfe-oci-quay-repository"
       workspaces:
@@ -103,6 +118,8 @@ spec:
           value: /workspace/workspace/blueprints/$(params.blueprint-dir)
         - name: build-commit
           value: $(tasks.rfe-oci-build-image.results.build-commit)
+        - name: image-builder-host
+          value: $(tasks.rfe-oci-build-image.results.image-builder-host)
         - name: image-path
           value: $(tasks.rfe-oci-quay-repository.results.image-path)
       runAfter:

@@ -19,7 +19,7 @@ spec:
             - name: GIT_DIRECTORY
               value: "/tmp/git/rhel-edge-automation-arch"
             - name: GIT_URL
-              value: {{ .Values.gitRepository | quote }}
+              value: {{ $.Values.gitRepository | quote }}
             - name: SSH_KEY
               value: "/var/secrets/image-builder-ssh-key/ssh-privatekey"
             - name: ANSIBLE_PLAYBOOK
@@ -27,7 +27,9 @@ spec:
             - name: ANSIBLE_CONFIG
               value: $GIT_DIRECTORY/ansible/ansible.cfg
             - name: GIT_BRANCH
-              value: {{ .Values.gitBranch | quote }}
+              value: {{ $.Values.gitBranch | quote }}
+            - name: IMAGE_BUILDER_REPLICAS
+              value: {{ $.Values.imageBuilderVM.replicas | quote }}
           command:
             - /bin/bash
             - -c
@@ -35,16 +37,13 @@ spec:
               mkdir -p $GIT_DIRECTORY
               git clone -b $GIT_BRANCH $GIT_URL $GIT_DIRECTORY
               ansible-galaxy collection install -r $GIT_DIRECTORY/ansible/collections/requirements.yaml
-              ansible-playbook -u cloud-user --private-key=$SSH_KEY $GIT_DIRECTORY/$ANSIBLE_PLAYBOOK
+              ansible-playbook -u cloud-user --private-key=$SSH_KEY $GIT_DIRECTORY/$ANSIBLE_PLAYBOOK -e image_builder_replicas=$IMAGE_BUILDER_REPLICAS
           volumeMounts:
             - name: image-builder-ssh-key
               mountPath: /var/secrets/image-builder-ssh-key
               readOnly: true
             - name: redhat-portal-credentials
               mountPath: /var/secrets/redhat-portal-credentials
-              readOnly: true
-            - name: composer-config
-              mountPath: /var/configs/composer
               readOnly: true
           imagePullPolicy: Always
           name: ansible-rfe-runner
@@ -57,11 +56,8 @@ spec:
           secret:
             secretName: redhat-portal-credentials
             defaultMode: 0400
-        - name: composer-config
-          configMap:
-            name: image-builder-vm-composer
       dnsPolicy: ClusterFirst
       restartPolicy: OnFailure
       serviceAccount: rfe-automation
       serviceAccountName: rfe-automation
-      terminationGracePeriodSeconds: 30 
+      terminationGracePeriodSeconds: 30

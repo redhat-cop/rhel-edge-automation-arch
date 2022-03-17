@@ -23,15 +23,14 @@ imageBuilderVM:
     description: RHEL 8 With Image Builder
   template:
     labels:
-      kubevirt.io/domain: image-builder
-      vm.kubevirt.io/name: image-builder
+      app: image-builder
       workload.template.kubevirt.io/server: "true"
   machine:
     type: pc-q35-rhel8.4.0
-  cores: 8
-  memory: 16Gi
-  composer:
-    sources: []
+  cores: 2
+  memory: 6Gi
+  disk: 150Gi
+  replicas: 1
 
 gitRepository: https://github.com/redhat-cop/rhel-edge-automation-arch.git
 gitBranch: main

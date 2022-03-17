@@ -1,8 +1,6 @@
 ---
 quay:
   components:
-    - kind: clair
-      managed: true
     - kind: horizontalpodautoscaler
       managed: true
     - kind: mirror

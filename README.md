@@ -8,7 +8,7 @@ RHEL for Edge (RFE) introduces a new model for building and deploying RHEL. This
 
 Our design will focus on the following topics:
 
-* Deployment of Image Builder
+* Deployment of Image Builder(s)
 * Management of Blueprint Definitions
 * Building RFE Images
 * Managing/Hosting RFE Artifacts
@@ -32,6 +32,7 @@ OpenShift is used to host all of the above site components. These components inc
 
 * Helm/Argo CD for GitOps based deployment and configuration
 * OpenShift Virtualization for RHEL Image Builder
+  * Ability to deploy multiple Image Builder VMs to support parallel pipelines (composes)
 * OpenShift Pipelines driving Ansible playbooks
 * Nexus for artifact storage
 * OpenShift Data Foundation (NooBaa only) for general object storage
@@ -199,3 +200,9 @@ helm upgrade -i -n rfe-gitops bootstrap charts/bootstrap/ -f examples/values/loc
 A basic walkthrough to demonstrate the end to end flow of building RHEL for Edge content and using it to create a RHEL for Edge instance can be found below:
 
 * [Basic Walkthrough](docs/basic-walkthrough.md)
+
+## MicroShift Example
+
+A more advanced example of building a MicroShift image that uses additional Image Builder content sources can be found here:
+
+* [MicroShift Example](docs/microshift.md)

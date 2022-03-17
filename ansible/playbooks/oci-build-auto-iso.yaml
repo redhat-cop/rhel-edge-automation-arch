@@ -1,15 +1,25 @@
-- name: Generate In-Memory Inventory of Image Builder VM
-  hosts: localhost
-  roles:
-    - role: openshift-image-builder-imi
-
-- name: Generate In-Memory Inventory of httpd Pod
+- name: Generate In-Memory Inventory of OpenShift VMs
+  gather_facts: no
   hosts: localhost
   roles:
     - role: openshift-httpd-pod-imi
-    
+  tasks:
+    - name: Assert image_builder_host is Defined
+      ansible.builtin.assert:
+        that:
+          - image_builder_host is defined
+
+    - name: Add Target Host to Inventory
+      ansible.builtin.add_host:
+        ansible_ssh_host: "{{ image_builder_host }}"
+        ansible_ssh_port: "22"
+        name: pipeline_target_host
+      delegate_to: localhost
+
 - name: Generate RFE Boot ISO w/ Embedded kickstart
   become: yes
-  hosts: image-builder
-  roles:
-    - role: oci-build-auto-iso
+  hosts: pipeline_target_host
+  tasks:
+    - name: Build Installer ISO
+      ansible.builtin.include_role:
+        name: oci-build-auto-iso

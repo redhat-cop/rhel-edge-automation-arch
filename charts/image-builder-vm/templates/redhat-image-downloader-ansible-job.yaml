@@ -17,13 +17,13 @@ spec:
             - name: GIT_DIRECTORY
               value: "/tmp/git/rhel-edge-automation-arch"
             - name: GIT_URL
-              value: {{ .Values.gitRepository | quote }}
+              value: {{ $.Values.gitRepository | quote }}
             - name: ANSIBLE_PLAYBOOK
               value: "ansible/playbooks/redhat-image-downloader.yaml"
             - name: ANSIBLE_CONFIG
               value: $GIT_DIRECTORY/ansible/ansible.cfg
             - name: GIT_BRANCH
-              value: {{ .Values.gitBranch | quote }}
+              value: {{ $.Values.gitBranch | quote }}
           command:
             - /bin/bash
             - -c

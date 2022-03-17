@@ -43,10 +43,21 @@ spec:
       description: Name of the Blueprint to use for the ISO Build (Should not be Customized)
       default: "rfe-iso-blueprint"
       type: string
+    - name: additional-content-sources
+      description: JSON object with list of Additional Image Builder sources
+      default: {{ $.Values.pipelines.additional_content_sources | toJson | b64enc }}
+      type: string
+    - name: rhsm-repositories
+      description: JSON object with list of RHEL Repos
+      default: {{ $.Values.pipelines.rhsm_repositories | toJson | b64enc }}
+      type: string
   results:
     - name: build-commit-id
       description: Commit ID of the Build
       value: $(tasks.rfe-oci-build-installer-image.results.build-commit-id)
+    - name: image-builder-host
+      description: Image Builder Host used for Pipeline Run
+      value: $(tasks.rfe-oci-build-installer-image.results.image-builder-host)
     - name: iso-url
       description: URL containing Autobooting Image
       value: $(tasks.rfe-oci-build-auto-iso.results.iso-url)
@@ -92,6 +103,10 @@ spec:
           value: $(params.image-builder-secret)
         - name: iso-blueprint
           value: /workspace/workspace/blueprints/$(params.iso-blueprint)
+        - name: additional-content-sources
+          value: $(params.additional-content-sources)
+        - name: rhsm-repositories
+          value: $(params.rhsm-repositories)
       runAfter:
         - "git-clone-tooling"
         - "git-clone-blueprints"
@@ -105,6 +120,8 @@ spec:
       params:
         - name: build-commit-id
           value: $(tasks.rfe-oci-build-installer-image.results.build-commit-id)
+        - name: image-builder-host
+          value: $(tasks.rfe-oci-build-installer-image.results.image-builder-host)
         - name: image-builder-secret
           value: $(params.image-builder-secret)
         - name: kickstart-url

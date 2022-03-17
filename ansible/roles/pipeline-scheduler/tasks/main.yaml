@@ -1,0 +1,108 @@
+- name: Gather Compose Status from Each VM
+  ansible.builtin.command:
+    argv:
+      - "composer-cli"
+      - "-j"
+      - "compose"
+      - "status"
+  register: compose_status
+
+- name: Aggregate Compose Status for Pool
+  ansible.builtin.set_fact:
+    pool_compose_status: >-
+      {{
+        pool_compose_status | default([]) + 
+        [
+          {
+            'host': item,
+            'id': (hostvars[item].compose_status.stdout | from_json)[0].id,
+            'status': (hostvars[item].compose_status.stdout | from_json)[0].status
+          }
+        ]
+      }}
+  delegate_to: localhost
+  loop: "{{ ansible_play_hosts }}"
+  run_once: yes
+  when:
+    - (hostvars[item].compose_status.stdout | from_json) | count > 0
+
+- name: Find Hosts with Compose Running
+  ansible.builtin.set_fact:
+    pool_has_running_jobs: >-
+      {{
+        pool_compose_status | json_query('[?status==`RUNNING`].host')
+      }}
+  delegate_to: localhost
+  run_once: yes
+
+- name: Build Idle Host Pool
+  ansible.builtin.set_fact:
+    pool_idle_hosts: "{{ ansible_play_hosts | difference(pool_has_running_jobs) }}"
+
+- name: Find Idle Host for Pipeline Run
+  ansible.builtin.set_fact:
+    pipeline_target_host: "{{ pool_idle_hosts | random }}"
+  delegate_to: localhost
+  run_once: yes
+  when:
+    - pool_idle_hosts | count > 0
+
+- name: Pick Random Host if None are Idle
+  ansible.builtin.set_fact:
+    pipeline_target_host: "{{ ansible_play_hosts | random }}"
+  delegate_to: localhost
+  run_once: yes
+  when:
+    - pool_idle_hosts | count == 0
+
+- name: Query VirtualMachineInstances
+  community.kubernetes.k8s_info:
+    api_key: "{{ lookup('file', '/var/run/secrets/kubernetes.io/serviceaccount/token') }}"
+    api_version: kubevirt.io/v1alpha3
+    ca_cert: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+    host: https://kubernetes.default.svc
+    kind: VirtualMachineInstance
+    label_selectors:
+      - app=image-builder
+    name: "{{ pipeline_target_host }}"
+    namespace: rfe
+    validate_certs: yes
+  become: no
+  delay: 10
+  delegate_to: localhost
+  register: vmi_results
+  retries: 60
+  run_once: yes
+  until:
+    - vmi_results.resources | list | length == 1
+    - >
+      vmi_results.resources |
+        json_query('[*].status.conditions[?type==`Ready`].status') |
+        flatten |
+        select('match', 'True') |
+        list |
+        length == 1
+
+- name: Add Target Host to Inventory
+  ansible.builtin.add_host:
+    ansible_ssh_host: "{{ vmi_results.resources[0].status.interfaces[0].ipAddress }}"
+    ansible_ssh_port: "22"
+    name: pipeline_target_host
+  delegate_to: localhost
+  run_once: yes
+
+- name: Save image-builder-host Pipeline Result to File
+  ansible.builtin.copy:
+    content: "{{ vmi_results.resources[0].status.interfaces[0].ipAddress }}"
+    dest: "{{ image_builder_host_output_file }}"
+  become: no
+  delegate_to: localhost
+  run_once: yes
+  when:
+    - image_builder_host_output_file is defined
+
+- name: Debug pipeline_target_host
+  ansible.builtin.debug:
+    msg: "pipeline_target_host = {{ pipeline_target_host }}"
+  delegate_to: localhost
+  run_once: yes

@@ -1,0 +1,11 @@
+- name: Generate List of RHSM Repositories
+  ansible.builtin.set_fact:
+    rhsm_repositories_list: "{{ ((rhsm_repositories | b64decode | from_json) | from_json).repositories | list }}"
+
+- name: Reconfigure RHSM Repositories
+  community.general.rhsm_repository:
+    name: "{{ rhsm_repositories_list | join(',') }}"
+    purge: yes
+    state: enabled
+  when:
+    - rhsm_repositories_list | count > 0

@@ -21,6 +21,9 @@ spec:
     - name: build-commit
       description: Commit ID of the Build
       type: string
+    - name: image-builder-host
+      description: Image Builder Host used for Pipeline Run
+      type: string
     - name: image-path
       description: Path to Container Image
   results:
@@ -41,6 +44,7 @@ spec:
             -e build_commit_id=$(params.build-commit) \
             -e quay_image_path=$(params.image-path) \
             -e image_tags_output_file=$(results.image-tags.path) \
+            -e image_builder_host=$(params.image-builder-host) \
             playbooks/oci-push-image.yaml 
       command:
         - /bin/bash

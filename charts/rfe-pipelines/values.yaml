@@ -21,3 +21,15 @@ pipelines:
     kickstarts:
       repoURL: https://github.com/redhat-cop/rhel-edge-automation-arch.git
       targetRevision: kickstarts
+  rhsm_repositories: |
+    {
+      "repositories": [
+        "rhel-8-for-x86_64-baseos-rpms",
+        "rhel-8-for-x86_64-appstream-rpms"
+      ]
+    }
+  additional_content_sources: |
+    {
+      "sources": {
+      }
+    }
