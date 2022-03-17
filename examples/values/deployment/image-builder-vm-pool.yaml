@@ -1,0 +1,20 @@
+---
+# Dynamically Generated Charts
+application-manager:
+  charts:
+    # Top Level RFE App of App Chart
+    rfe-automation:
+      values:
+        charts:
+          # RFE App of App Chart
+          rfe:
+            values:
+              charts:
+                # Image Builder Chart
+                image-builder-vm:
+                  name: image-builder-vm
+                  values:
+                    imageBuilderVM:
+                      replicas: 3
+                      cores: 4
+                      memory: 8Gi
