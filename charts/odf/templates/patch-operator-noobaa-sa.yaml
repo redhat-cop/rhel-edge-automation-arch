@@ -3,5 +3,5 @@ kind: ServiceAccount
 metadata:
   labels:
     {{- include "common.labels.labels" . | nindent 4 }}
-  name: resource-locker-noobaa-sa
+  name: patch-operator-noobaa-sa
   namespace: {{ template "common.names.namespace" $ }}

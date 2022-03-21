@@ -165,6 +165,20 @@ application-manager:
                             name: nexus-operator
                             source: redhatgov-operators
                             sourceNamespace: openshift-marketplace
+                      patch-operator:
+                        name: patch-operator
+                        path: charts/operator
+                        annotations:
+                          argocd.argoproj.io/sync-wave: "0"
+                        values:
+                          operator:
+                            channel: alpha
+                            installPlanApproval: Automatic
+                            name: patch-operator
+                            source: community-operators
+                            sourceNamespace: openshift-marketplace
+                          operatorgroup:
+                            create: false
                       pipelines-operator:
                         name: pipelines-operator
                         path: charts/operator
@@ -190,20 +204,6 @@ application-manager:
                             installPlanApproval: Automatic
                             name: quay-operator
                             source: redhat-operators
-                            sourceNamespace: openshift-marketplace
-                          operatorgroup:
-                            create: false
-                      resource-locker-operator:
-                        name: resource-locker-operator
-                        path: charts/operator
-                        annotations:
-                          argocd.argoproj.io/sync-wave: "0"
-                        values:
-                          operator:
-                            channel: alpha
-                            installPlanApproval: Automatic
-                            name: resource-locker-operator
-                            source: community-operators
                             sourceNamespace: openshift-marketplace
                           operatorgroup:
                             create: false
