@@ -1,0 +1,15 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  labels:
+    {{- include "common.labels.labels" . | nindent 4 }}
+  name: patch-operator-{{ template "common.names.fullname" . }}
+  namespace: {{ template "common.names.namespace" $ }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: patch-operator-{{ template "common.names.fullname" . }}
+subjects:
+  - kind: ServiceAccount
+    name: patch-operator-{{ template "common.names.fullname" . }}
+    namespace: {{ template "common.names.namespace" $ }}

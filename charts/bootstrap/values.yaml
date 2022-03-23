@@ -104,6 +104,11 @@ application-manager:
                         annotations:
                           openshift.io/description: OpenShift User Workload Monitoring
                           openshift.io/display-name: OpenShift User Workload Monitoring
+                      - name: pulp
+                        annotations:
+                          openshift.io/description: Pulp
+                          openshift.io/display-name: Pulp
+
                 # Operators App of App Chart
                 operators:
                   name: operators
@@ -193,6 +198,18 @@ application-manager:
                             sourceNamespace: openshift-marketplace
                           operatorgroup:
                             create: false
+                      pulp-operator:
+                        name: pulp-operator
+                        path: charts/operator
+                        annotations:
+                          argocd.argoproj.io/sync-wave: "0"
+                        values:
+                          operator:
+                            channel: alpha
+                            installPlanApproval: Automatic
+                            name: pulp-operator
+                            source: community-operators
+                            sourceNamespace: openshift-marketplace
                       quay-operator:
                         name: quay-operator
                         path: charts/operator
@@ -278,6 +295,20 @@ application-manager:
                   path: charts/nexus
                   annotations:
                     argocd.argoproj.io/sync-wave: "2"
+                # Pulp
+                pulp:
+                  name: pulp
+                  path: charts/pulp
+                  annotations:
+                    argocd.argoproj.io/sync-wave: "4"
+                  destinationNamespace: pulp
+                  ignoreDifferences:
+                    - kind: pulp-s3-storage
+                      name: oci-rfe-httpd
+                      namespace: pulp
+                      jsonPointers:
+                        - /data
+
                 # Quay
                 quay:
                   name: quay

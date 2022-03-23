@@ -1,0 +1,14 @@
+{{- if .Values.storage.odf.enabled }}
+apiVersion: objectbucket.io/v1alpha1
+kind: ObjectBucketClaim
+metadata:
+  name: {{ template "common.names.fullname" . }}-storage
+  namespace: {{ template "common.names.namespace" $ }}
+  labels:
+    {{- include "common.labels.labels" . | nindent 4 }}
+spec:
+  generateBucketName: {{ template "common.names.fullname" . }}-storage
+  storageClassName: {{ .Values.storage.odf.storageClassName }}
+  additionalConfig:
+    bucketclass: {{ .Values.storage.odf.bucketClass }}
+{{- end }}
