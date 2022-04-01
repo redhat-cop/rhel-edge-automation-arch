@@ -1,0 +1,30 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    {{- include "common.labels.labels" . | nindent 4 }}
+  name: patch-operator-{{ template "common.names.fullname" . }}
+rules:
+  - verbs:
+      - create
+      - update
+      - patch
+    apiGroups:
+      - ''
+    resources:
+      - secrets
+  - verbs:
+      - list
+      - get
+    apiGroups:
+      - ''
+    resources:
+      - secrets
+      - configmaps
+  - verbs:
+      - list
+      - get
+    apiGroups:
+      - noobaa.io
+    resources:
+      - noobaas

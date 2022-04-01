@@ -1,0 +1,37 @@
+apiVersion: pulp.pulpproject.org/v1beta1
+kind: Pulp
+metadata:
+  name: {{ template "common.names.fullname" . }}
+  namespace: {{ template "common.names.namespace" $ }}
+  annotations:
+    {{- toYaml .Values.commonCR.annotations | nindent 4 }}
+  labels:
+    {{- include "common.labels.labels" . | nindent 4 }}
+spec:
+  route_tls_termination_mechanism: {{ .Values.ingress.termination }}
+  ingress_type: {{ .Values.ingress.type }}
+  image_pull_policy: {{ .Values.image.pullPolicy }}
+  object_storage_s3_secret: {{ template "pulp.s3SecretName" . }}
+  image_version: {{ .Values.image.tag }}
+  web:
+    replicas: {{ .Values.content.replicas }}
+    resource_requirements:
+{{- tpl (toYaml .Values.web.resources) $ | nindent 6 }}
+
+  content:
+    replicas: {{ .Values.content.replicas }}
+    resource_requirements:
+{{- tpl (toYaml .Values.content.resources) $ | nindent 6 }}
+
+  pulp_settings:
+{{- tpl (toYaml .Values.settings) $ | nindent 4 }}
+  api:
+    replicas: 1
+  image: {{ .Values.image.image }}
+  resource_manager:
+    replicas: 1
+  storage_type: {{ ternary "S3" "File" .Values.storage.s3.enabled }}
+  worker:
+    replicas: {{ .Values.worker.replicas }}
+    resource_requirements:
+{{- tpl (toYaml .Values.worker.resources) $ | nindent 6 }}

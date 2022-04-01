@@ -1,0 +1,39 @@
+apiVersion: redhatcop.redhat.io/v1alpha1
+kind: Patch
+metadata:
+  name: {{ template "common.names.fullname" . }}
+  namespace: {{ template "common.names.namespace" $ }}
+  annotations:
+    {{- toYaml .Values.commonCR.annotations | nindent 4 }}
+  labels:
+    {{- include "common.labels.labels" . | nindent 4 }}
+spec:
+  serviceAccountRef:
+    name: patch-operator-{{ template "common.names.fullname" . }}
+  patches:
+    pulp-s3-storage-patch:
+      targetObjectRef:
+        apiVersion: v1
+        kind: Secret
+        name: {{ template "common.names.fullname" . }}-s3-storage
+        namespace: {{ template "common.names.namespace" $ }}
+      sourceObjectRefs:
+      - apiVersion: v1
+        kind: ConfigMap 
+        name: {{ template "common.names.fullname" . }}-storage
+        namespace: {{ template "common.names.namespace" $ }}
+      - apiVersion: v1
+        kind: Secret 
+        name: {{ template "common.names.fullname" . }}-storage
+        namespace: {{ template "common.names.namespace" $ }}
+      - apiVersion: noobaa.io/v1alpha1
+        kind: NooBaa
+        name: noobaa
+        namespace: openshift-storage
+      patchTemplate: |
+        data:
+          s3-access-key-id: {{ "{{" }} (index . 2).data.AWS_ACCESS_KEY_ID {{ "}}" }}
+          s3-bucket-name: {{ "{{" }} (index . 1).data.BUCKET_NAME | b64enc {{ "}}" }}
+          s3-endpoint: {{ "{{" }} index ((index . 3).status.services.serviceS3.externalDNS) 0 | b64enc {{ "}}" }}
+          s3-secret-access-key:  {{ "{{" }} (index . 2).data.AWS_SECRET_ACCESS_KEY {{ "}}" }}
+      patchType: application/merge-patch+json
