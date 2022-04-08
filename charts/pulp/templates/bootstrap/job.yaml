@@ -1,0 +1,41 @@
+{{- $name := printf "%s-bootstrap" (include "common.names.fullname" .) -}}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  labels:
+    {{- include "common.labels.labels" . | nindent 4 }}
+  annotations:
+    argocd.argoproj.io/hook: PostSync
+    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation
+  name: {{ $name }}
+  namespace: {{ template "common.names.namespace" $ }}
+spec:
+  template:
+    spec:
+      activeDeadlineSeconds: 600
+      containers:
+        - image: {{ include "pulp.image" .Values.bootstrap.image }}
+          command:
+            - /bin/bash
+            - -c
+            - |
+              # Execute script
+              /scripts/bootstrap.sh
+          imagePullPolicy: Always
+          name: {{ $name }}
+          volumeMounts:
+            - mountPath: "/scripts"
+              name: projected-scripts
+              readOnly: true
+      dnsPolicy: ClusterFirst
+      restartPolicy: OnFailure
+      serviceAccount: {{ $name }}
+      serviceAccountName: {{ $name }}
+      terminationGracePeriodSeconds: 30
+      volumes:
+        - name: projected-scripts
+          projected:
+            defaultMode: 0755
+            sources:
+              - configMap:
+                  name: {{ $name }}

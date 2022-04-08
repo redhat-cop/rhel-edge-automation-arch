@@ -303,8 +303,8 @@ application-manager:
                     argocd.argoproj.io/sync-wave: "4"
                   destinationNamespace: pulp
                   ignoreDifferences:
-                    - kind: pulp-s3-storage
-                      name: oci-rfe-httpd
+                    - kind: Secret
+                      name: pulp-s3-storage
                       namespace: pulp
                       jsonPointers:
                         - /data
