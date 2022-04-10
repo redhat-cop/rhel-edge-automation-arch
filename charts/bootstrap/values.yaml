@@ -197,6 +197,7 @@ application-manager:
                         path: charts/operator
                         annotations:
                           argocd.argoproj.io/sync-wave: "0"
+                        destinationNamespace: pulp
                         values:
                           operator:
                             channel: alpha
