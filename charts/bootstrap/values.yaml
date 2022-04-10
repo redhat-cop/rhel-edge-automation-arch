@@ -281,7 +281,7 @@ application-manager:
                   name: pulp
                   path: charts/pulp
                   annotations:
-                    argocd.argoproj.io/sync-wave: "4"
+                    argocd.argoproj.io/sync-wave: "2"
                   destinationNamespace: pulp
                   ignoreDifferences:
                     - kind: Secret
