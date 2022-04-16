@@ -57,5 +57,5 @@
 
     - name: Save OCI Image Path to File
       ansible.builtin.copy:
-        content: "{{ oci_endpoint }}/{{ oci_namespace }}/{{ oci_repository_name }}"
+        content: "{{ oci_endpoint }}/{{ oci_namespace_name }}/{{ oci_repository_name }}"
         dest: "{{ oci_image_path_output_file }}"
