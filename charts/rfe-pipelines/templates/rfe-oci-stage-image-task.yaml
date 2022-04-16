@@ -29,8 +29,8 @@ spec:
           cd tooling/ansible
           ansible-galaxy collection install -r collections/requirements.yaml
           ansible-playbook \
-            -e quay_image_path=$(params.image-path) \
-            -e quay_image_tag=$(params.image-tag) \
+            -e oci_image_path=$(params.image-path) \
+            -e oci_image_tag=$(params.image-tag) \
             -e route_host="$(params.route-host)" \
             -e content_path_output_file=$(results.content-path.path) \
             playbooks/oci-stage-content.yaml

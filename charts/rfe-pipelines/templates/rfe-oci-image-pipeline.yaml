@@ -36,13 +36,17 @@ spec:
       description: Tooling Repository URL
       default: {{ $.Values.pipelines.repos.tooling.repoURL }}
       type: string
+    - name: oci-namespace-name
+      description: OCI Namespace Name
+      default: {{ $.Values.pipelines.oci.namespace }}
+      type: string
   results:
     - name: build-commit
       description: Commit ID of the Build
       value: $(tasks.rfe-oci-build-image.results.build-commit)
     - name: image-path
       description: Path to Container Registry
-      value: $(tasks.rfe-oci-quay-repository.results.image-path)
+      value: $(tasks.rfe-oci-repository.results.image-path)
     - name: image-builder-host
       description: Image Builder Host used for Pipeline Run
       value: $(tasks.rfe-oci-build-image.results.image-builder-host)
@@ -80,11 +84,13 @@ spec:
       workspaces:
         - name: output
           workspace: shared-workspace
-    - name: rfe-oci-quay-repository
+    - name: rfe-oci-repository
       taskRef:
-        name: rfe-oci-quay-repository
+        name: rfe-oci-repository
         kind: Task
       params:
+        - name: namespace-name
+          value: $(params.oci-namespace)
         - name: repository-name
           value: $(params.blueprint-dir)
       runAfter:
@@ -105,7 +111,7 @@ spec:
         - name: rhsm-repositories
           value: $(params.rhsm-repositories)
       runAfter:
-        - "rfe-oci-quay-repository"
+        - "rfe-oci-repository"
       workspaces:
         - name: workspace
           workspace: shared-workspace
@@ -121,7 +127,7 @@ spec:
         - name: image-builder-host
           value: $(tasks.rfe-oci-build-image.results.image-builder-host)
         - name: image-path
-          value: $(tasks.rfe-oci-quay-repository.results.image-path)
+          value: $(tasks.rfe-oci-repository.results.image-path)
       runAfter:
         - "rfe-oci-build-image"
       workspaces:

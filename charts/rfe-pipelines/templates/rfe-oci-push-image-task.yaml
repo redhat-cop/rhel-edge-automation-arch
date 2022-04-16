@@ -42,7 +42,7 @@ spec:
             --private-key=/var/secrets/image-builder-ssh/ssh-privatekey \
             -e blueprint_source_dir=$(params.blueprint-dir) \
             -e build_commit_id=$(params.build-commit) \
-            -e quay_image_path=$(params.image-path) \
+            -e oci_image_path=$(params.image-path) \
             -e image_tags_output_file=$(results.image-tags.path) \
             -e image_builder_host=$(params.image-builder-host) \
             playbooks/oci-push-image.yaml 
@@ -53,9 +53,6 @@ spec:
         - name: publisher
           mountPath: /var/secrets/publisher
           readOnly: true
-        - name: quay-rfe-setup
-          mountPath: /var/secrets/quay-rfe-setup
-          readOnly: true
         - name: image-builder-ssh
           mountPath: /var/secrets/image-builder-ssh
           readOnly: true
@@ -64,10 +61,6 @@ spec:
       secret:
         defaultMode: 0440
         secretName: publisher
-    - name: quay-rfe-setup
-      secret:
-        defaultMode: 0440
-        secretName: quay-rfe-setup
     - name: image-builder-ssh
       secret:
         defaultMode: 0440

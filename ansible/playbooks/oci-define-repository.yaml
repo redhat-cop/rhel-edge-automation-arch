@@ -1,0 +1,61 @@
+- name: Create Quay Repository
+  gather_facts: no
+  hosts: localhost
+  vars:
+    path_publisher: /var/secrets/publisher/.dockerconfigjson
+  tasks:
+    - name: Assert Extra Variables are Defined
+      ansible.builtin.assert:
+        fail_msg: >
+          Make sure the following extra variables are defined before running this playbook:
+            - oci_image_path_output_file
+            - oci_namespace_name
+            - oci_repository_name
+        that:
+          - oci_image_path_output_file is defined
+          - oci_namespace_name is defined
+          - oci_repository_name is defined
+
+    - name: Make Sure Secrets are Properly Mounted
+      ansible.builtin.stat:
+        follow: yes
+        get_checksum: no
+        get_mime: no
+        path: "{{ path_publisher }}"
+      register: stat_results
+
+    - name: Make Sure Paths Exist
+      ansible.builtin.assert:
+        that:
+          - stat_results.stat.exists is defined
+          - stat_results.stat.readable is defined
+          - stat_results.stat.exists == true
+          - stat_results.stat.readable == true
+
+    - name: Read .dockerconfigjson From Publisher Secret
+      ansible.builtin.set_fact:
+        publisher_dcj: "{{ lookup('file', path_publisher) }}"
+
+    - name: Assert Only One Registry Exists in .dockerconfigjson
+      ansible.builtin.assert:
+        that:
+          - publisher_dcj.auths is defined
+          - publisher_dcj.auths | count == 1
+
+    - name: Define Registry Endpoint
+      ansible.builtin.set_fact:
+        oci_endpoint: "{{ publisher_dcj.auths.keys() | first }}"
+
+    - name: Define Registry Auth
+      ansible.builtin.set_fact:
+        oci_auth: "{{ publisher_dcj['auths'][oci_endpoint].auth | b64decode }}"
+
+    - name: Define OCI Registry Robot Credentials
+      ansible.builtin.set_fact:
+        oci_username: "{{ oci_auth.split(':')[0] }}"
+        oci_password: "{{ oci_auth.split(':')[1] }}"
+
+    - name: Save OCI Image Path to File
+      ansible.builtin.copy:
+        content: "{{ oci_endpoint }}/{{ oci_namespace }}/{{ oci_repository_name }}"
+        dest: "{{ oci_image_path_output_file }}"

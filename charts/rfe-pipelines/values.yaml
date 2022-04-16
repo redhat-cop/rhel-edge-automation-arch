@@ -11,6 +11,8 @@ commonCR:
     argocd.argoproj.io/compare-options: IgnoreExtraneous
 
 pipelines:
+  oci:
+    namespace: rfe
   repos:
     tooling:
       repoURL: https://github.com/redhat-cop/rhel-edge-automation-arch.git

@@ -3,16 +3,16 @@
     fail_msg: >
       Make sure the following extra variables are defined before running this role:
         - content_path_output_file
-        - quay_image_path
-        - quay_image_tag
+        - oci_image_path
+        - oci_image_tag
     that:
       - content_path_output_file is defined
-      - quay_image_path is defined
-      - quay_image_tag is defined
+      - oci_image_path is defined
+      - oci_image_tag is defined
 
-- name: Set Quay Image Path Basename
+- name: Set OCI Image Path Basename
   ansible.builtin.set_fact:
-    quay_image_path_basename: "{{ quay_image_path | basename }}"
+    oci_image_path_basename: "{{ oci_image_path | basename }}"
 
 - name: "Check for ImageStream {{ quay_image_path_basename }}-{{ quay_image_tag }}"
   community.kubernetes.k8s_info:
@@ -21,18 +21,18 @@
     ca_cert: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
     host: https://kubernetes.default.svc
     kind: ImageStream
-    name: "{{ quay_image_path_basename }}-{{ quay_image_tag }}"
+    name: "{{ oci_image_path_basename }}-{{ oci_image_tag }}"
     namespace: rfe
     validate_certs: yes
   register: imagestream_check_results
 
 - name: Update Image Stream
   ansible.builtin.command: >
-    oc import-image -n rfe {{ quay_image_path_basename }}-{{ quay_image_tag }}
+    oc import-image -n rfe {{ oci_image_path_basename }}-{{ oci_image_tag }}
   when:
     - imagestream_check_results.resources | count > 0
 
-- name: "Create/Update ImageStream for {{ quay_image_path_basename }}-{{ quay_image_tag }}:{{ quay_image_tag }}"
+- name: "Create/Update ImageStream for {{ oci_image_path_basename }}-{{ oci_image_tag }}:{{ oci_image_tag }}"
   community.kubernetes.k8s:
     api_key: "{{ lookup('file', '/var/run/secrets/kubernetes.io/serviceaccount/token') }}"
     api_version: v1
@@ -42,7 +42,7 @@
       apiVersion: image.openshift.io/v1
       kind: ImageStream
       metadata:
-        name: "{{ quay_image_path_basename }}-{{ quay_image_tag }}"
+        name: "{{ oci_image_path_basename }}-{{ oci_image_tag }}"
         namespace: rfe
       spec:
         lookupPolicy:
@@ -51,7 +51,7 @@
           - annotations: null
             from:
               kind: DockerImage
-              name: "{{ quay_image_path }}:{{ quay_image_tag }}"
+              name: "{{ oci_image_path }}:{{ oci_image_tag }}"
             importPolicy:
               insecure: true
             name: latest
@@ -67,14 +67,14 @@
         {
           "from": {
             "kind": "ImageStreamTag",
-            "name": "{{ quay_image_path_basename }}-{{ quay_image_tag }}:{{ quay_image_tag }}",
+            "name": "{{ oci_image_path_basename }}-{{ oci_image_tag }}:{{ oci_image_tag }}",
             "namespace": "rfe"
           },
           "fieldPath": "spec.template.spec.containers[?(@.name==\"httpd\")].image"
         }
       ]
 
-- name: "Create/Update Deployment for {{ quay_image_path_basename }}:{{ quay_image_tag }}"
+- name: "Create/Update Deployment for {{ oci_image_path_basename }}:{{ oci_image_tag }}"
   community.kubernetes.k8s:
     api_key: "{{ lookup('file', '/var/run/secrets/kubernetes.io/serviceaccount/token') }}"
     api_version: v1
@@ -87,21 +87,21 @@
         annotations:
           image.openshift.io/triggers: "{{ deployment_trigger | to_json(separators=(',',':')) }}"
         labels:
-          app: "{{ quay_image_path_basename }}-{{ quay_image_tag }}-httpd"
-          app.kubernetes.io/component: "{{ quay_image_path_basename }}-{{ quay_image_tag }}-httpd"
-          app.kubernetes.io/instance: "{{ quay_image_path_basename }}-{{ quay_image_tag }}-httpd"
-        name: "{{ quay_image_path_basename }}-{{ quay_image_tag }}-httpd"
+          app: "{{ oci_image_path_basename }}-{{ oci_image_tag }}-httpd"
+          app.kubernetes.io/component: "{{ oci_image_path_basename }}-{{ oci_image_tag }}-httpd"
+          app.kubernetes.io/instance: "{{ oci_image_path_basename }}-{{ oci_image_tag }}-httpd"
+        name: "{{ oci_image_path_basename }}-{{ oci_image_tag }}-httpd"
         namespace: rfe
       spec:
         replicas: 1
         selector:
           matchLabels:
-            deployment: "{{ quay_image_path_basename }}-{{ quay_image_tag }}-httpd"
+            deployment: "{{ oci_image_path_basename }}-{{ oci_image_tag }}-httpd"
         strategy: {}
         template:
           metadata:
             labels:
-              deployment: "{{ quay_image_path_basename }}-{{ quay_image_tag }}-httpd"
+              deployment: "{{ oci_image_path_basename }}-{{ oci_image_tag }}-httpd"
           spec:
             serviceAccountName: "{{ oci_rfe_http_service_account }}"
             containers:
@@ -120,7 +120,7 @@
     state: present
     validate_certs: yes
 
-- name: "Create/Update Service for {{ quay_image_path_basename }}:{{ quay_image_tag }}"
+- name: "Create/Update Service for {{ oci_image_path_basename }}:{{ quay_image_tag }}"
   community.kubernetes.k8s:
     api_key: "{{ lookup('file', '/var/run/secrets/kubernetes.io/serviceaccount/token') }}"
     api_version: v1
@@ -131,10 +131,10 @@
       kind: Service
       metadata:
         labels:
-          app: "{{ quay_image_path_basename }}-{{ quay_image_tag }}-httpd"
-          app.kubernetes.io/component: "{{ quay_image_path_basename }}-{{ quay_image_tag }}-httpd"
-          app.kubernetes.io/instance: "{{ quay_image_path_basename }}-{{ quay_image_tag }}-httpd"
-        name: "{{ quay_image_path_basename }}-{{ quay_image_tag }}-httpd"
+          app: "{{ quay_image_path_basename }}-{{ oci_image_tag }}-httpd"
+          app.kubernetes.io/component: "{{ oci_image_path_basename }}-{{ oci_image_tag }}-httpd"
+          app.kubernetes.io/instance: "{{ oci_image_path_basename }}-{{ oci_image_tag }}-httpd"
+        name: "{{ oci_image_path_basename }}-{{ oci_image_tag }}-httpd"
         namespace: rfe
       spec:
         ports:
@@ -147,13 +147,13 @@
             protocol: TCP
             targetPort: 8080
         selector:
-          deployment: "{{ quay_image_path_basename }}-{{ quay_image_tag }}-httpd"
+          deployment: "{{ oci_image_path_basename }}-{{ oci_image_tag }}-httpd"
         sessionAffinity: None
         type: ClusterIP
     state: present
     validate_certs: yes
 
-- name: "Create/Update Route for {{ quay_image_path_basename }}:{{ quay_image_tag }}"
+- name: "Create/Update Route for {{ oci_image_path_basename }}:{{ oci_image_tag }}"
   community.kubernetes.k8s:
     api_key: "{{ lookup('file', '/var/run/secrets/kubernetes.io/serviceaccount/token') }}"
     api_version: v1
@@ -163,16 +163,16 @@
       kind: Route
       apiVersion: route.openshift.io/v1
       metadata:
-        name: "{{ quay_image_path_basename }}-{{ quay_image_tag }}"
+        name: "{{ oci_image_path_basename }}-{{ oci_image_tag }}"
         namespace: rfe
         labels:
-          app: "{{ quay_image_path_basename }}-{{ quay_image_tag }}-httpd"
-          app.kubernetes.io/component: "{{ quay_image_path_basename }}-{{ quay_image_tag }}-httpd"
-          app.kubernetes.io/instance: "{{ quay_image_path_basename }}-{{ quay_image_tag }}-httpd"
+          app: "{{ oci_image_path_basename }}-{{ oci_image_tag }}-httpd"
+          app.kubernetes.io/component: "{{ oci_image_path_basename }}-{{ oci_image_tag }}-httpd"
+          app.kubernetes.io/instance: "{{ oci_image_path_basename }}-{{ oci_image_tag }}-httpd"
       spec:
         to:
           kind: Service
-          name: "{{ quay_image_path_basename }}-{{ quay_image_tag }}-httpd"
+          name: "{{ oci_image_path_basename }}-{{ oci_image_tag }}-httpd"
           weight: 100
         port:
           targetPort: http-80
