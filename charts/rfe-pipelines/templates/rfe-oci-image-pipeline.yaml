@@ -90,7 +90,7 @@ spec:
         kind: Task
       params:
         - name: namespace-name
-          value: $(params.oci-namespace)
+          value: $(params.oci-namespace-name)
         - name: repository-name
           value: $(params.blueprint-dir)
       runAfter:
