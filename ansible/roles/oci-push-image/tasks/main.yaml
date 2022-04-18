@@ -97,6 +97,7 @@
   ansible.builtin.command:
     argv:
       - "skopeo"
+      - "--debug"
       - "copy"
       - "--command-timeout=10m"
       - "--dest-authfile=/var/secrets/publisher/.dockerconfigjson"
