@@ -9,6 +9,7 @@ rules:
       - create
       - update
       - patch
+      - watch
     apiGroups:
       - ''
     resources:
@@ -16,6 +17,7 @@ rules:
   - verbs:
       - list
       - get
+      - watch
     apiGroups:
       - ''
     resources:
@@ -24,6 +26,7 @@ rules:
   - verbs:
       - list
       - get
+      - watch
     apiGroups:
       - noobaa.io
     resources:

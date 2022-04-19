@@ -3,24 +3,24 @@
     fail_msg: >
       Make sure the following extra variables are defined before running this role:
         - content_path_output_file
-        - quay_image_path
-        - quay_image_tag
+        - oci_image_path
+        - oci_image_tag
     that:
       - content_path_output_file is defined
-      - quay_image_path is defined
-      - quay_image_tag is defined
+      - oci_image_path is defined
+      - oci_image_tag is defined
 
-- name: Set Quay Image Path Basename
+- name: Set OCI Image Path Basename
   ansible.builtin.set_fact:
-    quay_image_path_basename: "{{ quay_image_path | basename }}"
+    oci_image_path_basename: "{{ oci_image_path | basename }}"
 
 - name: Set Remote Repository Path
   ansible.builtin.set_fact:
-    repo_remote_path: "{{ httpd_web_root }}/{{ quay_image_path_basename }}/{{ quay_image_tag }}"
+    repo_remote_path: "{{ httpd_web_root }}/{{ oci_image_path_basename }}/{{ oci_image_tag }}"
 
 - name: Wait for Stage Deployment
   ansible.builtin.uri:
-    url: "http://{{ quay_image_path_basename }}-{{ quay_image_tag }}-httpd.rfe.svc.cluster.local/repo/config"
+    url: "http://{{ oci_image_path_basename }}-{{ oci_image_tag }}-httpd.rfe.svc.cluster.local/repo/config"
   delay: 10
   retries: 60
 
@@ -53,8 +53,8 @@
       - "remote"
       - "add"
       - "--no-gpg-verify"
-      - "{{ quay_image_path_basename }}-{{ quay_image_tag }}"
-      - "http://{{ quay_image_path_basename }}-{{ quay_image_tag }}-httpd.rfe.svc.cluster.local/repo"
+      - "{{ oci_image_path_basename }}-{{ oci_image_tag }}"
+      - "http://{{ oci_image_path_basename }}-{{ oci_image_tag }}-httpd.rfe.svc.cluster.local/repo"
   ignore_errors: yes
   register: ostree_remote_add
 
@@ -63,7 +63,7 @@
     msg: Add Remote OSTree Repository Failed"
   when:
     - (ostree_remote_add.failed | bool)
-    - '"Remote configuration for \"" + quay_image_path_basename + "-" + quay_image_tag + "\" already exists:" not in ostree_remote_add.stderr'
+    - '"Remote configuration for \"" + oci_image_path_basename + "-" + oci_image_tag + "\" already exists:" not in ostree_remote_add.stderr'
 
 - name: Mirror OStree Repository from Stage
   ansible.builtin.command:
@@ -72,7 +72,7 @@
       - "--repo={{ repo_remote_path }}"
       - "pull"
       - "--mirror"
-      - "{{ quay_image_path_basename }}-{{ quay_image_tag }}"
+      - "{{ oci_image_path_basename }}-{{ oci_image_tag }}"
       - "rhel/8/x86_64/edge"
 
 - name: Update OSTree Summary Data
@@ -98,6 +98,6 @@
 
 - name: Save OSTree Content Path to Output File
   ansible.builtin.copy:
-    content: "http://{{ httpd_route.resources[0].spec.host }}/{{ quay_image_path_basename }}/{{ quay_image_tag }}"
+    content: "http://{{ httpd_route.resources[0].spec.host }}/{{ oci_image_path_basename }}/{{ oci_image_tag }}"
     dest: "{{ content_path_output_file }}"
   delegate_to: localhost

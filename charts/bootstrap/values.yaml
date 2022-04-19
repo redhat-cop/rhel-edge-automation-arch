@@ -84,12 +84,6 @@ application-manager:
                         annotations:
                           openshift.io/description: OpenShift Container Native Virtualization
                           openshift.io/display-name: OpenShift Container Native Virtualization
-                      - name: quay
-                        annotations:
-                          openshift.io/description: Quay
-                          openshift.io/display-name: Quay
-                        labels:
-                          openshift.io/cluster-monitoring: "true"
                       - name: openshift-storage
                         annotations:
                           openshift.io/description: OpenShift Data Foundation
@@ -203,6 +197,7 @@ application-manager:
                         path: charts/operator
                         annotations:
                           argocd.argoproj.io/sync-wave: "0"
+                        destinationNamespace: pulp
                         values:
                           operator:
                             channel: alpha
@@ -210,20 +205,6 @@ application-manager:
                             name: pulp-operator
                             source: community-operators
                             sourceNamespace: openshift-marketplace
-                      quay-operator:
-                        name: quay-operator
-                        path: charts/operator
-                        annotations:
-                          argocd.argoproj.io/sync-wave: "0"
-                        values:
-                          operator:
-                            channel: stable-3.6
-                            installPlanApproval: Automatic
-                            name: quay-operator
-                            source: redhat-operators
-                            sourceNamespace: openshift-marketplace
-                          operatorgroup:
-                            create: false
                 # User Mgmt
                 user-mgmt:
                   name: user-mgmt
@@ -300,22 +281,15 @@ application-manager:
                   name: pulp
                   path: charts/pulp
                   annotations:
-                    argocd.argoproj.io/sync-wave: "4"
+                    argocd.argoproj.io/sync-wave: "2"
                   destinationNamespace: pulp
                   ignoreDifferences:
-                    - kind: pulp-s3-storage
-                      name: oci-rfe-httpd
+                    - kind: Secret
+                      name: pulp-s3-storage
                       namespace: pulp
                       jsonPointers:
                         - /data
 
-                # Quay
-                quay:
-                  name: quay
-                  path: charts/quay
-                  annotations:
-                    argocd.argoproj.io/sync-wave: "2"
-                  destinationNamespace: quay
                 # RFE Pipelines Chart
                 rfe-pipelines:
                   name: rfe-pipelines

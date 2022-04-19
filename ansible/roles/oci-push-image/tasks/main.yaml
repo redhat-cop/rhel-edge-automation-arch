@@ -5,12 +5,12 @@
         - blueprint_source_dir
         - build_commit_id
         - image_tags_output_file
-        - quay_image_path
+        - oci_image_path
     that:
       - blueprint_source_dir is defined
       - build_commit_id is defined
       - image_tags_output_file is defined
-      - quay_image_path is defined
+      - oci_image_path is defined
 
 - name: Validate Blueprint Directory and Blueprint file Exists
   ansible.builtin.stat:
@@ -93,16 +93,17 @@
     path: "{{ tar_directory }}"
     state: absent
 
-- name: Copy OCI Tar to Quay
+- name: Copy OCI Tar to OCI Registry
   ansible.builtin.command:
     argv:
       - "skopeo"
+      - "--debug"
       - "copy"
       - "--command-timeout=10m"
       - "--dest-authfile=/var/secrets/publisher/.dockerconfigjson"
       - "--dest-tls-verify=false"
       - "oci-archive:{{ find_results.files[0].path | quote }}"
-      - "docker://{{ quay_image_path | quote }}:latest"
+      - "docker://{{ oci_image_path | quote }}:latest"
   become: no
   delegate_to: localhost
   register: skopeo_results
@@ -119,8 +120,8 @@
       - "--src-tls-verify=false"
       - "--dest-authfile=/var/secrets/publisher/.dockerconfigjson"
       - "--dest-tls-verify=false"
-      - "docker://{{ quay_image_path | quote }}:latest"
-      - "docker://{{ quay_image_path | quote }}:{{ blueprint_version | quote }}"
+      - "docker://{{ oci_image_path | quote }}:latest"
+      - "docker://{{ oci_image_path | quote }}:{{ blueprint_version | quote }}"
   become: no
   delegate_to: localhost
   register: skopeo_results

@@ -1,0 +1,15 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: pulp-bootstrap-rolebinding
+  namespace: {{ template "common.names.namespace" $ }}
+  labels:
+    {{- include "common.labels.labels" . | nindent 4 }}
+subjects:
+- kind: ServiceAccount
+  name: pulp-bootstrap
+  namespace: pulp
+roleRef:
+  kind: Role
+  apiGroup: rbac.authorization.k8s.io
+  name: pulp-bootstrap-role

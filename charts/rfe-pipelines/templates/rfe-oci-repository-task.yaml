@@ -6,28 +6,32 @@ metadata:
     {{- include "common.labels.labels" . | nindent 4 }}
   annotations:
     {{- toYaml .Values.commonCR.annotations | nindent 4 }}
-  name: rfe-oci-quay-repository
+  name: rfe-oci-repository
 spec:
   workspaces:
     - name: workspace
   params:
+    - name: namespace-name
+      description: Name of the OCI Namespace
+      type: string
     - name: repository-name
-      description: Name of the Quay Repository
+      description: Name of the OCI Repository
       type: string
   results:
     - name: image-path
       description: Path to Container Image
   steps:
-    - name: create-quay-repository-playbook
+    - name: define-oci-registry-playbook
       image: image-registry.openshift-image-registry.svc:5000/rfe/ansible-rfe-runner:latest
       workingDir: /workspace/workspace
       args:
         - |-
           cd tooling/ansible
           ansible-galaxy collection install -r collections/requirements.yaml
-          ansible-playbook playbooks/oci-create-repository.yaml \
-            -e quay_repository_name=$(params.repository-name) \
-            -e quay_image_path_output_file=$(results.image-path.path)
+          ansible-playbook playbooks/oci-define-repository.yaml \
+            -e oci_repository_name=$(params.repository-name) \
+             -e oci_namespace_name=$(params.namespace-name) \
+            -e oci_image_path_output_file=$(results.image-path.path)
       command:
         - /bin/bash
         - -c
@@ -35,15 +39,8 @@ spec:
         - name: publisher
           mountPath: /var/secrets/publisher
           readOnly: true
-        - name: quay-rfe-setup
-          mountPath: /var/secrets/quay-rfe-setup
-          readOnly: true
   volumes:
     - name: publisher
       secret:
         secretName: publisher
-        defaultMode: 0440
-    - name: quay-rfe-setup
-      secret:
-        secretName: quay-rfe-setup
         defaultMode: 0440

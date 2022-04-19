@@ -1,0 +1,15 @@
+{{- $name := printf "%s-bootstrap" (include "common.names.fullname" .) -}}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: {{ $name }}
+  namespace: {{ template "common.names.namespace" $ }}
+  labels:
+    {{- include "common.labels.labels" . | nindent 4 }}
+subjects:
+- kind: ServiceAccount
+  name: {{ $name }}
+roleRef:
+  kind: Role
+  apiGroup: rbac.authorization.k8s.io
+  name: {{ $name }}

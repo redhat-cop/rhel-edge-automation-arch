@@ -53,9 +53,6 @@ spec:
         - name: publisher
           mountPath: /var/secrets/publisher
           readOnly: true
-        - name: quay-rfe-setup
-          mountPath: /var/secrets/quay-rfe-setup
-          readOnly: true
         - name: image-builder-ssh
           mountPath: /var/secrets/image-builder-ssh
           readOnly: true
@@ -64,10 +61,6 @@ spec:
       secret:
         defaultMode: 0440
         secretName: publisher
-    - name: quay-rfe-setup
-      secret:
-        defaultMode: 0440
-        secretName: quay-rfe-setup
     - name: image-builder-ssh
       secret:
         defaultMode: 0440
