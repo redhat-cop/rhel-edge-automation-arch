@@ -1,0 +1,20 @@
+apiVersion: hco.kubevirt.io/v1beta1
+kind: HyperConverged
+metadata:
+  annotations:
+    {{- toYaml .Values.kubevirt_hyperconverged_cr.annotations | nindent 4 }}
+  labels:
+    {{- include "common.labels.labels" . | nindent 4 }}
+    {{- toYaml .Values.kubevirt_hyperconverged_cr.labels | nindent 4 }}
+  name: kubevirt-hyperconverged
+  namespace: {{ template "common.names.namespace" $ }}
+spec:
+  certConfig:
+    {{- toYaml .Values.kubevirt_hyperconverged_cr.certConfig | nindent 4 }}
+  liveMigrationConfig:
+    {{- toYaml .Values.kubevirt_hyperconverged_cr.liveMigrationConfig | nindent 4 }}
+  featureGates:
+    {{- toYaml .Values.kubevirt_hyperconverged_cr.featureGates | nindent 4 }}
+  uninstallStrategy: {{ .Values.kubevirt_hyperconverged_cr.uninstallStrategy }}
+  workloadUpdateStrategy:
+    {{- toYaml .Values.kubevirt_hyperconverged_cr.workloadUpdateStrategy | nindent 4 }}

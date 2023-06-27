@@ -1,16 +1,33 @@
 ---
-cdiCR:
-  annotations:
-    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
-
-kubevirtCR:
+kubevirt_hyperconverged_cr:
   annotations:
     argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
     deployOVS: "false"
-  labels:
-    app: kubevirt-cr
+  certConfig:
+    ca:
+      duration: 48h0m0s
+      renewBefore: 24h0m0s
+    server:
+      duration: 24h0m0s
+      renewBefore: 12h0m0s
   featureGates:
-    - DataVolumes
-cnv:
-  debug:
-    useEmulation: false
+    deployKubeSecondaryDNS: false
+    deployTektonTaskResources: false
+    enableCommonBootImageImport: true
+    nonRoot: true
+    withHostPassthroughCPU: false
+  labels:
+    app: kubevirt-hyperconverged-cr
+  liveMigrationConfig:
+    allowAutoConverge: false
+    allowPostCopy: false
+    completionTimeoutPerGiB: 800
+    parallelMigrationsPerCluster: 5
+    parallelOutboundMigrationsPerNode: 2
+    progressTimeout: 150
+  uninstallStrategy: BlockUninstallIfWorkloadsExist
+  workloadUpdateStrategy:
+    batchEvictionInterval: 1m0s
+    batchEvictionSize: 10
+    workloadUpdateMethods:
+      - LiveMigrate
