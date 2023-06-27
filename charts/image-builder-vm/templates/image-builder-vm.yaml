@@ -20,7 +20,7 @@ metadata:
     {{- include "kubevirtRHELLabel" $ | nindent 4 }}
 spec:
   dataVolumeTemplates:
-    - apiVersion: cdi.kubevirt.io/v1alpha1
+    - apiVersion: cdi.kubevirt.io/v1beta1
       kind: DataVolume
       metadata:
         creationTimestamp: null
@@ -32,7 +32,10 @@ spec:
           resources:
             requests:
               storage: {{ $.Values.imageBuilderVM.disk }}
-          volumeMode: Filesystem
+          volumeMode: {{ $.Values.imageBuilderVM.volumeMode }}
+        {{- if $.Values.imageBuilderVM.storageClassName }}
+          storageClassName: {{ $.Values.imageBuilderVM.storageClassName }}
+        {{- end }}
         source:
           http:
             url: "http://nexus:8081/repository/rfe-rhel-media/rhel-{{- $.Values.rhel.version -}}-x86_64-kvm.qcow2"
