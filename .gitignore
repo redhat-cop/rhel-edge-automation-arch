@@ -5,3 +5,4 @@ charts/bootstrap/files/ssh/image-builder-ssh-public-key
 charts/*/charts
 charts/*/Chart.lock
 examples/values/local
+.vscode
