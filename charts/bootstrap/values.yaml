@@ -199,6 +199,7 @@ application-manager:
                           operatorgroup:
                             create: false
                       pulp-operator:
+                        destinationNamespace: pulp
                         name: pulp-operator
                         path: charts/operator
                         annotations:
@@ -211,7 +212,7 @@ application-manager:
                             source: community-operators
                             sourceNamespace: openshift-marketplace
                           operatorgroup:
-                            create: false
+                            create: true
                       quay-operator:
                         name: quay-operator
                         path: charts/operator

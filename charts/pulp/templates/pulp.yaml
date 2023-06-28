@@ -1,4 +1,4 @@
-apiVersion: pulp.pulpproject.org/v1beta1
+apiVersion: pulp.pulpproject.org/v1beta2
 kind: Pulp
 metadata:
   name: {{ template "common.names.fullname" . }}
@@ -17,12 +17,10 @@ spec:
     replicas: {{ .Values.content.replicas }}
     resource_requirements:
 {{- tpl (toYaml .Values.web.resources) $ | nindent 6 }}
-
   content:
     replicas: {{ .Values.content.replicas }}
     resource_requirements:
 {{- tpl (toYaml .Values.content.resources) $ | nindent 6 }}
-
   pulp_settings:
 {{- tpl (toYaml .Values.settings) $ | nindent 4 }}
   api:
