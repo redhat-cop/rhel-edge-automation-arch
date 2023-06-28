@@ -1,4 +1,4 @@
-apiVersion: pulp.pulpproject.org/v1beta2
+apiVersion: repo-manager.pulpproject.org/v1beta2
 kind: Pulp
 metadata:
   name: {{ template "common.names.fullname" . }}
