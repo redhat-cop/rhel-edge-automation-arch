@@ -3,15 +3,23 @@ kind: NooBaa
 metadata:
   labels:
     {{- include "common.labels.labels" . | nindent 4 }}
-  name: noobaa
+  name: {{ .Values.noobaa_name }}
   namespace: {{ template "common.names.namespace" $ }}
 spec:
-  dbResources:
-    requests:
-      cpu: 100m
-      memory: 1Gi
-  dbType: postgres
+  cleanupPolicy:
+    {{- toYaml .Values.noobaa_cleanuppolicy | nindent 4 }}
   coreResources:
-    requests:
-      cpu: 100m
-      memory: 1Gi
+    {{- toYaml .Values.noobaa_coreresources | nindent 4 }}
+  dbResources:
+    {{- toYaml .Values.noobaa_dbresources | nindent 4 }}
+{{- if .Values.noobaa_dbstorageclass }}
+  dbStorageClass: {{ .Values.noobaa_dbstorageclass }}
+{{- end }}
+  dbType: {{ .Values.noobaa_dbtype }}
+{{- if .Values.noobaa_dbvolumeresources }}
+  dbVolumeResources:
+    {{- toYaml .Values.noobaa_dbvolumeresources | nindent 4 }}
+{{- end }}
+  loadBalancerSourceSubnets: {}
+  security:
+    kms: {}
