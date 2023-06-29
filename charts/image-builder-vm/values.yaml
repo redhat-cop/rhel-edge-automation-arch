@@ -31,6 +31,7 @@ imageBuilderVM:
   memory: 6Gi
   disk: 150Gi
   replicas: 1
+  volumeMode: Filesystem
 
 gitRepository: https://github.com/redhat-cop/rhel-edge-automation-arch.git
 gitBranch: main

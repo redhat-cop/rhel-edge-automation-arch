@@ -152,7 +152,7 @@ application-manager:
                         destinationNamespace: openshift-storage
                         values:
                           operator:
-                            channel: stable-4.9
+                            channel: stable-4.13
                             installPlanApproval: Automatic
                             name: odf-operator
                             source: redhat-operators
@@ -191,7 +191,7 @@ application-manager:
                           argocd.argoproj.io/sync-wave: "0"
                         values:
                           operator:
-                            channel: stable
+                            channel: latest
                             installPlanApproval: Automatic
                             name: openshift-pipelines-operator-rh
                             source: redhat-operators
@@ -199,17 +199,20 @@ application-manager:
                           operatorgroup:
                             create: false
                       pulp-operator:
+                        destinationNamespace: pulp
                         name: pulp-operator
                         path: charts/operator
                         annotations:
                           argocd.argoproj.io/sync-wave: "0"
                         values:
                           operator:
-                            channel: alpha
+                            channel: beta
                             installPlanApproval: Automatic
                             name: pulp-operator
                             source: community-operators
                             sourceNamespace: openshift-marketplace
+                          operatorgroup:
+                            create: true
                       quay-operator:
                         name: quay-operator
                         path: charts/operator
@@ -217,7 +220,7 @@ application-manager:
                           argocd.argoproj.io/sync-wave: "0"
                         values:
                           operator:
-                            channel: stable-3.6
+                            channel: stable-3.8
                             installPlanApproval: Automatic
                             name: quay-operator
                             source: redhat-operators
