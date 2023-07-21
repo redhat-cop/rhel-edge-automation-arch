@@ -58,7 +58,7 @@
 - name: Query VirtualMachineInstances
   community.kubernetes.k8s_info:
     api_key: "{{ lookup('file', '/var/run/secrets/kubernetes.io/serviceaccount/token') }}"
-    api_version: kubevirt.io/v1alpha3
+    api_version: kubevirt.io/v1
     ca_cert: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
     host: https://kubernetes.default.svc
     kind: VirtualMachineInstance
