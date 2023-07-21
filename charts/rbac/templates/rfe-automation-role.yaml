@@ -47,6 +47,7 @@ rules:
   - apiGroups:
       - kubevirt.io
     resources:
+      - virtualmachineinstance
       - virtualmachineinstances
     verbs:
       - get
@@ -61,3 +62,11 @@ rules:
       - list
       - update
       - get
+  - apiGroups:
+      - security.openshift.io
+    resourceNames:
+      - pipelines-scc
+    resources:
+      - securitycontextconstraints
+    verbs:
+      - use
