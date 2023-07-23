@@ -17,7 +17,7 @@
 
 - name: Create Blueprints Directory
   ansible.builtin.file:
-    mode: "755"
+    mode: preserve
     path: "{{ base_rpm_ostree_blueprints_dir }}"
     state: directory
 
@@ -28,7 +28,7 @@
 
 - name: Copy Blueprints Directory to Image Builder
   ansible.builtin.copy:
-    mode: "755"
+    mode: preserve
     dest: "{{ build_blueprint_dir }}/"
     src: "{{ blueprint_source_dir }}/"
 
@@ -90,6 +90,6 @@
   ansible.builtin.copy:
     content: "{{ build_commit_id }}"
     dest: "{{ build_commit_output_file }}"
-    mode: "644"
+    mode: preserve
   become: false
   delegate_to: localhost
