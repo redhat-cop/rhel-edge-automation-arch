@@ -7,7 +7,7 @@
 - name: Validate Blueprint Directory and Blueprint File Exists
   ansible.builtin.stat:
     path: "{{ item }}"
-  become: no
+  become: true
   delegate_to: localhost
   failed_when: not blueprint_exists.stat.exists
   loop:
@@ -17,6 +17,7 @@
 
 - name: Create Blueprints Directory
   ansible.builtin.file:
+    mode: "755"
     path: "{{ base_rpm_ostree_blueprints_dir }}"
     state: directory
 
@@ -27,54 +28,68 @@
 
 - name: Copy Blueprints Directory to Image Builder
   ansible.builtin.copy:
+    mode: "755"
     dest: "{{ build_blueprint_dir }}/"
     src: "{{ blueprint_source_dir }}/"
 
 - name: Push Blueprint to Server
   ansible.builtin.command: >
     composer-cli blueprints push "{{ build_blueprint_dir }}/blueprint.toml"
+  changed_when: _blueprints_push.rc == 0
+  register: _blueprints_push
 
 - name: Resolve Dependencies
   ansible.builtin.command: >
     composer-cli blueprints depsolve {{ blueprint_name }}
+  changed_when: _blueprints_depsolve.rc == 0
+  register: _blueprints_depsolve
 
 - name: Freeze Blueprint
   ansible.builtin.command: >
     composer-cli -j blueprints freeze {{ blueprint_name }}
+  changed_when: frozen_blueprint.rc == 0
   register: frozen_blueprint
 
 - name: Set Blueprint Version Number
   ansible.builtin.set_fact:
-    blueprint_version: "{{ (frozen_blueprint.stdout | from_json).blueprints[0].blueprint.version }}"
+    blueprint_version: "{{ (frozen_blueprint.stdout | from_json | first).body.blueprints[0].blueprint.version }}"
 
-- name: Image Builder
-  block:
-    - name: Compose Image
-      ansible.builtin.command: >
-        composer-cli -j compose start-ostree {{ blueprint_name }} rhel-edge-container
-      register: composed_image
+- name: Compose Image
+  ansible.builtin.command: >
+    composer-cli -j compose start-ostree {{ blueprint_name }} rhel-edge-container
+  changed_when: composer_image.rc == 0
+  register: composed_image
 
-    - name: Set Build Commit ID
-      ansible.builtin.set_fact:
-        build_commit_id: "{{ (composed_image.stdout | from_json).build_id }}"
+- name: Set Build Commit ID
+  ansible.builtin.set_fact:
+    build_commit_id: "{{ (composed_image.stdout | from_json | first).body.build_id }}"
 
-    - name: Wait for Image Build to Complete
-      ansible.builtin.command: >
-        composer-cli -j compose status
-      changed_when: false
-      delay: 30
-      failed_when: >
-        not (image_build_status.stdout | from_json | selectattr('id', 'equalto', build_commit_id) | list | first).finished and
-        (image_build_status.stdout | from_json | selectattr('id', 'equalto', build_commit_id) | list | first).status != "FINISHED"
-      register: image_build_status
-      retries: 200
-      until: >
-        (image_build_status.stdout | from_json | selectattr('id', 'equalto', build_commit_id) | list | first).finished and
-        (image_build_status.stdout | from_json | selectattr('id', 'equalto', build_commit_id) | list | first).status == "FINISHED"
+- name: Wait for Compose to Finish
+  ansible.builtin.command: >
+    composer-cli -j compose status
+  changed_when: >-
+    (
+      status_results.stdout | from_json | json_query(_body_query) | flatten | json_query(_id_query) | first
+    ).queue_status | default("UNKNOWN") in _compose_statuses
+  delay: 15
+  failed_when: >-
+    (
+      status_results.stdout | from_json | json_query(_body_query) | flatten | json_query(_id_query) | first
+    ).queue_status | default("UNKNOWN") != "FINISHED"
+  register: status_results
+  retries: 400
+  until: >-
+    (
+      status_results.stdout | from_json | json_query(_body_query) | flatten | json_query(_id_query) | first
+    ).queue_status | default("UNKNOWN") == "FINISHED"
+  vars:
+    _body_query: "[*].body.[failed,finished,new,run]"
+    _id_query: "[?id=='{{ build_id }}']"
 
 - name: Save Build Commit ID to File
   ansible.builtin.copy:
     content: "{{ build_commit_id }}"
     dest: "{{ build_commit_output_file }}"
-  become: no
+    mode: "644"
+  become: false
   delegate_to: localhost
