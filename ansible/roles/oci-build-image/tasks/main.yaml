@@ -7,7 +7,7 @@
 - name: Validate Blueprint Directory and Blueprint File Exists
   ansible.builtin.stat:
     path: "{{ item }}"
-  become: true
+  become: false
   delegate_to: localhost
   failed_when: not blueprint_exists.stat.exists
   loop:
@@ -17,7 +17,7 @@
 
 - name: Create Blueprints Directory
   ansible.builtin.file:
-    mode: preserve
+    mode: "755"
     path: "{{ base_rpm_ostree_blueprints_dir }}"
     state: directory
 
@@ -33,10 +33,8 @@
     src: "{{ blueprint_source_dir }}/"
 
 - name: Push Blueprint to Server
-  ansible.builtin.command: >
-    composer-cli blueprints push "{{ build_blueprint_dir }}/blueprint.toml"
-  changed_when: _blueprints_push.rc == 0
-  register: _blueprints_push
+  infra.osbuild.push_blueprint:
+    src: "{{ build_blueprint_dir }}/blueprint.toml"
 
 - name: Resolve Dependencies
   ansible.builtin.command: >
@@ -57,38 +55,20 @@
 - name: Compose Image
   ansible.builtin.command: >
     composer-cli -j compose start-ostree {{ blueprint_name }} rhel-edge-container
-  changed_when: composer_image.rc == 0
+  changed_when: composed_image.rc == 0
   register: composed_image
 
 - name: Set Build Commit ID
   ansible.builtin.set_fact:
-    build_commit_id: "{{ (composed_image.stdout | from_json | first).body.build_id }}"
+    _build_id: "{{ (composed_image.stdout | from_json | first).body.build_id }}"
 
 - name: Wait for Compose to Finish
-  ansible.builtin.command: >
-    composer-cli -j compose status
-  changed_when: >-
-    (
-      status_results.stdout | from_json | json_query(_body_query) | flatten | json_query(_id_query) | first
-    ).queue_status | default("UNKNOWN") in _compose_statuses
-  delay: 15
-  failed_when: >-
-    (
-      status_results.stdout | from_json | json_query(_body_query) | flatten | json_query(_id_query) | first
-    ).queue_status | default("UNKNOWN") != "FINISHED"
-  register: status_results
-  retries: 400
-  until: >-
-    (
-      status_results.stdout | from_json | json_query(_body_query) | flatten | json_query(_id_query) | first
-    ).queue_status | default("UNKNOWN") == "FINISHED"
-  vars:
-    _body_query: "[*].body.[failed,finished,new,run]"
-    _id_query: "[?id=='{{ build_id }}']"
+  infra.osbuild.wait_compose:
+    compose_id: "{{ _build_id }}"
 
 - name: Save Build Commit ID to File
   ansible.builtin.copy:
-    content: "{{ build_commit_id }}"
+    content: "{{ _build_id }}"
     dest: "{{ build_commit_output_file }}"
     mode: preserve
   become: false
