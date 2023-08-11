@@ -33,15 +33,17 @@
   ansible.builtin.set_fact:
     blueprint_version: "{{ blueprint_contents | regex_search('^version.*\"(.*)\"', '\\1', multiline=True) | first }}"
 
-- name: List Finished Builds
-  infra.osbuild.get_all_finished_images:
-  register: all_finished_builds
+- name: Get Build Info
+  ansible.builtin.command: >
+    composer-cli -j compose info {{ build_commit_id }}
+  register: build_info
 
 - name: Assert Finished Build ID Found
   ansible.builtin.assert:
     fail_msg: "Did not find a valid finished build for the commit id {{ build_commit_id }}!"
     that:
-      - all_finished_builds.result.finished | selectattr('id', 'equalto', build_commit_id) | length == 1
+      - build_info.rc == 0
+      - (build_info.stdout | from_json | first).body.queue_status == "FINISHED"
 
 - name: Set Remote Tar Directory
   ansible.builtin.set_fact:
@@ -80,10 +82,9 @@
   delegate_to: localhost
 
 - name: Fetch RFE Build tar
-  become: false
-  ansible.builtin.fetch:
+  ansible.posix.synchronize:
     dest: "{{ find_results.files[0].path }}"
-    flat: true
+    mode: pull
     src: "{{ find_results.files[0].path }}"
 
 - name: Remove Remote Build Directory
