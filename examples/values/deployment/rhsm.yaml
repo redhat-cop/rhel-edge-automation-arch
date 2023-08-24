@@ -1,0 +1,14 @@
+rhsm:
+  namespace: rfe
+  imageBuilder:
+    secretProvided: false
+    secretName: image-builder-ssh-key
+    privateKey: "image-builder-ssh-private-key"
+    publicKey: "image-builder-ssh-public-key"
+  portal:
+    secretProvided: false
+    secretName: redhat-portal-credentials
+    offlineToken: ""
+    password: ""
+    poolId: ""
+    username: ""

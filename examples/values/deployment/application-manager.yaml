@@ -1,0 +1,365 @@
+---
+argocd:
+  appProjects:
+    - name: rfe
+
+bootstrap:
+  raw:
+    - apiVersion: v1
+      kind: Secret
+      metadata:
+        name: rfe-htpasswd-secret
+        namespace: openshift-config
+      type: Opaque
+      data:
+        htpasswd: |
+          dXNlcjE6JDJ5JDA1JE9QcE1NdWlwUmYyQmNFSmpnUDRHTWVPRzUvQlZkUWFwL3kyZll2c1
+          ZldW5vT3RvL2J4enlHCnVzZXIyOiQyeSQwNSQzVjEvdWtjWnJJTngyT3dEcVg4UTlPa212
+          NkhaTkNDUlpEOE11am5GNUlSVEZoWlE0WTJ5bQp1c2VyMzokMnkkMDUkSHFoS3hhbERwND
+          d6NXJtWGt6NEtjZUhiOUVJakVIdUpUOW1YOGtYM2NPNlNDOEl3bC5taFcKdXNlcjQ6JDJ5
+          JDA1JEloUGlQVERmMDBJNFJReG9nQk12eXVkYVNBME9OdjU4dFNXY3FEejlydm5GOUVlel
+          FtR25xCnVzZXI1OiQyeSQwNSRteWlrY0ZmRTZrMm1mZ0VaVC5SejJPamt3Y3UweUh3dEV2
+          NjFnOW1PVFd1T2ltRkV2TjI1Qwo=
+
+namespace:
+  namespaces:
+    - name: rfe
+      annotations:
+        openshift.io/description: RHEL for Edge
+        openshift.io/display-name: RHEL for Edge
+
+# Dynamically Generated Charts
+application-manager:
+  common:
+    repoURL: https://github.com/redhat-cop/rhel-edge-automation-arch.git
+    targetRevision: main
+    namespace: rfe-gitops
+    project: rfe
+    destinationNamespace: rfe
+    prune: true
+    selfHeal: true
+  charts:
+    # Top Level RFE App of App Chart
+    rfe-automation:
+      name: rfe-automation
+      path: charts/application-manager
+      values:
+        common:
+          repoURL: https://github.com/redhat-cop/rhel-edge-automation-arch.git
+          targetRevision: main
+          namespace: rfe-gitops
+          project: rfe
+          destinationNamespace: rfe
+          prune: true
+          selfHeal: true
+        charts:
+          # Cluster Configuration App of App Chart
+          cluster-configs:
+            name: cluster-configs
+            path: charts/application-manager
+            annotations:
+              argocd.argoproj.io/sync-wave: "0"
+            destinationNamespace: rfe-gitops
+            values:
+              common:
+                repoURL: https://github.com/redhat-cop/rhel-edge-automation-arch.git
+                targetRevision: main
+                namespace: rfe-gitops
+                project: rfe
+                destinationNamespace: rfe-gitops
+                prune: true
+                selfHeal: true
+              charts:
+                # Create namespaces
+                namespaces:
+                  name: namespaces
+                  path: charts/namespaces
+                  annotations:
+                    argocd.argoproj.io/sync-wave: "0"
+                  values:
+                    namespaces:
+                      - name: quay
+                        annotations:
+                          openshift.io/description: Quay
+                          openshift.io/display-name: Quay
+                        labels:
+                          openshift.io/cluster-monitoring: "true"
+                      - name: openshift-pipelines
+                        annotations:
+                          openshift.io/description: OpenShift Pipelines
+                          openshift.io/display-name: OpenShift Pipelines
+                      - name: openshift-user-workload-monitoring
+                        annotations:
+                          openshift.io/description: OpenShift User Workload Monitoring
+                          openshift.io/display-name: OpenShift User Workload Monitoring
+                      - name: pulp
+                        annotations:
+                          openshift.io/description: Pulp
+                          openshift.io/display-name: Pulp
+                # Operators App of App Chart
+                operators:
+                  name: operators
+                  path: charts/application-manager
+                  values:
+                    common:
+                      repoURL: https://github.com/redhat-cop/rhel-edge-automation-arch.git
+                      targetRevision: main
+                      namespace: rfe-gitops
+                      project: rfe
+                      destinationNamespace: openshift-operators
+                      prune: true
+                      selfHeal: true
+                    charts:
+                      # Catalog Sources
+                      catalog-sources:
+                        name: catalog-sources
+                        path: charts/catalogsources
+                        annotations:
+                          argocd.argoproj.io/sync-wave: "0"
+                        destinationNamespace: openshift-marketplace
+                      # Operators
+                      cnv-operator:
+                        name: cnv-operator
+                        path: charts/operator
+                        annotations:
+                          argocd.argoproj.io/sync-wave: "0"
+                        destinationNamespace: openshift-cnv
+                        values:
+                          operator:
+                            channel: stable
+                            installPlanApproval: Automatic
+                            name: kubevirt-hyperconverged
+                            source: redhat-operators
+                            sourceNamespace: openshift-marketplace
+                      odf-operator:
+                        disabled: true
+                        name: odf-operator
+                        path: charts/operator
+                        annotations:
+                          argocd.argoproj.io/sync-wave: "0"
+                        destinationNamespace: openshift-storage
+                        values:
+                          operator:
+                            channel: stable-4.13
+                            installPlanApproval: Automatic
+                            name: odf-operator
+                            source: redhat-operators
+                            sourceNamespace: openshift-marketplace
+                      nexus-operator:
+                        name: nexus-operator
+                        path: charts/operator
+                        annotations:
+                          argocd.argoproj.io/sync-wave: "0"
+                        destinationNamespace: rfe
+                        values:
+                          operator:
+                            channel: alpha
+                            installPlanApproval: Automatic
+                            name: nexus-operator
+                            source: redhatgov-operators
+                            sourceNamespace: openshift-marketplace
+                      patch-operator:
+                        name: patch-operator
+                        path: charts/operator
+                        annotations:
+                          argocd.argoproj.io/sync-wave: "0"
+                        values:
+                          operator:
+                            channel: alpha
+                            installPlanApproval: Automatic
+                            name: patch-operator
+                            source: community-operators
+                            sourceNamespace: openshift-marketplace
+                          operatorgroup:
+                            create: false
+                      pipelines-operator:
+                        name: pipelines-operator
+                        path: charts/operator
+                        annotations:
+                          argocd.argoproj.io/sync-wave: "0"
+                        values:
+                          operator:
+                            channel: latest
+                            installPlanApproval: Automatic
+                            name: openshift-pipelines-operator-rh
+                            source: redhat-operators
+                            sourceNamespace: openshift-marketplace
+                          operatorgroup:
+                            create: false
+                      pulp-operator:
+                        destinationNamespace: pulp
+                        name: pulp-operator
+                        path: charts/operator
+                        annotations:
+                          argocd.argoproj.io/sync-wave: "0"
+                        values:
+                          operator:
+                            channel: beta
+                            installPlanApproval: Automatic
+                            name: pulp-operator
+                            source: community-operators
+                            sourceNamespace: openshift-marketplace
+                          operatorgroup:
+                            create: true
+                      quay-operator:
+                        name: quay-operator
+                        path: charts/operator
+                        annotations:
+                          argocd.argoproj.io/sync-wave: "0"
+                        values:
+                          operator:
+                            channel: stable-3.8
+                            installPlanApproval: Automatic
+                            name: quay-operator
+                            source: redhat-operators
+                            sourceNamespace: openshift-marketplace
+                          operatorgroup:
+                            create: false
+                # User Mgmt
+                user-mgmt:
+                  name: user-mgmt
+                  path: charts/user-mgmt
+                  annotations:
+                    argocd.argoproj.io/sync-wave: "0"
+                  destinationNamespace: openshift-config
+                  values:
+                    bindings:
+                      - apiVersion: rbac.authorization.k8s.io/v1
+                        kind: ClusterRoleBinding
+                        metadata:
+                          name: rfe-cluster-admins
+                        roleRef:
+                          apiGroup: rbac.authorization.k8s.io
+                          kind: ClusterRole
+                          name: cluster-admin
+                        subjects:
+                          - apiGroup: rbac.authorization.k8s.io
+                            kind: Group
+                            name: rfe-admins
+                    groups:
+                      - name: rfe-admins
+                        users:
+                          - user1
+                          - user2
+                          - user3
+                          - user4
+                          - user5
+                    identityProviders:
+                      - name: RFE
+                        mappingMethod: claim
+                        type: HTPasswd
+                        htpasswd:
+                          fileData:
+                            name: rfe-htpasswd-secret
+                # User Workload Monitoring
+                user-workload-monitoring:
+                  name: user-workload-monitoring
+                  path: charts/user-workload-monitoring
+                  annotations:
+                    argocd.argoproj.io/sync-wave: "0"
+                  destinationNamespace: openshift-user-workload-monitoring
+                # RBAC Chart
+                rbac:
+                  name: rbac
+                  path: charts/rbac
+                  destinationNamespace: rfe
+                  annotations:
+                    argocd.argoproj.io/sync-wave: "0"
+                  ignoreDifferences:
+                    - kind: ServiceAccount
+                      name: oci-rfe-httpd
+                      namespace: rfe
+                      jsonPointers:
+                        - /imagePullSecrets
+                        - /secrets
+                # OpenShift Data Foundations
+                odf:
+                  name: odf
+                  path: charts/odf
+                  annotations:
+                    argocd.argoproj.io/sync-wave: "1"
+                  destinationNamespace: openshift-storage
+                # OpenShift Data Foundations
+                cnv:
+                  name: cnv
+                  path: charts/cnv
+                  annotations:
+                    argocd.argoproj.io/sync-wave: "1"
+                  destinationNamespace: openshift-cnv
+          # RFE App of App Chart
+          rfe:
+            name: rfe
+            path: charts/application-manager
+            destinationNamespace: rfe-gitops
+            annotations:
+              argocd.argoproj.io/sync-wave: "1"
+            values:
+              common:
+                repoURL: https://github.com/redhat-cop/rhel-edge-automation-arch.git
+                targetRevision: main
+                namespace: rfe-gitops
+                project: rfe
+                destinationNamespace: rfe
+                prune: true
+                selfHeal: true
+              charts:
+                # HTTPD Chart
+                httpd:
+                  name: httpd
+                  path: charts/httpd
+                  annotations:
+                    argocd.argoproj.io/sync-wave: "4"
+                # Nexus Chart
+                nexus:
+                  name: nexus
+                  path: charts/nexus
+                  annotations:
+                    argocd.argoproj.io/sync-wave: "2"
+                  values:
+                    nexus:
+                      oauth:
+                        adminUsers:
+                          - user1
+                          - user2
+                          - user3
+                          - user4
+                          - user5
+                # Pulp
+                pulp:
+                  name: pulp
+                  path: charts/pulp
+                  annotations:
+                    argocd.argoproj.io/sync-wave: "4"
+                  destinationNamespace: pulp
+                  ignoreDifferences:
+                    - kind: pulp-s3-storage
+                      name: oci-rfe-httpd
+                      namespace: pulp
+                      jsonPointers:
+                        - /data
+                # Quay
+                quay:
+                  name: quay
+                  path: charts/quay
+                  annotations:
+                    argocd.argoproj.io/sync-wave: "2"
+                  destinationNamespace: quay
+                # RFE Pipelines Chart
+                rfe-pipelines:
+                  name: rfe-pipelines
+                  path: charts/rfe-pipelines
+                  annotations:
+                    argocd.argoproj.io/sync-wave: "1"
+                # Image Builder VM
+                image-builder-vm:
+                  name: image-builder-vm
+                  path: charts/image-builder-vm
+                  annotations:
+                    argocd.argoproj.io/sync-wave: "3"
+                # Ansible Runner Chart
+                ansible-rfe-runner:
+                  name: ansible-rfe-runner
+                  path: charts/ansible-rfe-runner
+                  destinationNamespace: rfe
+                  annotations:
+                    argocd.argoproj.io/sync-wave: "1"
