@@ -32,9 +32,10 @@ kubevirt_hyperconverged_cr:
     workloadUpdateMethods:
       - LiveMigrate
 namespaces:
-  - name: openshift-cnv
-    annotations:
-      openshift.io/description: OpenShift Container Native Virtualization
-      openshift.io/display-name: OpenShift Container Native Virtualization
-    labels:
-      openshift.io/cluster-monitoring: "true"
+  namespaces:
+    - name: openshift-cnv
+      annotations:
+        openshift.io/description: OpenShift Container Native Virtualization
+        openshift.io/display-name: OpenShift Container Native Virtualization
+      labels:
+        openshift.io/cluster-monitoring: "true"
