@@ -15,7 +15,7 @@
 - name: Validate Blueprint Directory and Blueprint file Exists
   ansible.builtin.stat:
     path: "{{ item }}"
-  become: no
+  become: false
   delegate_to: localhost
   failed_when: not blueprint_exists.stat.exists
   register: blueprint_exists
@@ -26,24 +26,24 @@
 - name: Load Contents of Blueprint
   ansible.builtin.set_fact:
     blueprint_contents: "{{ lookup('file', blueprint_source_dir + '/blueprint.toml') }}"
-  become: no
+  become: false
   delegate_to: localhost
 
 - name: Extract Blueprint Version
   ansible.builtin.set_fact:
     blueprint_version: "{{ blueprint_contents | regex_search('^version.*\"(.*)\"', '\\1', multiline=True) | first }}"
 
-- name: List Finished Builds
+- name: Get Build Info
   ansible.builtin.command: >
-    composer-cli -j compose list finished
-  changed_when: false
-  register: compose_list
+    composer-cli -j compose info {{ build_commit_id }}
+  register: build_info
 
 - name: Assert Finished Build ID Found
   ansible.builtin.assert:
     fail_msg: "Did not find a valid finished build for the commit id {{ build_commit_id }}!"
     that:
-      - compose_list.stdout | from_json | selectattr('id', 'equalto', build_commit_id) | list | length == 1
+      - build_info.rc == 0
+      - (build_info.stdout | from_json | first).body.queue_status == "FINISHED"
 
 - name: Set Remote Tar Directory
   ansible.builtin.set_fact:
@@ -68,7 +68,7 @@
     paths: "{{ tar_directory }}"
     patterns:
       - "{{ build_commit_id }}-container.tar"
-    use_regex: yes
+    use_regex: true
   register: find_results
   failed_when:
     - find_results.failed == true
@@ -78,14 +78,13 @@
   ansible.builtin.file:
     path: "{{ tar_directory }}"
     state: directory
-  become: no
+  become: false
   delegate_to: localhost
 
 - name: Fetch RFE Build tar
-  become: no
-  ansible.builtin.fetch:
+  ansible.posix.synchronize:
     dest: "{{ find_results.files[0].path }}"
-    flat: yes
+    mode: pull
     src: "{{ find_results.files[0].path }}"
 
 - name: Remove Remote Build Directory
@@ -103,7 +102,7 @@
       - "--dest-tls-verify=false"
       - "oci-archive:{{ find_results.files[0].path | quote }}"
       - "docker://{{ quay_image_path | quote }}:latest"
-  become: no
+  become: false
   delegate_to: localhost
   register: skopeo_results
   retries: "{{ skopeo_retries }}"
@@ -121,7 +120,7 @@
       - "--dest-tls-verify=false"
       - "docker://{{ quay_image_path | quote }}:latest"
       - "docker://{{ quay_image_path | quote }}:{{ blueprint_version | quote }}"
-  become: no
+  become: false
   delegate_to: localhost
   register: skopeo_results
   retries: "{{ skopeo_retries }}"
@@ -132,12 +131,12 @@
     tag_list:
       - latest
       - "{{ blueprint_version }}"
-  become: no
+  become: false
   delegate_to: localhost
 
 - name: Save Tag List to Output File
   ansible.builtin.copy:
     content: "{{ tag_list | to_json }}"
     dest: "{{ image_tags_output_file }}"
-  become: no
+  become: false
   delegate_to: localhost

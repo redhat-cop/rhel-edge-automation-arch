@@ -10,17 +10,17 @@
       - iso_url_output_file is defined
       - kickstart_url is defined
 
-- name: List Finished Builds
+- name: Get Build Info
   ansible.builtin.command: >
-    composer-cli -j compose list finished
-  changed_when: false
-  register: compose_list
+    composer-cli -j compose info {{ build_commit_id }}
+  register: build_info
 
 - name: Assert Finished Build ID Found
   ansible.builtin.assert:
     fail_msg: "Did not find a valid finished build for the commit id {{ build_commit_id }}!"
     that:
-      - compose_list.stdout | from_json | selectattr('id', 'equalto', build_commit_id) | list | length == 1
+      - build_info.rc == 0
+      - (build_info.stdout | from_json | first).body.queue_status == "FINISHED"
 
 - name: Set Remote Tar Directory
   ansible.builtin.set_fact:

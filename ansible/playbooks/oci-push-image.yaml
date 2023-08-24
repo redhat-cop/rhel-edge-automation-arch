@@ -1,5 +1,5 @@
 - name: Generate In-Memory Inventory of OpenShift VMs
-  gather_facts: no
+  gather_facts: false
   hosts: localhost
   tasks:
     - name: Assert image_builder_host is Defined
@@ -11,14 +11,14 @@
       ansible.builtin.add_host:
         ansible_ssh_host: "{{ image_builder_host }}"
         ansible_ssh_port: "22"
-        name: pipeline_target_host
+        name: "{{ image_builder_host }}"
       delegate_to: localhost
 
 - name: Push OCI Image
-  become: yes
-  gather_facts: no
-  hosts: pipeline_target_host
+  become: true
+  gather_facts: false
+  hosts: "{{ image_builder_host }}"
   tasks:
     - name: Push OCI Image
-      include_role:
+      ansible.builtin.include_role:
         name: oci-push-image
