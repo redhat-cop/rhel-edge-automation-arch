@@ -2,14 +2,3 @@ initial_download_path: /tmp
 
 redhat_sso_url: https://sso.redhat.com/auth/realms/redhat-external/protocol/openid-connect/token
 redhat_api_url: https://api.access.redhat.com/management/v1
-
-# image_checksums represents a list of SHA-256 hashes that correspond to specific
-# Red Hat images.  The RHEL 8.5 KVM QCOW2 Image followed by the RHEL 8.5 Boot ISO
-# are defaults in this list.
-# 
-# The latest can be found here:
-# https://access.redhat.com/downloads/content/479/ver=/rhel---8/8.5/x86_64/product-software
-
-image_checksums:
-  - "9b63267716fa557f76df4899fb6a591c4c8a6ae2828f6297458815bff55ce8cc"
-  - "61fe463758f6ee9b21c4d6698671980829ca4f747a066d556fa0e5eefc45382c"

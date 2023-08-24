@@ -1,10 +1,18 @@
 - name: Download Red Hat Images
+  gather_facts: false
   hosts: localhost
   vars:
     nexus_credentials_secret_name: nexus-rfe-credentials
-  roles:
-    - role: redhat-image-downloader
   tasks:
+    - name: Assert image_checksums is Defined
+      ansible.builtin.assert:
+        that:
+          - image_checksums is defined
+
+    - name: Download Images
+      ansible.builtin.import_role:
+        name: redhat-image-downloader
+
     - name: Get Nexus Credentials
       community.kubernetes.k8s_info:
         api_key: "{{ lookup('file', '/var/run/secrets/kubernetes.io/serviceaccount/token') }}"
@@ -27,8 +35,8 @@
       ansible.builtin.include_role:
         name: content-download-upload
         tasks_from: upload-rfe-artifact.yaml
+      loop: "{{ image_urls.results }}"
       vars:
         file_to_upload: "/tmp/{{ item.json.body.filename }}"
         nexus_repository: rfe-rhel-media
         skip_httpd_upload: true
-      loop: "{{ image_urls.results }}"

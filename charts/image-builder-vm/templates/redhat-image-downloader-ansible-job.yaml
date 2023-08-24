@@ -15,15 +15,17 @@ spec:
         - image: image-registry.openshift-image-registry.svc:5000/rfe/ansible-rfe-runner:latest
           env:
             - name: GIT_DIRECTORY
-              value: "/tmp/git/rhel-edge-automation-arch"
+              value: /tmp/git/rhel-edge-automation-arch
             - name: GIT_URL
               value: {{ $.Values.gitRepository | quote }}
             - name: ANSIBLE_PLAYBOOK
-              value: "ansible/playbooks/redhat-image-downloader.yaml"
+              value: ansible/playbooks/redhat-image-downloader.yaml
             - name: ANSIBLE_CONFIG
               value: $GIT_DIRECTORY/ansible/ansible.cfg
             - name: GIT_BRANCH
               value: {{ $.Values.gitBranch | quote }}
+            - name: EXTRA_VARS
+              value: -e {{ $.Values.imageDownloaderJob.image_checksums | toJson }}
           command:
             - /bin/bash
             - -c
@@ -31,7 +33,7 @@ spec:
               mkdir -p $GIT_DIRECTORY
               git clone -b $GIT_BRANCH $GIT_URL $GIT_DIRECTORY
               ansible-galaxy collection install -r $GIT_DIRECTORY/ansible/collections/requirements.yaml
-              ansible-playbook $GIT_DIRECTORY/$ANSIBLE_PLAYBOOK
+              ansible-playbook $EXTRA_VARS $GIT_DIRECTORY/$ANSIBLE_PLAYBOOK
           volumeMounts:
             - name: redhat-portal-credentials
               mountPath: /var/secrets/redhat-portal-credentials
