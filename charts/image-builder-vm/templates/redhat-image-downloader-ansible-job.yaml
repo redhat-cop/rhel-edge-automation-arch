@@ -25,7 +25,7 @@ spec:
             - name: GIT_BRANCH
               value: {{ $.Values.gitBranch | quote }}
             - name: EXTRA_VARS
-              value: -e {{ $.Values.imageDownloaderJob.image_checksums | toJson }}
+              value: -e image_checksums='{{ printf "{%s}" ($.Values.imageDownloaderJob.image_checksums | toJson) }}'
           command:
             - /bin/bash
             - -c
