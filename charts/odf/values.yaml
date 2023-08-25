@@ -1,12 +1,4 @@
 ---
-namespaces:
-  namespaces:
-    - name: openshift-storage
-      annotations:
-        openshift.io/description: OpenShift Data Foundation
-        openshift.io/display-name: OpenShift Data Foundation
-      labels:
-        openshift.io/cluster-monitoring: "true"
 noobaa_cleanuppolicy:
   allowNoobaaDeletion: true
 noobaa_coreresources:
