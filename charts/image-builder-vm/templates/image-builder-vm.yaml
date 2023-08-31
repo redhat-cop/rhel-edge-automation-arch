@@ -1,23 +1,20 @@
-{{- $i := (.Values.imageBuilderVM.replicas | int) -}}
-{{- if not (ge $i 1) -}}
-{{- fail "imageBuilderVM.replicas must be greater than or equal to zero!" -}}
-{{- end -}}
-{{- range until $i -}}
-{{- $instance_name := printf "image-builder-%03d" . -}}
-{{- $root_disk := printf "image-builder-%03d-rootdisk" . -}}
+{{- range $pool := $.Values.imageBuilderPools }}
+{{- range $i, $e := until ($pool.replicas | int) }}
+{{- $instance_name := printf "image-builder-pool-%s-%03d" $pool.name $i }}
+{{- $root_disk := printf "%s-rootdisk" $instance_name }}
 ---
-apiVersion: kubevirt.io/v1alpha3
+apiVersion: kubevirt.io/v1
 kind: VirtualMachine
 metadata:
   annotations:
-    {{- toYaml $.Values.imageBuilderVM.annotations | nindent 4 }}
-    {{- include "kubevirtRHELAnnotation" $ | nindent 4 }}
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+    argocd.argoproj.io/compare-options: IgnoreExtraneous
+    description: {{ $pool.description }}
   name: {{ $instance_name }}
   namespace: rfe
   labels:
-    {{- toYaml $.Values.imageBuilderVM.labels | nindent 4 }}
     {{- include "common.labels.labels" $ | nindent 4 }}
-    {{- include "kubevirtRHELLabel" $ | nindent 4 }}
+    os.template.kubevirt.io/rhel{{ $pool.rhel.version }}: "true"
 spec:
   dataVolumeTemplates:
     - apiVersion: cdi.kubevirt.io/v1beta1
@@ -31,26 +28,27 @@ spec:
             - ReadWriteOnce
           resources:
             requests:
-              storage: {{ $.Values.imageBuilderVM.disk }}
-          volumeMode: {{ $.Values.imageBuilderVM.volumeMode }}
-        {{- if $.Values.imageBuilderVM.storageClassName }}
-          storageClassName: {{ $.Values.imageBuilderVM.storageClassName }}
+              storage: {{ $pool.disk }}
+          volumeMode: {{ $pool.volumeMode }}
+        {{- if $pool.storageClassName }}
+          storageClassName: {{ $pool.storageClassName }}
         {{- end }}
         source:
           http:
-            url: "http://nexus:8081/repository/rfe-rhel-media/rhel-{{- $.Values.rhel.version -}}-x86_64-kvm.qcow2"
+            url: "http://nexus:8081/repository/rfe-rhel-media/rhel-{{- $pool.rhel.version -}}-x86_64-kvm.qcow2"
   runStrategy: Always
   template:
     metadata:
       labels:
-        {{- toYaml $.Values.imageBuilderVM.template.labels | nindent 8 }}
+        app: image-builder
+        pool: {{ $pool.name }}
         kubevirt.io/domain: {{ $instance_name }}
         vm.kubevirt.io/name: {{ $instance_name }}
-        {{- include "kubevirtRHELLabel" $ | nindent 8 }}
+        workload.template.kubevirt.io/server: "true"
     spec:
       domain:
         cpu:
-          cores: {{ $.Values.imageBuilderVM.cores }}
+          cores: {{ $pool.cores }}
           sockets: 1
           threads: 1
         devices:
@@ -81,10 +79,10 @@ spec:
           networkInterfaceMultiqueue: true
           rng: {}
         machine:
-          type: {{ $.Values.imageBuilderVM.machine.type }}
+          type: {{ $pool.machine.type }}
         resources:
           requests:
-            memory: {{ $.Values.imageBuilderVM.memory }}
+            memory: {{ $pool.memory }}
       hostname: {{ $instance_name }}
       networks:
         - name: nic-0
@@ -118,4 +116,5 @@ spec:
         - name: serviceaccount
           serviceAccount:
             serviceAccountName: rfe-automation
-{{ end }}
+{{- end }}
+{{- end }}

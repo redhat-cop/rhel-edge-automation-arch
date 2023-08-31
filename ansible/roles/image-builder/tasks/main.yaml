@@ -8,7 +8,7 @@
     name: router-ca
     namespace: openshift-ingress-operator
     validate_certs: yes
-  become: no
+  become: false
   delegate_to: localhost
   register: ingress_controller_ca
 
@@ -35,7 +35,7 @@
     kind: Proxy
     name: cluster
     validate_certs: yes
-  become: no
+  become: false
   delegate_to: localhost
   register: cluster_proxy_resource
 
@@ -51,7 +51,7 @@
         name: "{{ cluster_proxy_resource.resources[0].spec.trustedCA.name }}"
         namespace: openshift-config
         validate_certs: yes
-      become: no
+      become: false
       delegate_to: localhost
       register: trusted_ca_configmap
 
@@ -81,7 +81,7 @@
     kind: IngressController
     namespace: "{{ ingress_operator_namespace }}"
     validate_certs: yes
-  become: no
+  become: false
   delegate_to: localhost
   register: ingress_controllers
 
@@ -142,22 +142,21 @@
 
 - name: Register Host
   community.general.redhat_subscription:
-    state: present
-    username: "{{ lookup('file', '/var/secrets/redhat-portal-credentials/username') }}"
     password: "{{ lookup('file', '/var/secrets/redhat-portal-credentials/password') }}"
     pool_ids: "{{ lookup('file', '/var/secrets/redhat-portal-credentials/pool_id') }}"
+    state: present
+    username: "{{ lookup('file', '/var/secrets/redhat-portal-credentials/username') }}"
 
 - name: Setup Repositories
   community.general.rhsm_repository:
-    state: enabled
-    purge: yes
     name:
-      - rhel-8-for-x86_64-appstream-rpms
-      - rhel-8-for-x86_64-baseos-rpms
+      - "rhel-{{ ansible_distribution_major_version }}-for-{{ ansible_architecture }}-appstream-rpms"
+      - rhel-{{ ansible_distribution_major_version }}-for-{{ ansible_architecture }}-baseos-rpms
+    purge: yes
+    state: enabled
 
-- name: Install Packages
+- name: Install Base Packages
   ansible.builtin.dnf:
-    state: latest
     name:
       - osbuild-composer
       - composer-cli
@@ -167,6 +166,23 @@
       - genisoimage
       - httpd
       - syslinux
+    state: latest
+
+- name: Additional RHEL 8 Packages
+  ansible.builtin.dnf:
+    name:
+      - python3-pytoml
+    state: present
+  when:
+    - ansible_distribution_major_version | int == 8
+
+- name: Additional RHEL 9 Packages
+  ansible.builtin.dnf:
+    name:
+      - python3-toml
+    state: present
+  when:
+    - ansible_distribution_major_version | int == 9
 
 - name: Enable Cockpit/Composer/Firewalld/Apache
   ansible.builtin.systemd:
