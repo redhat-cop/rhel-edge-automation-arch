@@ -1,32 +1,36 @@
 - name: Append Certificates
   block:
-  - name: Query Ingress TLS Secret
-    community.kubernetes.k8s_info:
-      api_key: "{{ lookup('file', '/var/run/secrets/kubernetes.io/serviceaccount/token') }}"
-      api_version: v1
-      ca_cert: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
-      host: https://kubernetes.default.svc
-      kind: Secret
-      name: "{{ item.spec.defaultCertificate.name }}"
-      namespace: "{{ ingress_controller_namespace }}"
-      validate_certs: yes
-    become: no
-    delegate_to: localhost
-    register: ingress_controller_tls_secret
+    - name: Query Ingress TLS Secret
+      community.kubernetes.k8s_info:
+        api_key: "{{ lookup('file', '/var/run/secrets/kubernetes.io/serviceaccount/token') }}"
+        api_version: v1
+        ca_cert: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+        host: https://kubernetes.default.svc
+        kind: Secret
+        name: "{{ item.spec.defaultCertificate.name }}"
+        namespace: "{{ ingress_controller_namespace }}"
+        validate_certs: yes
+      become: false
+      delegate_to: localhost
+      register: ingress_controller_tls_secret
 
-  - name: Append Additional Certificates to Payload
-    ansible.builtin.set_fact:
-      ca_certificate_text: |
-        {{
-          ca_certificate_text +
-          (ingress_controller_tls_secret.resources[0].data['tls.crt'] | b64decode)
-        }}
+    - name: Append Additional Certificates to Payload
+      ansible.builtin.set_fact:
+        ca_certificate_text: |
+          {{
+            ca_certificate_text +
+            (ingress_controller_tls_secret.resources[0].data['tls.crt'] | b64decode)
+          }}
+      become: false
+      delegate_to: localhost
 
-  - name: Ensure Updated Certificate Payload has Trailing Empty Line
-    ansible.builtin.set_fact:
-      ca_certificate_text: "{{ ca_certificate_text + \"\n\" }}"
-    when:
-      - ca_certificate_text[-1:] != "\n"
+    - name: Ensure Updated Certificate Payload has Trailing Empty Line
+      ansible.builtin.set_fact:
+        ca_certificate_text: "{{ ca_certificate_text + \"\n\" }}"
+      become: false
+      delegate_to: localhost
+      when:
+        - ca_certificate_text[-1:] != "\n"
   when:
     - item.spec.defaultCertificate.name is defined
     - item.spec.defaultCertificate.name != ""
