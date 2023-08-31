@@ -36,6 +36,9 @@ spec:
       description: Tooling Repository URL
       default: {{ $.Values.pipelines.repos.tooling.repoURL }}
       type: string
+    - name: vmi-pool
+      description: Builder Pool used to Initiate Compose
+      type: string
   results:
     - name: build-commit
       description: Commit ID of the Build
@@ -104,6 +107,8 @@ spec:
           value: $(params.additional-content-sources)
         - name: rhsm-repositories
           value: $(params.rhsm-repositories)
+        - name: vmi-pool
+          value: $(params.vmi-pool)
       runAfter:
         - "rfe-oci-quay-repository"
       workspaces:

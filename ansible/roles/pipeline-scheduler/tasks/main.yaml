@@ -15,16 +15,19 @@
         [
           {
             'host': item,
-            'id': (hostvars[item].compose_status.stdout | from_json)[0].id,
-            'status': (hostvars[item].compose_status.stdout | from_json)[0].status
+            'status': hostvars[item].compose_status.stdout | from_json | json_query('[?path==`/compose/queue`].body.run[0].queue_status | [0]')
           }
         ]
       }}
   delegate_to: localhost
   loop: "{{ ansible_play_hosts }}"
-  run_once: yes
-  when:
-    - (hostvars[item].compose_status.stdout | from_json) | count > 0
+  run_once: true
+
+- name: Debug pool_compose_status
+  ansible.builtin.debug:
+    var: pool_compose_status
+  delegate_to: localhost
+  run_once: true
 
 - name: Find Hosts with Compose Running
   ansible.builtin.set_fact:
@@ -33,17 +36,31 @@
         pool_compose_status | json_query('[?status==`RUNNING`].host')
       }}
   delegate_to: localhost
-  run_once: yes
+  run_once: true
+
+- name: Debug pool_has_running_jobs
+  ansible.builtin.debug:
+    var: pool_has_running_jobs
+  delegate_to: localhost
+  run_once: true
 
 - name: Build Idle Host Pool
   ansible.builtin.set_fact:
     pool_idle_hosts: "{{ ansible_play_hosts | difference(pool_has_running_jobs) }}"
+  delegate_to: localhost
+  run_once: true
+
+- name: Debug pool_idle_hosts
+  ansible.builtin.debug:
+    var: pool_idle_hosts
+  delegate_to: localhost
+  run_once: true
 
 - name: Find Idle Host for Pipeline Run
   ansible.builtin.set_fact:
     pipeline_target_host: "{{ pool_idle_hosts | random }}"
   delegate_to: localhost
-  run_once: yes
+  run_once: true
   when:
     - pool_idle_hosts | count > 0
 
@@ -51,9 +68,15 @@
   ansible.builtin.set_fact:
     pipeline_target_host: "{{ ansible_play_hosts | random }}"
   delegate_to: localhost
-  run_once: yes
+  run_once: true
   when:
     - pool_idle_hosts | count == 0
+
+- name: Debug pipeline_target_host
+  ansible.builtin.debug:
+    var: pipeline_target_host
+  delegate_to: localhost
+  run_once: true
 
 - name: Query VirtualMachineInstances
   community.kubernetes.k8s_info:
@@ -67,12 +90,12 @@
     name: "{{ pipeline_target_host }}"
     namespace: rfe
     validate_certs: yes
-  become: no
+  become: false
   delay: 10
   delegate_to: localhost
   register: vmi_results
   retries: 60
-  run_once: yes
+  run_once: true
   until:
     - vmi_results.resources | list | length == 1
     - >
@@ -89,15 +112,15 @@
     ansible_ssh_port: "22"
     name: pipeline_target_host
   delegate_to: localhost
-  run_once: yes
+  run_once: true
 
 - name: Save image-builder-host Pipeline Result to File
   ansible.builtin.copy:
     content: "{{ vmi_results.resources[0].status.interfaces[0].ipAddress }}"
     dest: "{{ image_builder_host_output_file }}"
-  become: no
+  become: false
   delegate_to: localhost
-  run_once: yes
+  run_once: true
   when:
     - image_builder_host_output_file is defined
 
@@ -105,4 +128,4 @@
   ansible.builtin.debug:
     msg: "pipeline_target_host = {{ pipeline_target_host }}"
   delegate_to: localhost
-  run_once: yes
+  run_once: true

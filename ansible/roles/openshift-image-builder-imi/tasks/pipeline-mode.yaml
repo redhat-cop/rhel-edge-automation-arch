@@ -1,0 +1,41 @@
+- name: Assert vmi_pool is Defined
+  ansible.builtin.assert:
+    that:
+      - vmi_pool is defined
+
+- name: Query VirtualMachineInstances
+  community.kubernetes.k8s_info:
+    api_key: "{{ lookup('file', '/var/run/secrets/kubernetes.io/serviceaccount/token') }}"
+    api_version: kubevirt.io/v1
+    ca_cert: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+    host: https://kubernetes.default.svc
+    kind: VirtualMachineInstance
+    label_selectors:
+      - app=image-builder
+      - "pool={{ vmi_pool }}"
+    namespace: rfe
+    validate_certs: true
+  register: vmi_results
+
+- name: Build List of Ready Hosts in Pool
+  ansible.builtin.set_fact:
+    ready_builders: "{{ vmi_results.resources | json_query(builder_query) }}"
+  vars:
+    builder_query: |-
+      [*].{
+        name: metadata.name,
+        ip: status.interfaces[0].ipAddress,
+        status: status.conditions[?type==`Ready`].status | [0]
+      } | [?status==`True`].{
+        name: name,
+        ip: ip
+      }
+
+- name: Generate In-Memory Inventory of Image Builder VM(s)
+  ansible.builtin.add_host:
+    ansible_ssh_host: "{{ item.ip }}"
+    ansible_ssh_port: "22"
+    groups:
+      - builders
+    name: "{{ item.name }}"
+  loop: "{{ ready_builders }}"

@@ -1,0 +1,32 @@
+- name: Query VirtualMachineInstances
+  community.kubernetes.k8s_info:
+    api_key: "{{ lookup('file', '/var/run/secrets/kubernetes.io/serviceaccount/token') }}"
+    api_version: kubevirt.io/v1
+    ca_cert: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+    host: https://kubernetes.default.svc
+    kind: VirtualMachineInstance
+    label_selectors:
+      - app=image-builder
+    namespace: rfe
+    validate_certs: true
+  delay: 10
+  register: vmi_results
+  retries: 60
+  until:
+    - vmi_results.resources | list | length == (image_builder_replicas | int)
+    - >
+      vmi_results.resources |
+        json_query('[*].status.conditions[?type==`Ready`].status') |
+        flatten |
+        select('match', 'True') |
+        list |
+        length == (image_builder_replicas | int)
+
+- name: Generate In-Memory Inventory of Image Builder VM(s)
+  ansible.builtin.add_host:
+    ansible_ssh_host: "{{ item.status.interfaces[0].ipAddress }}"
+    ansible_ssh_port: "22"
+    groups:
+      - builders
+    name: "{{ item.metadata.name }}"
+  loop: "{{ vmi_results.resources }}"
