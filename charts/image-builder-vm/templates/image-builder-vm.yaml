@@ -1,4 +1,4 @@
-{{- range $pool := $.Values.imageBuilderPools }}
+{{- range $pool := .Values.imageBuilderPools }}
 {{- range $i, $e := until ($pool.replicas | int) }}
 {{- $instance_name := printf "image-builder-pool-%s-%03d" $pool.name $i }}
 {{- $root_disk := printf "%s-rootdisk" $instance_name }}
@@ -29,7 +29,9 @@ spec:
           resources:
             requests:
               storage: {{ $pool.disk }}
+        {{- if $pool.volumeMode }}
           volumeMode: {{ $pool.volumeMode }}
+        {{- end }}
         {{- if $pool.storageClassName }}
           storageClassName: {{ $pool.storageClassName }}
         {{- end }}

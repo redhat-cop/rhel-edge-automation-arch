@@ -1,33 +1,38 @@
-ansibleVM:
-  annotations:
-    argocd.argoproj.io/hook: PostSync
-    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation,HookSucceeded
-  activeDeadlineSeconds: 1800
-gitRepository: https://github.com/redhat-cop/rhel-edge-automation-arch.git
+# gitBranch used for Ansible Job content
 gitBranch: main
-imageBuilderPools:
-  - cores: 2
-    description: RHEL 8.8 with Image Builder
-    disk: 150Gi
-    machine:
-      type: q35
-    memory: 6Gi
-    name: rhel88
-    replicas: 2
-    rhel:
-      version: '8.8'
-  - cores: 2
-    description: RHEL 9.2 with Image Builder
-    disk: 150Gi
-    machine:
-      type: q35
-    memory: 6Gi
-    name: rhel92
-    replicas: 2
-    rhel:
-      version: '9.2'
-imageDownloaderJob:
-  annotations:
-    argocd.argoproj.io/hook: PreSync
-    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation,HookSucceeded
-  activeDeadlineSeconds: 600
+
+# gitRepository used for Ansible Job content
+gitRepository: https://github.com/redhat-cop/rhel-edge-automation-arch.git
+
+# imageBuilderConfigJobAnnotations annotations applied to the Kubernetes Job resource
+imageBuilderConfigJobAnnotations:
+  argocd.argoproj.io/hook: PostSync
+  argocd.argoproj.io/hook-delete-policy: BeforeHookCreation,HookSucceeded
+
+# imageBuilderConfigJobDeadline value passed to the Job's activeDeadlineSeconds parameter
+imageBuilderConfigJobDeadline: 1800
+
+# imageBuilderConfigJobImage container image used in the Image Builder configuration job
+imageBuilderConfigJobImage: image-registry.openshift-image-registry.svc:5000/rfe/ansible-rfe-runner:latest
+
+# imageDownloaderJobAnnotations annotations applied to the Kubernetes Job resource
+imageDownloaderJobAnnotations:
+  argocd.argoproj.io/hook: PreSync
+  argocd.argoproj.io/hook-delete-policy: BeforeHookCreation,HookSucceeded
+
+# imageDownloaderJobChecksums list of RHEL artifacts to download (see documentation)
+imageDownloaderJobChecksums:
+  # Red Hat Enterprise Linux 9.2 KVM Guest Image
+  - 34ff41b5274692c984e3860b21136af8b6ae502744c6c7578dda82002fba0287
+  # Red Hat Enterprise Linux 9.2 Boot ISO
+  - 087f5387f28e6edf1f770ec7eb41e56823b6c3c4d4c3ef09b3b61f59440c229c
+  # Red Hat Enterprise Linux 8.8 KVM Guest Image
+  - 5f9cd94d9a9a44ac448b434f3e28d24465deef089bbd452392b3f10e96cb8eaa
+  # Red Hat Enterprise Linux 8.8 Boot ISO
+  - 1419ea8ae06722f858734bcc8060285314c335522e2086f0963941cd00432f8c
+
+# imageDownloaderJobDeadline value passed to the Job's activeDeadlineSeconds parameter
+imageDownloaderJobDeadline: 600
+
+# imageDownloaderJobImage container image used in the Image Builder configuration job
+imageDownloaderJobImage: image-registry.openshift-image-registry.svc:5000/rfe/ansible-rfe-runner:latest

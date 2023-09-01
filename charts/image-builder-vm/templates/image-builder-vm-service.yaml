@@ -1,4 +1,4 @@
-{{- range $pool := $.Values.imageBuilderPools }}
+{{- range $pool := .Values.imageBuilderPools }}
 {{- range $i, $e := until ($pool.replicas | int) }}
 {{- $instance_name := printf "image-builder-pool-%s-%03d" $pool.name $i }}
 ---
@@ -16,14 +16,10 @@ spec:
     port: 22
     protocol: TCP
     targetPort: 22
-  - name: 80-tcp
-    port: 80
+  - name: 9090-tcp
+    port: 9090
     protocol: TCP
-    targetPort: 80
-  - name: 443-tcp
-    port: 443
-    protocol: TCP
-    targetPort: 443
+    targetPort: 9090
   selector:
     vm.kubevirt.io/name: {{ $instance_name }}
   sessionAffinity: None

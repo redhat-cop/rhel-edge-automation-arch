@@ -2,24 +2,24 @@ apiVersion: batch/v1
 kind: Job
 metadata:
   annotations:
-    {{- toYaml .Values.ansibleVM.annotations | nindent 4 }}
+    {{- toYaml .Values.imageBuilderConfigJobAnnotations | nindent 4 }}
   labels:
-    run: image-builder-vm-ansible-job
-    {{- include "common.labels.labels" . | nindent 4 }}
-  name: image-builder-vm-ansible-job
+    run: image-builder-config-ansible-job
+    {{- include "common.labels.labels" $ | nindent 4 }}
+  name: image-builder-config-ansible-job
   namespace: rfe
 spec:
-  activeDeadlineSeconds: {{ $.Values.ansibleVM.activeDeadlineSeconds }}
+  activeDeadlineSeconds: {{ .Values.imageBuilderConfigJobDeadline }}
   template:
     spec:
-      activeDeadlineSeconds: {{ $.Values.ansibleVM.activeDeadlineSeconds }}
+      activeDeadlineSeconds: {{ .Values.imageBuilderConfigJobDeadline }}
       containers:
-        - image: image-registry.openshift-image-registry.svc:5000/rfe/ansible-rfe-runner:latest
+        - image: {{ .Values.imageBuilderConfigJobImage }}
           env:
             - name: GIT_DIRECTORY
               value: "/tmp/git/rhel-edge-automation-arch"
             - name: GIT_URL
-              value: {{ $.Values.gitRepository | quote }}
+              value: {{ .Values.gitRepository | quote }}
             - name: SSH_KEY
               value: "/var/secrets/image-builder-ssh-key/ssh-privatekey"
             - name: ANSIBLE_PLAYBOOK
@@ -27,7 +27,7 @@ spec:
             - name: ANSIBLE_CONFIG
               value: $GIT_DIRECTORY/ansible/ansible.cfg
             - name: GIT_BRANCH
-              value: {{ $.Values.gitBranch | quote }}
+              value: {{ .Values.gitBranch | quote }}
             - name: IMAGE_BUILDER_REPLICAS
               value: {{ include "imageBuilderReplicas" . | quote }}
           command:
