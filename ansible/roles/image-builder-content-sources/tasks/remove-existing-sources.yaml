@@ -1,6 +1,7 @@
 - name: Get List of Existing Content Sources
   ansible.builtin.command: >
     composer-cli -j sources list
+  changed_when: false
   register: existing_sources
 
 - name: Create CSV of Existing Content Sources
@@ -8,17 +9,20 @@
     existing_sources_csv: "{{ (existing_sources.stdout | from_json | first).body.sources | join(',') }}"
 
 - name: Remove Applicable Existing Content Sources
+  when:
+    - (existing_sources.stdout | from_json | first).body.sources | count > 0
   block:
     - name: Get Details of Existing Content Sources
       ansible.builtin.command: >
         composer-cli -j sources info {{ existing_sources_csv }}
+      changed_when: false
       register: existing_sources_detail
 
     - name: Remove Existing Content Sources
       ansible.builtin.command: >
         composer-cli sources delete {{ item.id }}
+      changed_when: existing_sources_delete.rc == 0
       loop: "{{ (existing_sources_detail.stdout | from_json | first | json_query('body.sources.[*]'))[0] }}"
+      register: existing_sources_delete
       when:
-        - item.system == false
-  when:
-    - (existing_sources.stdout | from_json | first).body.sources | count > 0
+        - not item.system

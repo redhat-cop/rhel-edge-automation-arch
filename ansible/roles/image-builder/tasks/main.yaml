@@ -11,6 +11,7 @@
   become: false
   delegate_to: localhost
   register: ingress_controller_ca
+  run_once: true
 
 - name: Set Initial Certificate Payload
   ansible.builtin.set_fact:
@@ -19,10 +20,14 @@
         (ca_certificate_text | default('')) +
         (ingress_controller_ca.resources[0].data['tls.crt'] | b64decode)
       }}
+  delegate_to: localhost
+  run_once: true
 
 - name: Ensure Initial Certificate Payload has Trailing Empty Line
   ansible.builtin.set_fact:
     ca_certificate_text: "{{ ca_certificate_text + \"\n\" }}"
+  delegate_to: localhost
+  run_once: true
   when:
     - ca_certificate_text[-1:] != "\n"
 
@@ -38,6 +43,7 @@
   become: false
   delegate_to: localhost
   register: cluster_proxy_resource
+  run_once: true
 
 - name: Add CAs from ConfigMap Defined in Cluster Proxy Resource
   when:
@@ -57,6 +63,7 @@
       become: false
       delegate_to: localhost
       register: trusted_ca_configmap
+      run_once: true
 
     - name: Append Additional Certificates to Payload
       ansible.builtin.set_fact:
@@ -65,10 +72,14 @@
             ca_certificate_text +
             trusted_ca_configmap.resources[0].data['ca-bundle.crt']
           }}
+      delegate_to: localhost
+      run_once: true
 
     - name: Ensure Updated Certificate Payload has Trailing Empty Line
       ansible.builtin.set_fact:
         ca_certificate_text: "{{ ca_certificate_text + \"\n\" }}"
+      delegate_to: localhost
+      run_once: true
       when:
         - ca_certificate_text[-1:] != "\n"
 
@@ -84,11 +95,13 @@
   become: false
   delegate_to: localhost
   register: ingress_controllers
+  run_once: true
 
 - name: Add Certificates Defined in each IngressController's defaultCertificate
   ansible.builtin.include_tasks:
     file: ingress-default-certificate.yaml
   loop: "{{ ingress_controllers.resources }}"
+  run_once: true
   when:
     - ingress_controllers.resources | count > 0
 
@@ -101,6 +114,7 @@
       }}
   become: false
   delegate_to: localhost
+  run_once: true
 
 - name: Parse Certificates
   community.crypto.x509_certificate_info:
@@ -109,6 +123,7 @@
   delegate_to: localhost
   loop: "{{ ca_certificate_list }}"
   register: x509_certificate_info
+  run_once: true
 
 - name: Include only CA Certificates
   ansible.builtin.set_fact:
@@ -119,6 +134,7 @@
       }}
   become: false
   delegate_to: localhost
+  run_once: true
 
 - name: Assert Parsed CA List Count > 0
   ansible.builtin.assert:
@@ -126,6 +142,7 @@
       - ca_certificate_list_parsed | count > 0
   become: false
   delegate_to: localhost
+  run_once: true
 
 - name: Build CA Certificate Payload
   ansible.builtin.set_fact:
@@ -137,6 +154,7 @@
   become: false
   delegate_to: localhost
   loop: "{{ ca_certificate_list_parsed }}"
+  run_once: true
 
 - name: Copy Certificate Payload to Image Builder VM
   ansible.builtin.copy:
@@ -160,11 +178,14 @@
     state: present
     username: "{{ lookup('file', '/var/secrets/redhat-portal-credentials/username') }}"
 
+- name: Query Pool Default Repositories
+  ansible.builtin.slurp:
+    src: /var/configmaps/pool-default-config/channels
+  register: pool_default_repositories
+
 - name: Setup Repositories
   community.general.rhsm_repository:
-    name:
-      - "rhel-{{ ansible_distribution_major_version }}-for-{{ ansible_architecture }}-appstream-rpms"
-      - rhel-{{ ansible_distribution_major_version }}-for-{{ ansible_architecture }}-baseos-rpms
+    name: "{{ pool_default_repositories.content | b64decode | from_json }}"
     purge: true
     state: enabled
 

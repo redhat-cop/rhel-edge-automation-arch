@@ -64,12 +64,16 @@ spec:
               name: cloudinitdisk
             - disk:
                 bus: virtio
-              name: redhat-portal-credentials
-              serial: rhpc
+              name: pool-default-config
+              serial: hftb
             - disk:
                 bus: virtio
               name: image-builder-ssh-key
               serial: ibsk
+            - disk:
+                bus: virtio
+              name: redhat-portal-credentials
+              serial: rhpc
             - disk:
                 bus: virtio
               name: serviceaccount
@@ -103,12 +107,17 @@ spec:
               bootcmd:
                 - "mkdir -p /home/cloud-user/.ssh && chown -R 1000:1000 /home/cloud-user"
                 - "mkdir -p /var/secrets/{redhat-portal-credentials,image-builder-ssh-key,serviceaccount}"
+                - "mkdir -p /var/configmaps/pool-default-config"
                 - "mount -o overriderockperm,mode=0400,uid=0,gid=0 /dev/disk/by-id/virtio-rhpc /var/secrets/redhat-portal-credentials"
                 - "mount -o overriderockperm,mode=0400,uid=0,gid=0 /dev/disk/by-id/virtio-ibsk /var/secrets/image-builder-ssh-key"
                 - "mount -o overriderockperm,mode=0400,uid=0,gid=0 /dev/disk/by-id/virtio-seac /var/secrets/serviceaccount"
+                - "mount -o overriderockperm,mode=0444,uid=0,gid=0 /dev/disk/by-id/virtio-hftb /var/configmaps/pool-default-config"
                 - "cp /var/secrets/image-builder-ssh-key/ssh-publickey /home/cloud-user/.ssh/authorized_keys"
                 - "chmod 644 /home/cloud-user/.ssh/authorized_keys"
           name: cloudinitdisk
+        - name: pool-default-config
+          configMap:
+            name: "pool-{{ $pool.name }}-default-config"
         - name: redhat-portal-credentials
           secret:
             secretName: redhat-portal-credentials

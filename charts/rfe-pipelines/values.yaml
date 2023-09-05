@@ -23,10 +23,7 @@ pipelines:
       targetRevision: kickstarts
   rhsm_repositories: |
     {
-      "repositories": [
-        "rhel-8-for-x86_64-baseos-rpms",
-        "rhel-8-for-x86_64-appstream-rpms"
-      ]
+      "repositories": []
     }
   additional_content_sources: |
     {

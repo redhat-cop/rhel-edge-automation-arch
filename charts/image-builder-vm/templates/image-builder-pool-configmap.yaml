@@ -1,0 +1,15 @@
+{{- range $pool := .Values.imageBuilderPools }}
+---
+apiVersion: v1
+data:
+  channels: |-
+    {{- $pool.channels | toJson | nindent 4 }}
+immutable: false
+kind: ConfigMap
+metadata:
+  labels:
+    {{- include "common.labels.labels" $ | nindent 4 }}
+  name: "pool-{{ $pool.name }}-default-config"
+  namespace: rfe
+
+{{- end }}

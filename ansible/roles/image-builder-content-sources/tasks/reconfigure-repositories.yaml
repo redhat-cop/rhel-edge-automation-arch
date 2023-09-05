@@ -2,10 +2,25 @@
   ansible.builtin.set_fact:
     rhsm_repositories_list: "{{ ((rhsm_repositories | b64decode | from_json) | from_json).repositories | list }}"
 
-- name: Reconfigure RHSM Repositories
+- name: Reconfigure RHSM Repositories from Pipeline (Custom Sources)
   community.general.rhsm_repository:
     name: "{{ rhsm_repositories_list | join(',') }}"
-    purge: yes
+    purge: true
     state: enabled
   when:
     - rhsm_repositories_list | count > 0
+
+- name: Reconfigure RHSM Repositories from Pool Config (Default Sources)
+  when:
+    - rhsm_repositories_list | count == 0
+  block:
+    - name: Query Pool Default Repositories
+      ansible.builtin.slurp:
+        src: /var/configmaps/pool-default-config/channels
+      register: pool_default_repositories
+
+    - name: Setup Repositories
+      community.general.rhsm_repository:
+        name: "{{ pool_default_repositories.content | b64decode | from_json }}"
+        purge: true
+        state: enabled

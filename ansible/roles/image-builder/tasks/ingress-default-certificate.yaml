@@ -1,4 +1,7 @@
 - name: Append Certificates
+  when:
+    - item.spec.defaultCertificate.name is defined
+    - item.spec.defaultCertificate.name != ""
   block:
     - name: Query Ingress TLS Secret
       community.kubernetes.k8s_info:
@@ -9,10 +12,11 @@
         kind: Secret
         name: "{{ item.spec.defaultCertificate.name }}"
         namespace: "{{ ingress_controller_namespace }}"
-        validate_certs: yes
+        validate_certs: true
       become: false
       delegate_to: localhost
       register: ingress_controller_tls_secret
+      run_once: true
 
     - name: Append Additional Certificates to Payload
       ansible.builtin.set_fact:
@@ -23,14 +27,13 @@
           }}
       become: false
       delegate_to: localhost
+      run_once: true
 
     - name: Ensure Updated Certificate Payload has Trailing Empty Line
       ansible.builtin.set_fact:
         ca_certificate_text: "{{ ca_certificate_text + \"\n\" }}"
       become: false
       delegate_to: localhost
+      run_once: true
       when:
         - ca_certificate_text[-1:] != "\n"
-  when:
-    - item.spec.defaultCertificate.name is defined
-    - item.spec.defaultCertificate.name != ""
