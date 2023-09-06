@@ -28,6 +28,9 @@ spec:
     - name: rhsm-repositories
       description: JSON object with list of RHEL Repos
       type: string
+    - name: vmi-pool
+      description: Builder Pool used to Initiate Compose
+      type: string
   results:
     - name: build-commit-id
       description: Commit ID of the Build
@@ -50,6 +53,7 @@ spec:
             -e image_builder_host_output_file=$(results.image-builder-host.path) \
             -e additional_content_sources=$(params.additional-content-sources) \
             -e rhsm_repositories=$(params.rhsm-repositories) \
+            -e vmi_pool=$(params.vmi-pool) \
             playbooks/oci-build-installer-image.yaml
       command:
         - /bin/bash

@@ -13,6 +13,7 @@
 - name: Get Build Info
   ansible.builtin.command: >
     composer-cli -j compose info {{ build_commit_id }}
+  changed_when: false
   register: build_info
 
 - name: Assert Finished Build ID Found
@@ -29,6 +30,7 @@
 
 - name: Create Remote Tar Directory
   ansible.builtin.file:
+    mode: "0755"
     path: "{{ iso_directory }}"
     state: directory
 
@@ -37,6 +39,8 @@
     composer-cli compose image {{ build_commit_id | quote }}
   args:
     chdir: "{{ iso_directory }}"
+  changed_when:
+    - compose_image_results.rc == 0
   register: compose_image_results
   failed_when:
     - compose_image_results.rc != 0
@@ -48,7 +52,7 @@
     paths: "{{ iso_directory }}"
     patterns:
       - "{{ build_commit_id }}-installer.iso"
-    use_regex: yes
+    use_regex: true
   register: find_results
   failed_when:
     - find_results.failed == true
@@ -65,6 +69,7 @@
     - name: Get ISO Label
       ansible.builtin.command: >
         blkid -s LABEL -o value {{ iso_source_path | quote }}
+      changed_when: false
       register: iso_source_label
 
     - name: Create Working Directories
@@ -78,7 +83,7 @@
 
     - name: Mount ISO
       ansible.posix.mount:
-        boot: no
+        boot: false
         fstype: iso9660
         opts: loop
         path: "{{ iso_mount_path }}"
@@ -88,15 +93,16 @@
     - name: Copy ISO Contents to Scratch Directory
       ansible.posix.synchronize:
         dest: "{{ scratch_path }}/"
-        recursive: yes
+        recursive: true
         src: "{{ iso_mount_path }}/"
       delegate_to: "{{ inventory_hostname }}"
 
     - name: Copy Kickstart File to Scratch Directory
       ansible.builtin.get_url:
         dest: "{{ scratch_path }}/kickstart.ks"
+        mode: "0644"
         url: "{{ kickstart_url }}"
-        validate_certs: no
+        validate_certs: false
 
     - name: Copy Updated Grub Configuration
       ansible.builtin.template:
@@ -133,11 +139,16 @@
           -no-emul-boot \
           -graft-points \
           -V "{{ iso_source_label.stdout | quote }}" .
+      changed_when:
+        - rfe_iso_results.rc == 0
       register: rfe_iso_results
 
     - name: Build EFI Bootable Image
-      ansible.builtin.shell:
+      ansible.builtin.command:
         cmd: isohybrid --uefi {{ edge_iso_path | quote }}
+      changed_when:
+        - isohybrid_results.rc == 0
+      register: isohybrid_results
   always:
     - name: Remove ISO Mount
       ansible.posix.mount:
@@ -160,8 +171,9 @@
 - name: Pull ISO From Image Builder to httpd Pod
   ansible.builtin.get_url:
     dest: "{{ edge_iso_path }}"
+    mode: "0644"
     url: "http://{{ image_builder_host }}/{{ edge_iso_path | basename }}"
-  become: no
+  become: false
   delegate_to: "{{ groups.httpd_pod_group[0] }}"
 
 - name: Remove ISO From Image Builder
@@ -178,14 +190,16 @@
     kind: Route
     name: httpd
     namespace: rfe
-    validate_certs: yes
-  become: no
+    validate_certs: true
+  become: false
   register: httpd_route
   delegate_to: localhost
 
 - name: Set iso-url Result
   ansible.builtin.copy:
-    content: "{{ ('https://' if httpd_route.resources[0].spec.tls is defined else 'http://') + httpd_route.resources[0].spec.host }}/{{ edge_iso_path | basename }}"
+    content: |
+      {{ ('https://' if httpd_route.resources[0].spec.tls is defined else 'http://') + httpd_route.resources[0].spec.host }}/{{ edge_iso_path | basename }}
     dest: "{{ iso_url_output_file }}"
-  become: no
+    mode: "0644"
+  become: false
   delegate_to: localhost

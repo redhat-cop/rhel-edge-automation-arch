@@ -3,6 +3,8 @@
   hosts: localhost
   roles:
     - role: openshift-image-builder-imi
+      vars:
+        pipeline_mode: true
 
 - name: Find Appropriate Image Builder Host
   become: yes
