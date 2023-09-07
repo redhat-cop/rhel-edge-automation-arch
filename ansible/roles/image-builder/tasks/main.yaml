@@ -148,8 +148,7 @@
   ansible.builtin.set_fact:
     ca_certificate_payload: |
       {{
-        (ca_certificate_payload | default('')) +
-        "-----BEGIN CERTIFICATE-----" + (item | regex_replace('(?m)^[\\n]+'))
+        (ca_certificate_payload | default('')) + "-----BEGIN CERTIFICATE-----" + item
       }}
   become: false
   delegate_to: localhost
