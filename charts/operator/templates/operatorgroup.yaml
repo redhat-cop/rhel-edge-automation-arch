@@ -12,6 +12,8 @@ metadata:
     {{- toYaml .Values.operatorgroup.annotations | nindent 4 }}
   {{- end }}
 spec:
+  {{- if not .Values.operatorgroup.allNamespaces }}
   targetNamespaces:
     - {{ template "common.names.namespace" . }}
+  {{- end }}
 {{- end }}

@@ -8,3 +8,4 @@ operator:
 
 operatorgroup:
   create: true
+  allNamespaces: false
