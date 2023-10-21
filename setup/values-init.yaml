@@ -7,6 +7,10 @@ config:
       value: "rfe-gitops"
 
 namespaces:
+  - name: openshift-gitops-operator
+    annotations:
+      openshift.io/description: RFE GitOps
+      openshift.io/display-name: RFE GitOps
   - name: rfe-gitops
     annotations:
       openshift.io/description: RFE GitOps
@@ -21,4 +25,6 @@ operator:
   sourceNamespace: openshift-marketplace
 
 operatorgroup:
-  create: false
+  allNamespaces: true
+
+namespaceOverride: openshift-gitops-operator
