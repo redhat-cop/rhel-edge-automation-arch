@@ -31,6 +31,9 @@ spec:
     - name: kickstart-path
       description: Path containing the kickstart
       type: string
+    - name: extra-template-variables
+      description: Additional template variables to be replaced in the kickstart.ks
+      type: string      
   workspaces:
     - name: shared-workspace
   tasks:
@@ -73,6 +76,8 @@ spec:
           value: /workspace/workspace/kickstarts/$(params.kickstart-path)
         - name: kickstart-destination-dir
           value: /workspace/workspace/kickstarts
+        - name: extra-template-variables
+          value: $(params.extra-template-variables)
       runAfter:
         - "git-clone-kickstarts"
         - "git-clone-tooling"

@@ -19,8 +19,8 @@ spec:
     - name: kickstart-destination-dir
       description: Directory Kickstart file should be created
       type: string
-    - name: extra-ansible-variables
-      description: Extra Ansible variables
+    - name: extra-template-variables
+      description: Extra template variables
       default: ""
       type: string
   results:
@@ -42,7 +42,7 @@ spec:
             -e kickstart_destination_dir=$(params.kickstart-destination-dir) \
             -e artifact_repository_url_output_file=$(results.artifact-repository-storage-url.path) \
             -e storage_url_output_file=$(results.serving-storage-url.path) \
-            $(params.extra-ansible-variables) \
+            -e "$(params.extra-template-variables)" \
             playbooks/upload-kickstart.yaml
       command:
         - /bin/bash
