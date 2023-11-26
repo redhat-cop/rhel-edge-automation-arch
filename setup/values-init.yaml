@@ -9,8 +9,8 @@ config:
 namespaces:
   - name: openshift-gitops-operator
     annotations:
-      openshift.io/description: RFE GitOps
-      openshift.io/display-name: RFE GitOps
+      openshift.io/description: OpenShift GitOps Operator
+      openshift.io/display-name: OpenShift GitOps Operator
   - name: rfe-gitops
     annotations:
       openshift.io/description: RFE GitOps
