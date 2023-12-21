@@ -31,12 +31,14 @@ spec:
             - /bin/bash
             - -c
             - |
+              set -x
               export HOME=/tmp/nexus-setup
 
-              until oc get secrets ${SERVICE_NAME}-admin-credentials > /dev/null 2>&1; do sleep 5; done;
+              # until oc get secrets ${SERVICE_NAME}-admin-credentials > /dev/null 2>&1; do sleep 5; done;
 
-              NEXUS_ADMIN_USERNAME=$(oc get secrets ${SERVICE_NAME}-admin-credentials -o jsonpath='{ .data.username }' | base64 -d)
-              NEXUS_ADMIN_PASSWORD=$(oc get secrets ${SERVICE_NAME}-admin-credentials -o jsonpath='{ .data.password }' | base64 -d)
+              NEXUS_ADMIN_USERNAME=admin
+              # NEXUS_ADMIN_PASSWORD=$(oc get secrets ${SERVICE_NAME}-admin-credentials -o jsonpath='{ .data.password }' | base64 -d)
+              NEXUS_ADMIN_PASSWORD=$(oc exec -c nexus-server $(oc get pod -lapp=nexus --no-headers=true -o custom-columns=:.metadata.name) -- cat /nexus-data/admin.password)
 
               while [[ "$(curl -s -u ${NEXUS_ADMIN_USERNAME}:${NEXUS_ADMIN_PASSWORD} -o /dev/null -w ''%{http_code}'' http://${SERVICE_NAME}:8081/service/rest/v1/status/check)" != "200" ]]; do sleep 5; done
 

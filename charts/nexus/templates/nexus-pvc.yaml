@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  labels:
+    {{- include "common.labels.labels" . | nindent 4 }}
+  name: {{ .Values.nexus.storage.pvcName }}
+  namespace: {{ template "common.names.namespace" $ }}
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ .Values.nexus.storage.pvcSize | quote }}
+  volumeMode: Filesystem

@@ -1,0 +1,84 @@
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  labels:
+    {{- include "common.labels.labels" . | nindent 4 }}
+  name: {{ template "common.names.fullname" . }}
+  namespace: {{ template "common.names.namespace" $ }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nexus
+  template:
+    metadata:
+      labels:
+        app: nexus
+    spec:
+      containers:
+        - env:
+            {{- toYaml .Values.nexus.server.env | nindent 12 }}
+          image: {{ template "common.images.registryRepository" .Values.nexus.image }}
+          imagePullPolicy: {{ .Values.nexus.image.imagePullPolicy }}
+          livenessProbe:
+            failureThreshold: 50
+            httpGet:
+              path: /
+              port: 8081
+              scheme: HTTP
+            initialDelaySeconds: 120
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 1
+          name: nexus-server
+          ports:
+            - containerPort: 8081
+              name: http
+              protocol: TCP
+            - containerPort: 8082
+              name: docker
+              protocol: TCP
+          readinessProbe:
+            failureThreshold: 50
+            httpGet:
+              path: /
+              port: 8081
+              scheme: HTTP
+            initialDelaySeconds: 120
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 1
+          resources:
+            {{- toYaml .Values.nexus.resources | nindent 12 }}
+          volumeMounts:
+            - mountPath: /nexus-data
+              name: nexus-data
+            - mountPath: /opt/nexus/config
+              name: nexus-config
+      dnsPolicy: ClusterFirst
+      initContainers:
+        - command:
+            - bash
+            - '-c'
+            - >-
+              mkdir -m777 -p /nexus-data/etc/ ; ln -s /opt/nexus/config/nexus.properties /nexus-data/etc/nexus.properties || true
+          name: init
+          image: {{ template "common.images.registryRepository" .Values.nexus.init.image }}
+          imagePullPolicy: {{ .Values.nexus.init.image.imagePullPolicy }}
+          volumeMounts:
+            - name: nexus-data
+              mountPath: /nexus-data
+      restartPolicy: Always
+      serviceAccount: {{ .Values.nexus.sa }}
+      serviceAccountName: {{ .Values.nexus.sa }}
+      schedulerName: default-scheduler
+      volumes:
+        - configMap:
+            defaultMode: 420
+            name: {{ .Values.nexus.configMapName }}
+          name: nexus-config
+        - name: nexus-data
+          persistentVolumeClaim:
+            claimName: {{ .Values.nexus.storage.pvcName }}
+  strategy:
+    type: Recreate

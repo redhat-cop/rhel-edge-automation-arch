@@ -1,48 +1,52 @@
 ---
 nexus:
-  allowAnonymousAccess: true
-  service: nexus
-  oauth:
-    enabled: true
-    bypassAuthFor:
-      - "/repository"
-    adminUsers: []
-  resources:
-    requests:
-      cpu: 1
-      memory: 2048Mi
-    limits:
-      cpu: 2
-      memory: 4096Mi
-  expose:
-    ssl: true
-    kind: Route
-  persistent:
-    enabled: true
-    volumeSize: 100Gi
+  config: |-
+    nexus.properties: nexus.scripts.allowCreation=true
+  configMapName: nexus-config
   image:
+    imagePullPolicy: IfNotPresent
     registry: registry.connect.redhat.com
     repository: sonatype/nexus-repository-manager
     version: latest
-    imagePullPolicy: IfNotPresent
-
+  init:
+    image:
+      imagePullPolicy: IfNotPresent
+      registry: registry.connect.redhat.com
+      repository: sonatype/nexus-repository-manager
+      version: latest
+  resources:
+    limits:
+      cpu: 2
+      memory: 4096Mi
+    requests:
+      cpu: 1
+      memory: 2048Mi
+  route: nexus
+  sa: nexus
+  server:
+    env:
+      - name: INSTALL4J_ADD_VM_PARAMS
+        value: >-
+          -Xms512m -Xmx512m -XX:MaxDirectMemorySize=512m -Djava.util.prefs.userRoot=${NEXUS_DATA}/javaprefs
+  service: nexus
+  storage:
+    pvcName: nexus-data
+    pvcSize: 100Gi
 setup:
   repositories:
     raw:
-      - rfe-kickstarts
-      - rfe-tarballs
-      - rfe-rhel-media
       - rfe-auto-iso
+      - rfe-kickstarts
+      - rfe-rhel-media
+      - rfe-tarballs
   rfe:
-    username: rfe-automation
     secretName: nexus-rfe-credentials
-
+    username: rfe-automation
   image:
+    imagePullPolicy: IfNotPresent
     registry: registry.redhat.io
     repository: openshift4/ose-cli
-    version: v4.6
-    imagePullPolicy: IfNotPresent
-
+    version: latest
 setupJob:
   annotations:
     argocd.argoproj.io/hook: PostSync

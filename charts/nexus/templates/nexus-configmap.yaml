@@ -1,0 +1,9 @@
+apiVersion: v1
+data:
+  {{- .Values.nexus.config | nindent 2 }}
+kind: ConfigMap
+metadata:
+  labels:
+    {{- include "common.labels.labels" . | nindent 4 }}
+  name: {{ .Values.nexus.configMapName }}
+  namespace: {{ template "common.names.namespace" $ }}

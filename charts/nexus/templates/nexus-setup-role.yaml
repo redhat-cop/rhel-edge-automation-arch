@@ -2,18 +2,27 @@
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
-  name: {{ $setupJobName }}
-  namespace: {{ template "common.names.namespace" $ }}
-  labels:
-    {{- include "common.labels.labels" . | nindent 4 }}
   annotations:
     {{- toYaml .Values.setupJob.annotations | nindent 4}}
+  labels:
+    {{- include "common.labels.labels" . | nindent 4 }}
+  name: {{ $setupJobName }}
+  namespace: {{ template "common.names.namespace" $ }}
 rules:
   - apiGroups:
       - ""
     resources:
       - secrets
     verbs:
-      - list
-      - get
       - create
+      - get
+      - list
+  - apiGroups:
+      - ""
+    resources:
+      - pods
+      - pods/exec
+    verbs:
+      - create
+      - get
+      - list
